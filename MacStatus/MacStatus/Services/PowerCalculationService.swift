@@ -1,4 +1,5 @@
 import Foundation
+import IOKit.ps
 
 class PowerCalculationService {
     static let shared = PowerCalculationService()
@@ -10,8 +11,14 @@ class PowerCalculationService {
         // 'PSTR' gets the true total system draw in real-time
         let smcSystemWatts = SMCService.shared.systemTotalPower
         
-        let adapterWatts = data.adapter?.realTimeWatts ?? Double(data.adapterWatts)
+        let powerSourceType = IOPSGetProvidingPowerSourceType(nil)?.takeRetainedValue() as? String ?? ""
+        let isTrueAC = (powerSourceType == "AC Power")
+        
+        // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
+        let adapterWatts = isTrueAC ? (data.adapter?.realTimeWatts ?? Double(data.adapterWatts)) : 0.0
+        
         let batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
+
         
         var systemWatts: Double = 0.0
         var topology: TopologyState = .topologyB
@@ -60,6 +67,15 @@ class PowerCalculationService {
             trueAdapterWatts = systemWatts + batteryWatts
         } else if !isDischarging && topology == .topologyA {
             trueAdapterWatts = systemWatts
+        } else if isDischarging {
+            // When discharging, the adapter might be assisting (rare but possible under heavy load).
+            // Trust the real-time intake watts from the PMU if present.
+            // Ensure if we are physically unplugged (adapter == nil), it stays at 0.
+            if data.adapter == nil {
+                trueAdapterWatts = 0.0
+            } else {
+                trueAdapterWatts = adapterWatts
+            }
         }
         
         return PowerFlowData(
