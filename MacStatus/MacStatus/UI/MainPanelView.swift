@@ -15,18 +15,20 @@ struct MainPanelView: View {
                     .font(.headline)
                     .fontWeight(.bold)
                 Spacer()
+                
+                Button(action: {
+                    openWindow(id: "settings")
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                }) {
+                    Image(systemName: "gearshape")
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
                 Toggle(isOn: $showDetails) {
                     Image(systemName: "list.bullet.rectangle")
                 }
                 .toggleStyle(.button)
-                .font(.caption2)
-                
-                Toggle("％", isOn: $showPercentage)
-                    .toggleStyle(.button)
-                    .font(.caption2)
-                Toggle("W", isOn: $showWattage)
-                    .toggleStyle(.button)
-                    .font(.caption2)
             }
             .padding(.horizontal, 4)
             
@@ -55,28 +57,6 @@ struct MainPanelView: View {
                     HighPowerAppsModule()
                 }
             }
-            .moduleCardStyle()
-            
-            // Footer
-            HStack {
-                Button(action: {
-                    openWindow(id: "settings")
-                    NSApplication.shared.activate(ignoringOtherApps: true)
-                }) {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
-                
-                Spacer()
-                Button("Quit") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
-                .font(.caption)
-            }
-            .padding(.horizontal, 4)
         }
         .onAppear {
             EnergyEfficiencyManager.shared.appState = .active

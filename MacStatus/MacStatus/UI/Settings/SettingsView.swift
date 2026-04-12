@@ -27,6 +27,15 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
+            .safeAreaInset(edge: .bottom) {
+                Button("退出 MacStatus") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .controlSize(.large)
+                .buttonStyle(.borderless)
+                .foregroundColor(.red)
+                .padding()
+            }
         } detail: {
             Group {
                 if let tab = selectedTab {
