@@ -6,11 +6,11 @@ struct MainWindowView: View {
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     
     enum MainWindowTab: String, CaseIterable, Hashable {
-        case dashboard = "Dashboard"
-        case general = "General"
-        case menuBar = "Menu Bar"
-        case appearance = "Appearance"
-        case about = "About"
+        case dashboard = "仪表盘"
+        case general = "通用"
+        case menuBar = "菜单栏"
+        case appearance = "外观"
+        case about = "关于"
         
         var icon: String {
             switch self {
@@ -230,16 +230,127 @@ struct MenuBarSettingsView: View {
     @AppStorage("menuRightClickAction") private var menuRightClickAction = "同左击"
 
     var body: some View {
-        VStack(spacing: 0) {
-            // --- 置顶实时预览 ---
-            VStack(alignment: .leading, spacing: 8) {
+        Form {
+            Section("主图标样式") {
+                Picker("样式", selection: $menuBarIconStyle) {
+                    Text("不要显示").tag("none")
+                    Text("AlDente 图标").tag("aldente_icon")
+                    Text("AlDente 状态").tag("aldente_status")
+                    Text("macOS 原生").tag("battery")
+                    Text("iOS 原生").tag("ios_native")
+                    Text("macOS 彩色").tag("macos_color")
+                }
+            }
+
+            Section("主图标选项") {
+                Toggle("显示百分比", isOn: $showPercentage)
+                Toggle("低电量模式颜色", isOn: $iconLowPowerColor)
+                Toggle("充电状态", isOn: $showChargingStatus)
+            }
+            
+            Section("电池健康") {
+                Toggle("最大容量", isOn: $showMaxCapacity)
+                Toggle("macOS 容量", isOn: $showMacOSCapacity)
+                Toggle("macOS 条件", isOn: $showMacOSCondition)
+                Toggle("循环次数", isOn: $showCycles)
+            }
+            
+            Section("电池规格") {
+                Toggle("温度", isOn: $showTemperature)
+                Toggle("满载/剩余时间", isOn: $showTimeRemaining)
+                Toggle("电流", isOn: $showAmperage)
+                Toggle("电压", isOn: $showVoltage)
+                Toggle("电源", isOn: $showWattage)
+                Toggle("系统负载", isOn: $showSystemLoad)
+            }
+            
+            Section("电源适配器规格") {
+                Toggle("当前", isOn: $showAdapterCurrent)
+                Toggle("电压", isOn: $showAdapterVoltage)
+                Toggle("电源", isOn: $showAdapterPower)
+            }
+            
+            Section("AlDente 状态") {
+                Toggle("校准模式", isOn: $showAlDenteCalibration)
+                Toggle("过热保护", isOn: $showAlDenteOverheat)
+                Toggle("航海模式", isOn: $showAlDenteSailing)
+                Toggle("充满", isOn: $showAlDenteFull)
+            }
+            
+            Section("菜单栏偏好设置") {
                 HStack {
-                    Image(systemName: "menubar.rectangle")
+                    Text("菜单项间距")
+                    Slider(value: $menuItemSpacing, in: 0...20, step: 1)
+                    Text("\(Int(menuItemSpacing))")
+                        .monospacedDigit()
+                        .frame(width: 24, alignment: .trailing)
+                }
+                
+                HStack {
+                    Text("菜单更新间隔")
+                    Slider(value: $menuUpdateInterval, in: 2...20, step: 1)
+                    Text("\(Int(menuUpdateInterval)) 秒")
+                        .monospacedDigit()
+                        .frame(width: 40, alignment: .trailing)
+                }
+                
+                Picker("菜单栏右击", selection: $menuRightClickAction) {
+                    Text("同左击").tag("同左击")
+                    Text("退出应用").tag("退出应用")
+                }
+            }
+            
+            Section {
+                HStack {
+                    Spacer()
+                    Button("重置") {
+                        menuItemSpacing = 4
+                        menuUpdateInterval = 2
+                    }
+                    .buttonStyle(.borderless)
+                    
+                    Button("全部清除") {
+                        menuBarIconStyle = "none"
+                        showPercentage = false
+                        showChargingStatus = false
+                        iconLowPowerColor = false
+                        showMaxCapacity = false
+                        showMacOSCapacity = false
+                        showMacOSCondition = false
+                        showCycles = false
+                        showTemperature = false
+                        showTimeRemaining = false
+                        showAmperage = false
+                        showVoltage = false
+                        showWattage = false
+                        showSystemLoad = false
+                        showAdapterCurrent = false
+                        showAdapterVoltage = false
+                        showAdapterPower = false
+                        showAlDenteCalibration = false
+                        showAlDenteOverheat = false
+                        showAlDenteSailing = false
+                        showAlDenteFull = false
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundColor(.red)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("菜单栏属性")
+        .safeAreaInset(edge: .top) {
+            // --- 沉浸式浮动预览卡片 ---
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "eyes")
+                        .foregroundColor(.blue)
                     Text("实时体验预览")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
                     Spacer()
                 }
-                .foregroundColor(.primary)
                 
                 HStack(spacing: menuItemSpacing) {
                     if menuBarIconStyle != "none" {
@@ -277,124 +388,19 @@ struct MenuBarSettingsView: View {
                 }
                 .font(.system(.body, design: .rounded).monospacedDigit())
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(NSColor.textBackgroundColor))
+                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
+                .background(Color(NSColor.controlBackgroundColor))
                 .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             }
-            .padding(20)
-            .background(Color(NSColor.windowBackgroundColor))
-            
-            Divider()
-            
-            Form {
-                Section("主图标样式") {
-                    Picker("样式", selection: $menuBarIconStyle) {
-                        Text("不要显示").tag("none")
-                        Text("AlDente 图标").tag("aldente_icon")
-                        Text("AlDente 状态").tag("aldente_status")
-                        Text("macOS 原生").tag("battery")
-                        Text("iOS 原生").tag("ios_native")
-                        Text("macOS 彩色").tag("macos_color")
-                    }
-                }
-
-                Section("主图标选项") {
-                    Toggle("显示百分比", isOn: $showPercentage)
-                    Toggle("低电量模式颜色", isOn: $iconLowPowerColor)
-                    Toggle("充电状态", isOn: $showChargingStatus)
-                }
-                
-                Section("电池健康") {
-                    Toggle("最大容量", isOn: $showMaxCapacity)
-                    Toggle("macOS 容量", isOn: $showMacOSCapacity)
-                    Toggle("macOS 条件", isOn: $showMacOSCondition)
-                    Toggle("循环次数", isOn: $showCycles)
-                }
-                
-                Section("电池规格") {
-                    Toggle("温度", isOn: $showTemperature)
-                    Toggle("满载/剩余时间", isOn: $showTimeRemaining)
-                    Toggle("电流", isOn: $showAmperage)
-                    Toggle("电压", isOn: $showVoltage)
-                    Toggle("电源", isOn: $showWattage)
-                    Toggle("系统负载", isOn: $showSystemLoad)
-                }
-                
-                Section("电源适配器规格") {
-                    Toggle("当前", isOn: $showAdapterCurrent)
-                    Toggle("电压", isOn: $showAdapterVoltage)
-                    Toggle("电源", isOn: $showAdapterPower)
-                }
-                
-                Section("AlDente 状态") {
-                    Toggle("校准模式", isOn: $showAlDenteCalibration)
-                    Toggle("过热保护", isOn: $showAlDenteOverheat)
-                    Toggle("航海模式", isOn: $showAlDenteSailing)
-                    Toggle("充满", isOn: $showAlDenteFull)
-                }
-                
-                Section("菜单栏偏好设置") {
-                    HStack {
-                        Text("菜单项间距")
-                        Slider(value: $menuItemSpacing, in: 0...20, step: 1)
-                        Text("\(Int(menuItemSpacing))")
-                            .monospacedDigit()
-                            .frame(width: 24, alignment: .trailing)
-                    }
-                    
-                    HStack {
-                        Text("菜单更新间隔")
-                        Slider(value: $menuUpdateInterval, in: 2...20, step: 1)
-                        Text("\(Int(menuUpdateInterval)) 秒")
-                            .monospacedDigit()
-                            .frame(width: 40, alignment: .trailing)
-                    }
-                    
-                    Picker("菜单栏右击", selection: $menuRightClickAction) {
-                        Text("同左击").tag("同左击")
-                        Text("退出应用").tag("退出应用")
-                    }
-                }
-                
-                Section {
-                    HStack {
-                        Spacer()
-                        Button("重置") {
-                            menuItemSpacing = 4
-                            menuUpdateInterval = 2
-                        }
-                        .buttonStyle(.borderless)
-                        
-                        Button("全部清除") {
-                            menuBarIconStyle = "none"
-                            showPercentage = false
-                            showChargingStatus = false
-                            iconLowPowerColor = false
-                            showMaxCapacity = false
-                            showMacOSCapacity = false
-                            showMacOSCondition = false
-                            showCycles = false
-                            showTemperature = false
-                            showTimeRemaining = false
-                            showAmperage = false
-                            showVoltage = false
-                            showWattage = false
-                            showSystemLoad = false
-                            showAdapterCurrent = false
-                            showAdapterVoltage = false
-                            showAdapterPower = false
-                            showAlDenteCalibration = false
-                            showAlDenteOverheat = false
-                            showAlDenteSailing = false
-                            showAlDenteFull = false
-                        }
-                        .buttonStyle(.borderless)
-                        .foregroundColor(.red)
-                    }
-                }
-            }
-            .formStyle(.grouped)
-            .navigationTitle("菜单栏属性")
+            .padding(16)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
         }
     }
 }
@@ -405,59 +411,76 @@ struct DashboardSettingsView: View {
     // Simulate real-time updates for now
     let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     
-    let columns = [
-        GridItem(.adaptive(minimum: 240, maximum: 350), spacing: 16)
-    ]
-    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    // Battery Specs Card
-                    DashboardCard(title: "Battery Specs", icon: "bolt.fill", iconColor: .primary) {
-                        VStack(spacing: 8) {
-                            DataRow(label: "Current", value: String(format: "%.2f A", Double(batteryData.amperage) / 1000.0))
-                            DataRow(label: "Voltage", value: String(format: "%.2f V", Double(batteryData.voltage) / 1000.0))
-                            DataRow(label: "Power", value: String(format: "%.2f W", batteryData.adapter?.realTimeWatts ?? 0))
-                            DataRow(label: "System Load", value: String(format: "%.2f W", abs(Double(batteryData.voltage) * Double(batteryData.amperage) / 1_000_000.0)))
-                            DataRow(label: "Remaining Capacity", value: "\(batteryData.currentCapacity) mAh")
+                // Top Content: 2-Column Layout
+                HStack(alignment: .top, spacing: 20) {
+                    
+                    // Left Column
+                    VStack(spacing: 20) {
+                        // 电池规格 Card
+                        DashboardCard(title: "电池规格", icon: "bolt.fill") {
+                            VStack(spacing: 12) {
+                                DataRow(label: "Current", value: String(format: "%.2f A", Double(batteryData.amperage) / 1000.0))
+                                DataRow(label: "Voltage", value: String(format: "%.2f V", Double(batteryData.voltage) / 1000.0))
+                                DataRow(label: "Power", value: String(format: "%.2f W", batteryData.adapter?.realTimeWatts ?? 0.0))
+                                DataRow(label: "System Load", value: String(format: "%.2f W", abs(Double(batteryData.voltage) * Double(batteryData.amperage) / 1_000_000.0)))
+                                DataRow(label: "Remaining Capacity", value: "\(batteryData.currentCapacity) mAh")
+                            }
+                        }
+                        
+                        // 电源适配器规格 Card
+                        DashboardCard(title: "电源适配器规格", icon: "powerplug.fill") {
+                            VStack(spacing: 12) {
+                                let maxC = batteryData.adapter?.activeProfile?.maxCurrent ?? 0
+                                let maxV = batteryData.adapter?.activeProfile?.maxVoltage ?? 0
+                                DataRow(label: "Adapter Name", value: batteryData.adapter?.name ?? "Unknown")
+                                DataRow(label: "Design Power", value: "\(batteryData.adapterWatts) W")
+                                DataRow(label: "Negotiated Current", value: String(format: "%.2f A", maxC))
+                                DataRow(label: "Negotiated Voltage", value: String(format: "%.2f V", maxV))
+                            }
                         }
                     }
                     
-                    // Battery Health Card
-                    DashboardCard(title: "Battery Health", icon: "heart.fill", iconColor: .primary) {
-                        VStack(spacing: 8) {
-                            DataRow(label: "Design Capacity", value: "\(batteryData.designCapacity) mAh")
-                            DataRow(label: "Maximum Capacity", value: "\(batteryData.maxCapacity) mAh")
-                            let healthPercent = batteryData.designCapacity > 0 ? (Double(batteryData.maxCapacity) / Double(batteryData.designCapacity)) * 100 : 0
-                            DataRow(label: "macOS Status", value: healthPercent > 80 ? "Normal" : "Service Recommended")
-                            DataRow(label: "Cycle Count", value: "\(batteryData.cycleCount)")
-                        }
-                    }
-                    
-                    // Power Adapter Setup Card
-                    DashboardCard(title: "Power Adapter Specs", icon: "powerplug.fill", iconColor: .primary) {
-                        VStack(spacing: 8) {
-                            let maxC = batteryData.adapter?.activeProfile?.maxCurrent ?? 0
-                            let maxV = batteryData.adapter?.activeProfile?.maxVoltage ?? 0
-                            DataRow(label: "Adapter Name", value: batteryData.adapter?.name ?? "Unknown")
-                            DataRow(label: "Design Power", value: "\(batteryData.adapterWatts) W")
-                            DataRow(label: "Negotiated Current", value: String(format: "%.2f A", maxC))
-                            DataRow(label: "Negotiated Voltage", value: String(format: "%.2f V", maxV))
+                    // Right Column
+                    VStack(spacing: 20) {
+                        // 电池健康 Card
+                        DashboardCard(title: "电池健康", icon: "heart.fill") {
+                            VStack(spacing: 12) {
+                                DataRow(label: "Design Capacity", value: "\(batteryData.designCapacity) mAh")
+                                DataRow(label: "Maximum Capacity", value: "\(batteryData.maxCapacity) mAh")
+                                let healthPercent = batteryData.designCapacity > 0 ? (Double(batteryData.maxCapacity) / Double(batteryData.designCapacity)) * 100 : 0
+                                DataRow(label: "macOS Status", value: healthPercent > 80 ? "Normal" : "Service Recommended")
+                                DataRow(label: "Cycle Count", value: "\(batteryData.cycleCount)")
+                            }
                         }
                     }
                 }
                 
-                // Additional Info row
-                HStack(spacing: 16) {
-                    DashboardSimpleCard(title: "Battery Level", value: "\(batteryData.maxCapacity > 0 ? Int((Double(batteryData.currentCapacity) / Double(batteryData.maxCapacity)) * 100) : 0) %", icon: "battery.100")
-                    DashboardSimpleCard(title: "Battery Temperature", value: batteryData.temperature > 0 ? String(format: "%.1f°C", batteryData.temperature) : "--", icon: "thermometer")
-                    DashboardSimpleCard(title: "Charging State", value: batteryData.isCharging ? "Charging" : "Discharging", icon: batteryData.isCharging ? "bolt.fill" : "battery.50")
+                // Bottom Row: Small metrics widgets
+                HStack(spacing: 20) {
+                    DashboardSimpleCard(
+                        title: "Battery Level", 
+                        value: "\(batteryData.maxCapacity > 0 ? Int((Double(batteryData.currentCapacity) / Double(batteryData.maxCapacity)) * 100) : 0) %", 
+                        icon: batteryData.maxCapacity > 0 ? "battery.100" : "battery.0"
+                    )
+                    DashboardSimpleCard(
+                        title: "Battery Temperature", 
+                        value: batteryData.temperature > 0 ? String(format: "%.1f°C", batteryData.temperature) : "--", 
+                        icon: "thermometer"
+                    )
+                    DashboardSimpleCard(
+                        title: "Charging State", 
+                        value: batteryData.isCharging ? "Charging" : "Discharging", 
+                        icon: batteryData.isCharging ? "bolt.fill" : "battery.25"
+                    )
                 }
             }
-            .padding(24)
+            .padding(32)
         }
-        .navigationTitle("Dashboard")
+        .navigationTitle("仪表盘")
+        // In macOS 14+, using clear background with control opacity replicates the typical System Settings feel
         .background(VisualEffectBackground(material: .contentBackground, blendingMode: .withinWindow))
         .onAppear {
             self.batteryData = BatteryService.shared.fetchBatteryData()
@@ -471,32 +494,31 @@ struct DashboardSettingsView: View {
 struct DashboardCard<Content: View>: View {
     let title: String
     let icon: String
-    let iconColor: Color
     let content: Content
     
-    init(title: String, icon: String, iconColor: Color, @ViewBuilder content: () -> Content) {
+    init(title: String, icon: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
-        self.iconColor = iconColor
         self.content = content()
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .foregroundColor(iconColor)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.primary)
                 Text(LocalizedStringKey(title))
-                    .font(.headline)
-                    .fontWeight(.bold)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
             }
             content
         }
-        .padding(20)
+        .padding(24)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(Color(NSColor.textBackgroundColor).opacity(0.6))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -506,24 +528,26 @@ struct DashboardSimpleCard: View {
     let icon: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(LocalizedStringKey(title))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
-            HStack {
+            
+            HStack(alignment: .bottom) {
                 Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: icon)
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundColor(.secondary)
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(NSColor.textBackgroundColor).opacity(0.6))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -533,13 +557,13 @@ struct DataRow: View {
     
     var body: some View {
         HStack {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .foregroundColor(.secondary)
-                .font(.subheadline)
+                .font(.system(size: 13, weight: .medium))
             Spacer()
             Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
         }
     }
 }
