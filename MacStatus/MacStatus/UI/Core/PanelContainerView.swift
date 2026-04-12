@@ -33,3 +33,10 @@ extension View {
         self.modifier(CardModifier())
     }
 }
+
+#Preview {
+    PanelContainerView {
+        Text("Preview Content")
+            .moduleCardStyle()
+    }
+}

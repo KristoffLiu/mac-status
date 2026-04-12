@@ -26,8 +26,10 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationTitle("MacStatus")
-            .toolbar(removing: .sidebarToggle) // Optional: keeps it clean
+            .safeAreaInset(edge: .top) {
+                Color.clear.frame(height: 28) // Space for traffic lights
+            }
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             Group {
                 if let tab = selectedTab {
