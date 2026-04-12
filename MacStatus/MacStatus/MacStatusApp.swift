@@ -110,7 +110,6 @@ struct MacStatusApp: App {
             .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
         }
         .windowResizability(.contentSize)
-        .windowStyle(.hiddenTitleBar)
     }
     
     @ViewBuilder
