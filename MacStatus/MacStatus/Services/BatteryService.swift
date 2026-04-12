@@ -1,6 +1,32 @@
 import Foundation
 import IOKit
 
+// MARK: - Adapter & PD Profile Structures
+struct PDProfile: Identifiable {
+    var id: Int { index }
+    var index: Int
+    var maxVoltage: Double // In Volts (hardware provides mV)
+    var maxCurrent: Double // In Amps (hardware provides mA)
+    
+    var maxWatts: Double {
+        return maxVoltage * maxCurrent
+    }
+}
+
+struct AdapterInfo {
+    var id: Int
+    var familyCode: Int
+    var name: String
+    var designWatts: Int
+    var realTimeWatts: Double // Real-time intake from PMU
+    var activeProfileIndex: Int
+    var profiles: [PDProfile]
+    
+    var activeProfile: PDProfile? {
+        profiles.first { $0.index == activeProfileIndex }
+    }
+}
+
 struct BatteryData {
     var voltage: Int
     var amperage: Int
@@ -10,9 +36,10 @@ struct BatteryData {
     var designCapacity: Int
     var cycleCount: Int
     var temperature: Double
-    var adapterWatts: Int
+    var adapterWatts: Int // Legacy
+    var adapter: AdapterInfo? // Advanced Adapter Info
     
-    static let empty = BatteryData(voltage: 0, amperage: 0, isCharging: false, currentCapacity: 0, maxCapacity: 0, designCapacity: 0, cycleCount: 0, temperature: 0.0, adapterWatts: 0)
+    static let empty = BatteryData(voltage: 0, amperage: 0, isCharging: false, currentCapacity: 0, maxCapacity: 0, designCapacity: 0, cycleCount: 0, temperature: 0.0, adapterWatts: 0, adapter: nil)
 }
 
 class BatteryService {
@@ -48,8 +75,36 @@ class BatteryService {
                     let rawTemp = dict["Temperature"] as? Int ?? 0
                     data.temperature = Double(rawTemp) / 100.0
                     
+                    // Parse Real-time Adapter Power from internal BatteryData dict
+                    var realTimeIntake: Double = 0.0
+                    if let internalBatteryData = dict["BatteryData"] as? [String: Any],
+                       let adapterPower = internalBatteryData["AdapterPower"] as? Double {
+                        realTimeIntake = adapterPower
+                    }
+                    
+                    // Parse Adapter Details & PD Profiles
                     if let adapterDetails = dict["AdapterDetails"] as? [String: Any] {
                         data.adapterWatts = adapterDetails["Watts"] as? Int ?? 0
+                        
+                        var profiles: [PDProfile] = []
+                        if let hvcMenu = adapterDetails["UsbHvcMenu"] as? [[String: Any]] {
+                            for profile in hvcMenu {
+                                let index = profile["Index"] as? Int ?? 0
+                                let maxV = Double(profile["MaxVoltage"] as? Int ?? 0) / 1000.0
+                                let maxC = Double(profile["MaxCurrent"] as? Int ?? 0) / 1000.0
+                                profiles.append(PDProfile(index: index, maxVoltage: maxV, maxCurrent: maxC))
+                            }
+                        }
+                        
+                        data.adapter = AdapterInfo(
+                            id: adapterDetails["AdapterID"] as? Int ?? 0,
+                            familyCode: adapterDetails["FamilyCode"] as? Int ?? 0,
+                            name: adapterDetails["Description"] as? String ?? "Unknown",
+                            designWatts: data.adapterWatts,
+                            realTimeWatts: realTimeIntake,
+                            activeProfileIndex: adapterDetails["UsbHvcHvcIndex"] as? Int ?? 0,
+                            profiles: profiles
+                        )
                     } else {
                         data.adapterWatts = 0
                     }

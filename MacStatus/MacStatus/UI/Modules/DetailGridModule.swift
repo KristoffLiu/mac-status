@@ -22,10 +22,35 @@ struct DetailGridModule: View {
             }
         }
         .padding(.horizontal, 4)
-        .padding(.vertical, 8)
+        .padding(.top, 8)
+        .padding(.bottom, batteryData.adapter != nil ? 0 : 8)
+        
+        if let adapter = batteryData.adapter {
+            VStack(alignment: .leading, spacing: 8) {
+                Divider()
+                    .padding(.horizontal, 4)
+                
+                Text("充电协议 (Adapter)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 4)
+                
+                HStack {
+                    detailItem(title: "Design Max", value: "\(adapter.designWatts) W", width: 80)
+                    Spacer()
+                    if let profile = adapter.activeProfile {
+                        detailItem(title: "Active PD", value: String(format: "%.1fV / %.1fA", profile.maxVoltage, profile.maxCurrent), width: 120)
+                    } else {
+                        detailItem(title: "Protocol", value: adapter.name, width: 120)
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+            .padding(.bottom, 8)
+        }
     }
     
-    private func detailItem(title: String, value: String) -> some View {
+    private func detailItem(title: String, value: String, width: CGFloat = 100) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption)
@@ -34,7 +59,7 @@ struct DetailGridModule: View {
                 .font(.system(.subheadline, design: .rounded).monospacedDigit())
                 .fontWeight(.medium)
         }
-        .frame(width: 100, alignment: .leading)
+        .frame(width: width, alignment: .leading)
     }
     
     private func calculateHealth() -> Int {

@@ -19,14 +19,14 @@ class MSeriesPowerService: ObservableObject {
     
     private let reader = IOReportReader()
     private var timer: AnyCancellable?
-    private let interval: TimeInterval = 2.0
+    private let interval: TimeInterval = 0.5
     
     private init() {
         start()
     }
     
     func start() {
-        // We poll every 2 seconds to match the IOReportBridge's conversion factor
+        // We poll every 0.5 seconds for snappy UI updates
         timer = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
@@ -41,9 +41,9 @@ class MSeriesPowerService: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            let cpuData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "CPU Complex PerformanceStates")
-            let gpuData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "GPU PerformanceStates")
-            let aneData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "ANE PerformanceStates")
+            let cpuData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "CPU Complex PerformanceStates", pollInterval: self.interval)
+            let gpuData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "GPU PerformanceStates", pollInterval: self.interval)
+            let aneData = self.reader.getPowerDeltas(group: "Energy Model", subgroup: "ANE PerformanceStates", pollInterval: self.interval)
             
             // On Apple Silicon, we can sum the component energy.
             // For total system draw including display/backlight, we often need PMU sensors.

@@ -6,7 +6,8 @@ class PowerCalculationService {
     private init() {}
     
     func calculateFlow(from data: BatteryData, mSeriesMetrics: MSeriesPowerMetrics? = nil) -> PowerFlowData {
-        let adapterWatts = Double(data.adapterWatts)
+        // Use real-time PMU intake if available, fallback to design rating
+        let adapterWatts = data.adapter?.realTimeWatts ?? Double(data.adapterWatts)
         let batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
         
         var systemWatts: Double = 0.0

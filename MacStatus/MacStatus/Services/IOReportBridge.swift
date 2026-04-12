@@ -42,7 +42,7 @@ class IOReportReader {
         }
     }
 
-    func getPowerDeltas(group: String, subgroup: String?) -> [String: Double] {
+    func getPowerDeltas(group: String, subgroup: String?, pollInterval: TimeInterval) -> [String: Double] {
         guard let copyChannels = _IOReportCopyChannelsInGroup,
               let createSamples = _IOReportCreateSamples,
               let createDelta = _IOReportCreateSamplesDelta,
@@ -75,8 +75,8 @@ class IOReportReader {
         _ = iterate(delta) { sample -> Int32 in
             if let name = getName(sample) as String? {
                 let value = getInt(sample, 0)
-                // Assuming 2.0s interval. Energy in nJ / 1e9 = J. J / 2.0s = W.
-                let wattage = Double(value) / 2_000_000_000.0
+                // Energy in nJ / 1e9 = J. J / interval = W.
+                let wattage = (Double(value) / 1_000_000_000.0) / pollInterval
                 results[name] = wattage
             }
             return 0

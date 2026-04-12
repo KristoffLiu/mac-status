@@ -27,7 +27,7 @@ class EnergyEfficiencyManager: ObservableObject {
     private func setupTimer() {
         timerCancellable?.cancel()
         
-        let interval: TimeInterval = (appState == .active) ? 1.0 : 10.0 // 1s when active, 10s when background
+        let interval: TimeInterval = (appState == .active) ? 0.5 : 10.0 // 0.5s when active, 10s when background
         
         timerCancellable = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()

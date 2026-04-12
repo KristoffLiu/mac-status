@@ -4,183 +4,159 @@ struct SankeyPowerFlowView: View {
     var powerFlow: PowerFlowData
     
     var body: some View {
-        HStack(spacing: 8) {
-            // Left Column (Sources)
-            VStack(spacing: 0) {
-                sourceNode(name: "Adapter", icon: "powerplug.fill", watts: powerFlow.adapterPower, color: UIConstants.Colors.adapterAmber)
-                Spacer()
-                if powerFlow.topology == .topologyB {
-                    sourceNode(name: "Battery", icon: "battery.100", watts: powerFlow.batteryPower, color: UIConstants.Colors.dischargingBlue)
-                } else {
-                    Color.clear.frame(height: 50)
-                }
-            }
-            .frame(width: 80, height: 100)
+        VStack(spacing: 12) {
             
-
-            // Middle Column (Sankey Paths)
-            GeometryReader { geometry in
-                let w = geometry.size.width
-                let h = geometry.size.height
-                let topY = h * 0.25
-                let bottomY = h * 0.75
+            // MAIN SYSTEM ROW: Adapter -> System (or Battery -> System if unplugged)
+            HStack(spacing: 8) {
+                // Main Source: Adapter if plugged in, else Battery
+                if powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA {
+                    NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
+                } else {
+                    NodePill(icon: "battery.100", value: nil, iconColor: .blue)
+                }
                 
-                ZStack {
+                // Flow Block for System
+                let sysFlowWatts = powerFlow.systemPower > 0 ? powerFlow.systemPower : (powerFlow.adapterPower > 0 ? powerFlow.adapterPower : powerFlow.batteryPower)
+                
+                ThickFlowBlock(
+                    watts: sysFlowWatts,
+                    startColor: (powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA) ? .yellow.opacity(0.8) : .blue,
+                    endColor: .gray.opacity(0.2)
+                )
+                
+                // Main Sink: System
+                NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
+            }
+            .frame(height: 70)
+            
+            // SUB ROW: Battery Charging/Discharging (only if Battery is active and NOT the main source)
+            if powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0.1 {
+                HStack(spacing: 8) {
+                    
+                    // Invisible spacer node on left to align with above (Adapter)
+                    Color.clear.frame(width: 60)
+                    
+                    // Secondary Flow to/from Battery
                     if powerFlow.topology == .topologyA {
-                        // Adapter -> System
-                        if powerFlow.systemPower != 0 {
-                            // If systemPower is unknown (-1.0), base visual thickness on adapter power
-                            let displayWidth = powerFlow.systemPower > 0 ? powerFlow.systemPower : powerFlow.adapterPower
-                            ThickFlowPath(
-                                startPoint: CGPoint(x: 0, y: topY),
-                                endPoint: CGPoint(x: w, y: topY),
-                                startColor: UIConstants.Colors.adapterAmber,
-                                endColor: UIConstants.Colors.adapterAmber,
-                                width: lineWidth(for: displayWidth)
-                            )
-                        }
-                        
                         // Adapter -> Battery (Charging)
-                        if powerFlow.batteryPower > 0.1 {
-                            ThickFlowPath(
-                                startPoint: CGPoint(x: 0, y: topY),
-                                endPoint: CGPoint(x: w, y: bottomY),
-                                startColor: UIConstants.Colors.adapterAmber,
-                                endColor: UIConstants.Colors.chargingGreen,
-                                width: lineWidth(for: powerFlow.batteryPower)
-                            )
-                        }
+                        ThickFlowBlock(
+                            watts: powerFlow.batteryPower,
+                            startColor: .yellow.opacity(0.8),
+                            endColor: .green,
+                            isSubFlow: true
+                        )
+                        NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
                     } else {
-                        // Adapter -> System (if any adapter power)
-                        if powerFlow.adapterPower > 0.1 {
-                            ThickFlowPath(
-                                startPoint: CGPoint(x: 0, y: topY),
-                                endPoint: CGPoint(x: w, y: topY),
-                                startColor: UIConstants.Colors.adapterAmber,
-                                endColor: UIConstants.Colors.adapterAmber,
-                                width: lineWidth(for: powerFlow.adapterPower)
-                            )
-                        }
-                        
-                        // Battery -> System (Discharging)
-                        if powerFlow.batteryPower > 0.1 {
-                            ThickFlowPath(
-                                startPoint: CGPoint(x: 0, y: bottomY),
-                                endPoint: CGPoint(x: w, y: topY),
-                                startColor: UIConstants.Colors.dischargingBlue,
-                                endColor: UIConstants.Colors.adapterAmber,
-                                width: lineWidth(for: powerFlow.batteryPower)
-                            )
-                        }
+                        // Battery -> System (Discharging alongside Adapter)
+                        // This rarely happens in M-series (usually Adapter bypasses or both drain), but just in case
+                        NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
+                        ThickFlowBlock(
+                            watts: powerFlow.batteryPower,
+                            startColor: .blue,
+                            endColor: .gray.opacity(0.2),
+                            isSubFlow: true
+                        )
                     }
                 }
+                .frame(height: 40)
             }
-            .frame(height: 100)
-            
-            // Right Column (Sinks)
-            VStack(spacing: 0) {
-                sinkNode(name: "System", icon: "cpu", watts: powerFlow.systemPower, color: UIConstants.Colors.adapterAmber)
-                Spacer()
-                if powerFlow.topology == .topologyA {
-                    sinkNode(name: "Battery", icon: "battery.100.bolt", watts: powerFlow.batteryPower, color: UIConstants.Colors.chargingGreen)
-                } else {
-                    Color.clear.frame(height: 50)
-                }
-            }
-            .frame(width: 80, height: 100)
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 0)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
     }
+}
+
+// MARK: - Subcomponents
+
+struct NodePill: View {
+    var icon: String
+    var value: String?
+    var iconColor: Color
+    var isSubNode: Bool = false
     
-    // Scale line width for a clean pipe look
-    private func lineWidth(for watts: Double) -> CGFloat {
-        if watts <= 0.1 { return 0 }
-        let calculated = min(watts * 0.2, 12.0)
-        return max(4.0, calculated)
-    }
-    
-    private func sourceNode(name: String, icon: String, watts: Double, color: Color) -> some View {
-        nodeView(name: name, icon: icon, watts: watts, color: color)
-    }
-    
-    private func sinkNode(name: String, icon: String, watts: Double, color: Color) -> some View {
-        nodeView(name: name, icon: icon, watts: watts, color: color)
-    }
-    
-    private func nodeView(name: String, icon: String, watts: Double, color: Color) -> some View {
-        VStack(spacing: 6) {
+    var body: some View {
+        VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 24)) // Better size for symbols
-                .foregroundColor(.secondary)
-            HStack(alignment: .lastTextBaseline, spacing: 2) {
-                if watts < 0 {
-                    Text("--")
-                        .font(.system(.subheadline, design: .rounded).monospacedDigit())
-                        .fontWeight(.bold)
-                } else {
-                    Text(String(format: "%.1f", watts))
-                        .font(.system(.subheadline, design: .rounded).monospacedDigit())
-                        .fontWeight(.bold)
-                }
-                Text("W")
-                    .font(.caption2)
+                .font(.system(size: isSubNode ? 14 : 20, weight: .regular))
+                .foregroundColor(iconColor)
+            
+            if let val = value {
+                Text(val)
+                    .font(.system(size: isSubNode ? 10 : 12, weight: .medium, design: .rounded))
+                    .foregroundColor(.primary)
             }
-            .foregroundColor(color)
         }
-        .frame(height: 50)
+        .frame(width: isSubNode ? 50 : 60, height: isSubNode ? 35 : 70)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+        )
     }
 }
 
-// Custom Shape for Smooth S-Curve
-struct FlowLine: Shape {
-    var startPoint: CGPoint
-    var endPoint: CGPoint
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: startPoint)
-        
-        // If it's almost horizontal, add a slightly curved path so it doesn't look like a solid pill
-        if abs(startPoint.y - endPoint.y) < 1 {
-            let midX = startPoint.x + (endPoint.x - startPoint.x) / 2
-            path.addQuadCurve(to: endPoint, control: CGPoint(x: midX, y: startPoint.y - 12))
-        } else {
-            let controlPoint1 = CGPoint(x: startPoint.x + (endPoint.x - startPoint.x) / 2, y: startPoint.y)
-            let controlPoint2 = CGPoint(x: startPoint.x + (endPoint.x - startPoint.x) / 2, y: endPoint.y)
-            path.addCurve(to: endPoint, control1: controlPoint1, control2: controlPoint2)
-        }
-        return path
-    }
-}
-
-// Thick Gradient Flow Path with Shimmer Effect
-struct ThickFlowPath: View {
-    var startPoint: CGPoint
-    var endPoint: CGPoint
+struct ThickFlowBlock: View {
+    var watts: Double
     var startColor: Color
     var endColor: Color
-    var width: CGFloat
+    var isSubFlow: Bool = false
     
-    @State private var isAnimating: Bool = false
-
+    @State private var phase = 0.0
+    
+    // Scale thickness logarithmically / clamped linearly
+    private var thickness: CGFloat {
+        if isSubFlow {
+            return max(4, min(CGFloat(watts * 0.5), 15)) // Thinner for battery trickle
+        }
+        return max(15, min(CGFloat(watts * 1.5), 60)) // Scale 15px to 60px
+    }
+    
     var body: some View {
-        FlowLine(startPoint: startPoint, endPoint: endPoint)
-            .stroke(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        startColor.opacity(isAnimating ? 0.7 : 1.0),
-                        endColor.opacity(isAnimating ? 1.0 : 0.7)
-                    ]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                style: StrokeStyle(lineWidth: width, lineCap: .round)
-            )
-            .shadow(color: startColor.opacity(0.3), radius: isAnimating ? 8 : 2, x: 0, y: 0)
-            .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
-            .onAppear {
-                isAnimating = true
-            }
+        ZStack {
+            // The Block
+            RoundedRectangle(cornerRadius: 8)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            startColor.opacity(0.9),
+                            endColor.opacity(0.4)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: thickness)
+                .overlay(
+                    // Flow animation overlay
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: Color.white.opacity(0.4), location: 0.5),
+                                    .init(color: .clear, location: 1)
+                                ],
+                                startPoint: UnitPoint(x: phase - 0.5, y: 0),
+                                endPoint: UnitPoint(x: phase + 0.5, y: 0)
+                            )
+                        )
+                        .blendMode(.overlay)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
+                )
+            
+            // Text inside the block
+            let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
+            Text(textValue)
+                .font(.system(size: isSubFlow ? 10 : 14, weight: .bold, design: .rounded))
+                .foregroundColor(isSubFlow ? .secondary : .primary)
+                // White shadow to ensure readability on variable colors
+                .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+                .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .onAppear {
+            phase = 1.0
+        }
     }
 }
