@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab? = .general
+    @State private var columnVisibility = NavigationSplitViewVisibility.all
     
     enum SettingsTab: String, CaseIterable, Hashable {
         case general = "通用"
@@ -18,7 +19,7 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             List(SettingsTab.allCases, id: \.self, selection: $selectedTab) { tab in
                 NavigationLink(value: tab) {
                     Label(tab.rawValue, systemImage: tab.icon)
@@ -26,10 +27,6 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .safeAreaInset(edge: .top) {
-                Color.clear.frame(height: 28) // Space for traffic lights
-            }
-            .toolbar(removing: .sidebarToggle)
         } detail: {
             Group {
                 if let tab = selectedTab {

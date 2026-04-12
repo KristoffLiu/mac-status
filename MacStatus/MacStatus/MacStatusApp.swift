@@ -25,10 +25,9 @@ struct MacStatusApp: App {
         // Settings Window with Sidebar (Single Instance)
         Window("MacStatus 设置", id: "settings") {
             SettingsView()
-                .toolbarBackground(.hidden, for: .windowToolbar)
         }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
+        .windowToolbarStyle(.unified)
+        .windowResizability(.automatic)
     }
     
     @ViewBuilder

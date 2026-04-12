@@ -19,8 +19,8 @@ class PowerCalculationService {
             // Charging
             isCharging = true
             isDischarging = false
-            // Use M-series metrics for system power if available, else fallback to unknown
-            systemWatts = mSeriesMetrics?.totalSystemWatts ?? -1.0
+            // Use total adapter intake minus battery charge rate to get actual system usage
+            systemWatts = adapterWatts - batteryWatts
             topology = .topologyA
         } else if data.amperage < 0 {
             // Discharging
@@ -36,8 +36,8 @@ class PowerCalculationService {
             isDischarging = false
             if adapterWatts > 0 {
                 // Adapter bypass
-                // This is where M-series metrics shine! 
-                systemWatts = mSeriesMetrics?.totalSystemWatts ?? -1.0
+                // True system draw is exactly the real-time intake from the adapter
+                systemWatts = adapterWatts
                 topology = .topologyA
             } else {
                 // Unknown / no load

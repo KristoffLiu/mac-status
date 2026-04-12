@@ -15,11 +15,16 @@ struct SankeyPowerFlowView: View {
                     NodePill(icon: "battery.100", value: nil, iconColor: .blue)
                 }
                 
+                // Base absolute reference mapping for proportional flow
+                let totalSource = max(powerFlow.adapterPower, powerFlow.batteryPower, 0.1)
+                
                 // Flow Block for System
                 let sysFlowWatts = powerFlow.systemPower > 0 ? powerFlow.systemPower : (powerFlow.adapterPower > 0 ? powerFlow.adapterPower : powerFlow.batteryPower)
+                let sysFraction = sysFlowWatts / totalSource
                 
                 ThickFlowBlock(
                     watts: sysFlowWatts,
+                    fraction: min(sysFraction, 1.0),
                     startColor: (powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA) ? .yellow.opacity(0.8) : .blue,
                     endColor: .gray.opacity(0.2)
                 )
@@ -31,6 +36,9 @@ struct SankeyPowerFlowView: View {
             
             // SUB ROW: Battery Charging/Discharging (only if Battery is active and NOT the main source)
             if powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0.1 {
+                let totalSource = max(powerFlow.adapterPower, 0.1)
+                let batFraction = powerFlow.batteryPower / totalSource
+                
                 HStack(spacing: 8) {
                     
                     // Invisible spacer node on left to align with above (Adapter)
@@ -41,6 +49,7 @@ struct SankeyPowerFlowView: View {
                         // Adapter -> Battery (Charging)
                         ThickFlowBlock(
                             watts: powerFlow.batteryPower,
+                            fraction: min(batFraction, 1.0),
                             startColor: .yellow.opacity(0.8),
                             endColor: .green,
                             isSubFlow: true
@@ -52,6 +61,7 @@ struct SankeyPowerFlowView: View {
                         NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
                         ThickFlowBlock(
                             watts: powerFlow.batteryPower,
+                            fraction: min(batFraction, 1.0),
                             startColor: .blue,
                             endColor: .gray.opacity(0.2),
                             isSubFlow: true
@@ -97,18 +107,17 @@ struct NodePill: View {
 
 struct ThickFlowBlock: View {
     var watts: Double
+    var fraction: Double // 0.0 to 1.0 representing percentage of total flow
     var startColor: Color
     var endColor: Color
     var isSubFlow: Bool = false
     
     @State private var phase = 0.0
     
-    // Scale thickness logarithmically / clamped linearly
+    // True Sankey logic: thickness is proportional to its fraction of total power
     private var thickness: CGFloat {
-        if isSubFlow {
-            return max(4, min(CGFloat(watts * 0.5), 15)) // Thinner for battery trickle
-        }
-        return max(15, min(CGFloat(watts * 1.5), 60)) // Scale 15px to 60px
+        let maxThickness: CGFloat = isSubFlow ? 36.0 : 56.0
+        return max(12.0, CGFloat(fraction) * maxThickness)
     }
     
     var body: some View {

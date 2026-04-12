@@ -61,6 +61,7 @@ struct MainPanelView: View {
             HStack {
                 Button(action: {
                     openWindow(id: "settings")
+                    NSApplication.shared.activate(ignoringOtherApps: true)
                 }) {
                     Image(systemName: "gearshape")
                 }
