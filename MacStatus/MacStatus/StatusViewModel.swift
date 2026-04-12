@@ -25,26 +25,35 @@ class StatusViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        // Fetch synchronously on init to avoid initial 0% display
+        let data = BatteryService.shared.fetchBatteryData()
+        let flow = PowerCalculationService.shared.calculateFlow(from: data)
+        self.batteryData = data
+        self.powerFlow = flow
+        self.lastBatteryFetch = Date()
+        
         EnergyEfficiencyManager.shared.tickPublisher
-            .sink { [weak self] _ in
-                self?.refresh()
-            }
-            .store(in: &cancellables)
-            
-        // Also subscribe to high-fidelity M-series metrics
-        MSeriesPowerService.shared.$metrics
             .sink { [weak self] _ in
                 self?.refresh()
             }
             .store(in: &cancellables)
     }
     
+    private var lastBatteryFetch: Date = .distantPast
+    
     private func refresh() {
-        // Run IOKit call on background thread to prevent UI stutter
         DispatchQueue.global(qos: .userInitiated).async {
-            let data = BatteryService.shared.fetchBatteryData()
-            let mMetrics = MSeriesPowerService.shared.metrics
-            let flow = PowerCalculationService.shared.calculateFlow(from: data, mSeriesMetrics: mMetrics)
+            // AppleSmartBattery queries (IOKit) can be slow (up to 500ms) on state changes.
+            // We only query it every 2 seconds, but we query ultra-fast SMC data on every tick.
+            let now = Date()
+            var data = self.batteryData
+            if now.timeIntervalSince(self.lastBatteryFetch) >= 2.0 {
+                data = BatteryService.shared.fetchBatteryData()
+                self.lastBatteryFetch = now
+            }
+            
+            // SMC fetch is instantaneous (~0.01ms) and will now never be blocked by battery PMU latency
+            let flow = PowerCalculationService.shared.calculateFlow(from: data)
             
             DispatchQueue.main.async {
                 self.batteryData = data

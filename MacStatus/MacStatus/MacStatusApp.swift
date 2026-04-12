@@ -1,55 +1,27 @@
 import SwiftUI
+import ServiceManagement
 
 @main
 struct MacStatusApp: App {
-    @StateObject private var viewModel = StatusViewModel()
-    @AppStorage("showPercentage") private var showPercentage = true
-    @AppStorage("showWattage") private var showWattage = false
-    @AppStorage("showDetails") private var showDetails = false
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     init() {
         // Hide the dock icon to make it a pure Menu Bar agent
         NSApplication.shared.setActivationPolicy(.accessory)
     }
 
-    @Environment(\.openWindow) private var openWindow
-
     var body: some Scene {
-        MenuBarExtra {
-            MainPanelView(viewModel: viewModel)
-        } label: {
-            menuBarLabel()
+        // Dummy Settings scene to intercept SwiftUI's default start-up window behavior.
+        // SwiftUI won't automatically open the secondary 'Window' scene on app launch.
+        Settings { 
+            EmptyView()
         }
-        .menuBarExtraStyle(.window) // This enables the nice custom popover View
         
         // Settings Window with Sidebar (Single Instance)
         Window("MacStatus 设置", id: "settings") {
             SettingsView()
         }
         .windowToolbarStyle(.unified)
-        .windowResizability(.automatic)
-    }
-    
-    @ViewBuilder
-    private func menuBarLabel() -> some View {
-        HStack(spacing: 2) {
-            Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
-                .imageScale(.medium)
-            
-            if showPercentage {
-                Text("\(viewModel.currentCapacity)%")
-                    .font(.system(.body, design: .rounded).monospacedDigit())
-            }
-            
-            if showWattage {
-                if viewModel.powerFlow.systemPower < 0 {
-                    Text(" -- W")
-                        .font(.system(.body, design: .rounded).monospacedDigit())
-                } else {
-                    Text(String(format: " %.1fW", viewModel.powerFlow.systemPower))
-                        .font(.system(.body, design: .rounded).monospacedDigit())
-                }
-            }
-        }
+        .windowResizability(.contentSize)
     }
 }
