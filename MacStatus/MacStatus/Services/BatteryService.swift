@@ -83,7 +83,9 @@ class BatteryService {
                     }
                     
                     // Parse Adapter Details & PD Profiles
-                    if let adapterDetails = dict["AdapterDetails"] as? [String: Any] {
+                    let isExternalConnected = dict["ExternalConnected"] as? Bool ?? false
+                    
+                    if isExternalConnected, let adapterDetails = dict["AdapterDetails"] as? [String: Any] {
                         data.adapterWatts = adapterDetails["Watts"] as? Int ?? 0
                         
                         var profiles: [PDProfile] = []

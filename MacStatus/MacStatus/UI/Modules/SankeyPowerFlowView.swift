@@ -41,11 +41,10 @@ struct SankeyPowerFlowView: View {
                 
                 HStack(spacing: 8) {
                     
-                    // Invisible spacer node on left to align with above (Adapter)
-                    Color.clear.frame(width: 60)
-                    
-                    // Secondary Flow to/from Battery
                     if powerFlow.topology == .topologyA {
+                        // Invisible spacer node on left to align with above (Adapter)
+                        Color.clear.frame(width: 60)
+                        
                         // Adapter -> Battery (Charging)
                         ThickFlowBlock(
                             watts: powerFlow.batteryPower,
@@ -55,10 +54,12 @@ struct SankeyPowerFlowView: View {
                             isSubFlow: true
                         )
                         NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
+                            .frame(width: 60, alignment: .center)
                     } else {
                         // Battery -> System (Discharging alongside Adapter)
-                        // This rarely happens in M-series (usually Adapter bypasses or both drain), but just in case
                         NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
+                            .frame(width: 60, alignment: .center)
+                        
                         ThickFlowBlock(
                             watts: powerFlow.batteryPower,
                             fraction: min(batFraction, 1.0),
@@ -66,6 +67,9 @@ struct SankeyPowerFlowView: View {
                             endColor: .gray.opacity(0.2),
                             isSubFlow: true
                         )
+                        
+                        // Invisible spacer on right to align with System above
+                        Color.clear.frame(width: 60)
                     }
                 }
                 .frame(height: 40)

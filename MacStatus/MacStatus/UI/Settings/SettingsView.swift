@@ -227,425 +227,175 @@ struct MenuBarSettingsView: View {
     // 底部参数
     @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
     @AppStorage("menuUpdateInterval") private var menuUpdateInterval: Double = 2
-    @AppStorage("menuRightClickAction") private var menuRightClickAction = "Same as Left Click"
+    @AppStorage("menuRightClickAction") private var menuRightClickAction = "同左击"
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        VStack(spacing: 0) {
+            // --- 置顶实时预览 ---
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "menubar.rectangle")
+                    Text("实时体验预览")
+                        .font(.headline)
+                    Spacer()
+                }
+                .foregroundColor(.primary)
                 
-                // --- 顶部预览 ---
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "menubar.rectangle")
-                        Text("Selected Menu Items")
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.secondary)
+                HStack(spacing: menuItemSpacing) {
+                    if menuBarIconStyle != "none" {
+                        if menuBarIconStyle == "battery" { Image(systemName: "battery.100.bolt") }
+                        else if menuBarIconStyle == "ios_native" { Image(systemName: "battery.75") }
+                        else if menuBarIconStyle == "macos_color" { Image(systemName: "battery.100").foregroundColor(.green) }
+                        else if menuBarIconStyle == "aldente_status" { Image(systemName: "minus.plus.batteryblock.fill") }
+                        else if menuBarIconStyle == "aldente_icon" { Image(systemName: "leaf") }
+                        else { Image(systemName: "battery.100") }
                     }
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    if showPercentage { Text("75%").font(.system(.body, design: .rounded).monospacedDigit()) }
+                    if showChargingStatus { Image(systemName: "bolt.fill") }
+                    if iconLowPowerColor { Circle().fill(Color.orange).frame(width: 8, height: 8) }
                     
-                    VStack {
-                        HStack(spacing: menuItemSpacing) {
-                            if menuBarIconStyle == "battery" {
-                                Image(systemName: "battery.100")
-                                    .imageScale(.medium)
-                            }
-                            
-                            if showPercentage {
-                                Text("75%")
-                                    .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                            
-                            if showChargingStatus {
-                                Image(systemName: "bolt.fill")
-                            }
-                            
-                            if showCycles {
-                                HStack(spacing: 2) {
-                                    Image(systemName: "arrow.3.path").font(.caption)
-                                    Text("120")
-                                }
-                                .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                            
-                            if showTemperature {
-                                Text("32°C")
-                                    .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                            
-                            if showWattage {
-                                Text("15.2W")
-                                    .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                            
-                            if showVoltage {
-                                Text("12.4V")
-                                    .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                            
-                            if showAmperage {
-                                Text("1.2A")
-                                    .font(.system(.body, design: .rounded).monospacedDigit())
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color(NSColor.textBackgroundColor))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(NSColor.separatorColor).opacity(0.5), lineWidth: 1)
-                        )
+                    if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("100%") } }
+                    if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text("100%") } }
+                    if showMacOSCondition { HStack(spacing: 2) { Image(systemName: "cross.case"); Text("正常") } }
+                    if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text("120") } }
+                    
+                    if showTemperature { HStack(spacing: 2) { Image(systemName: "thermometer"); Text("32°C") } }
+                    if showTimeRemaining { HStack(spacing: 2) { Image(systemName: "clock"); Text("2:30") } }
+                    if showAmperage { HStack(spacing: 2) { Image(systemName: "a.square"); Text("1.2A") } }
+                    if showVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text("12.4V") } }
+                    if showWattage { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text("15.2W") } }
+                    if showSystemLoad { HStack(spacing: 2) { Image(systemName: "laptopcomputer"); Text("15.0W") } }
+                    
+                    if showAdapterCurrent { HStack(spacing: 2) { Image(systemName: "powerplug"); Text("2.0A") } }
+                    if showAdapterVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text("20.0V") } }
+                    if showAdapterPower { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text("40W") } }
+                    
+                    if showAlDenteCalibration { Image(systemName: "slider.vertical.3") }
+                    if showAlDenteOverheat { Image(systemName: "flame") }
+                    if showAlDenteSailing { Image(systemName: "paperplane") }
+                    if showAlDenteFull { Image(systemName: "plus.circle") }
+                }
+                .font(.system(.body, design: .rounded).monospacedDigit())
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color(NSColor.textBackgroundColor))
+                .cornerRadius(8)
+            }
+            .padding(20)
+            .background(Color(NSColor.windowBackgroundColor))
+            
+            Divider()
+            
+            Form {
+                Section("主图标样式") {
+                    Picker("样式", selection: $menuBarIconStyle) {
+                        Text("不要显示").tag("none")
+                        Text("AlDente 图标").tag("aldente_icon")
+                        Text("AlDente 状态").tag("aldente_status")
+                        Text("macOS 原生").tag("battery")
+                        Text("iOS 原生").tag("ios_native")
+                        Text("macOS 彩色").tag("macos_color")
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Section("主图标选项") {
+                    Toggle("显示百分比", isOn: $showPercentage)
+                    Toggle("低电量模式颜色", isOn: $iconLowPowerColor)
+                    Toggle("充电状态", isOn: $showChargingStatus)
                 }
                 
-                // --- 下方的项目卡片 ---
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "book")
-                        Text("Menu Item Directory")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    
-                    VStack(alignment: .leading, spacing: 28) {
-                        
-                        MenuDirectoryRow(title: "Main Icon Style", subtitle: "(Select One)", showChevron: true) {
-                            ChipButton(title: "Do Not Show", icon: "eye.slash", isSelected: menuBarIconStyle == "none") {
-                                menuBarIconStyle = "none"
-                            }
-                            ChipButton(title: "AlDente Icon", icon: "leaf", isSelected: menuBarIconStyle == "aldente_icon") {
-                                menuBarIconStyle = "aldente_icon"
-                            }
-                            ChipButton(title: "AlDente Status", icon: "battery.50", isSelected: menuBarIconStyle == "aldente_status") {
-                                menuBarIconStyle = "aldente_status"
-                            }
-                            ChipButton(title: "macOS Native", icon: "battery.100.bolt", isSelected: menuBarIconStyle == "battery") {
-                                menuBarIconStyle = "battery"
-                            }
-                            ChipButton(title: "macOS", icon: "battery.100", isSelected: menuBarIconStyle == "battery_plain") {
-                                menuBarIconStyle = "battery_plain"
-                            }
-                        }
-                        
-                        MenuDirectoryRow(title: "Main Icon Options", showChevron: false) {
-                            Toggle(isOn: $showPercentage) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "percent")
-                                    Text("Show Percentage")
-                                }
-                            }
-                            .toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $iconLowPowerColor) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "paintpalette.fill")
-                                    Text("Low Power Mode Color")
-                                }
-                            }
-                            .toggleStyle(ChipToggleStyle())
-                        }
-                        
-                        MenuDirectoryRow(title: "Battery Health", showChevron: true) {
-                            Toggle(isOn: $showMaxCapacity) {
-                                HStack(spacing: 4) { Image(systemName: "stethoscope"); Text("Maximum Capacity") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showMacOSCapacity) {
-                                HStack(spacing: 4) { Image(systemName: "info.circle"); Text("macOS Capacity") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showMacOSCondition) {
-                                HStack(spacing: 4) { Image(systemName: "cross.case"); Text("macOS Condition") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showCycles) {
-                                HStack(spacing: 4) { Image(systemName: "arrow.3.path"); Text("Cycles") }
-                            }.toggleStyle(ChipToggleStyle())
-                        }
-                        
-                        MenuDirectoryRow(title: "Battery Specs", showChevron: true) {
-                            Toggle(isOn: $showTemperature) {
-                                HStack(spacing: 4) { Image(systemName: "thermometer"); Text("Temperature") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showTimeRemaining) {
-                                HStack(spacing: 4) { Image(systemName: "clock"); Text("Time until Full/Empty") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAmperage) {
-                                HStack(spacing: 4) { Image(systemName: "battery.100"); Text("Current") } // matching their current
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showVoltage) {
-                                HStack(spacing: 4) { Image(systemName: "v.square"); Text("Voltage") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showWattage) {
-                                HStack(spacing: 4) { Image(systemName: "bolt.fill"); Text("Power") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showSystemLoad) {
-                                HStack(spacing: 4) { Image(systemName: "laptopcomputer"); Text("System Load") }
-                            }.toggleStyle(ChipToggleStyle())
-                        }
-                        
-                        MenuDirectoryRow(title: "Power Adapter Specs", showChevron: false) {
-                            Toggle(isOn: $showAdapterCurrent) {
-                                HStack(spacing: 4) { Image(systemName: "powerplug"); Text("Current") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAdapterVoltage) {
-                                HStack(spacing: 4) { Image(systemName: "v.square"); Text("Voltage") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAdapterPower) {
-                                HStack(spacing: 4) { Image(systemName: "bolt.fill"); Text("Power") }
-                            }.toggleStyle(ChipToggleStyle())
-                        }
-                        
-                        MenuDirectoryRow(title: "AlDente Status", showChevron: true) {
-                            Toggle(isOn: $showAlDenteCalibration) {
-                                HStack(spacing: 4) { Image(systemName: "slider.vertical.3"); Text("Calibration Mode") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAlDenteOverheat) {
-                                HStack(spacing: 4) { Image(systemName: "flame"); Text("Overheat Protection") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAlDenteSailing) {
-                                HStack(spacing: 4) { Image(systemName: "paperplane"); Text("Sailing Mode") }
-                            }.toggleStyle(ChipToggleStyle())
-                            
-                            Toggle(isOn: $showAlDenteFull) {
-                                HStack(spacing: 4) { Image(systemName: "plus.circle"); Text("Fully Charged") }
-                            }.toggleStyle(ChipToggleStyle())
-                        }
-                        
-                        Divider().padding(.top, 8)
-                        
-                        // 重置按钮区域
-                        HStack(spacing: 12) {
-                            Spacer()
-                            Button(action: {
-                                // reset all
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "arrow.counterclockwise")
-                                    Text("Reset")
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color(NSColor.windowBackgroundColor))
-                                .cornerRadius(16)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            Button(action: {
-                                // clear all
-                                menuBarIconStyle = "none"
-                                showPercentage = false
-                                showChargingStatus = false
-                                iconLowPowerColor = false
-                                showMaxCapacity = false
-                                showMacOSCapacity = false
-                                showMacOSCondition = false
-                                showCycles = false
-                                showTemperature = false
-                                showTimeRemaining = false
-                                showAmperage = false
-                                showVoltage = false
-                                showWattage = false
-                                showSystemLoad = false
-                                showAdapterCurrent = false
-                                showAdapterVoltage = false
-                                showAdapterPower = false
-                                showAlDenteCalibration = false
-                                showAlDenteOverheat = false
-                                showAlDenteSailing = false
-                                showAlDenteFull = false
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "trash")
-                                    Text("Clear All")
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color(NSColor.windowBackgroundColor))
-                                .foregroundColor(.red)
-                                .cornerRadius(16)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(24)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                Section("电池健康") {
+                    Toggle("最大容量", isOn: $showMaxCapacity)
+                    Toggle("macOS 容量", isOn: $showMacOSCapacity)
+                    Toggle("macOS 条件", isOn: $showMacOSCondition)
+                    Toggle("循环次数", isOn: $showCycles)
                 }
                 
-                // --- 间距与额外设置 ---
-                VStack(alignment: .leading, spacing: 16) {
+                Section("电池规格") {
+                    Toggle("温度", isOn: $showTemperature)
+                    Toggle("满载/剩余时间", isOn: $showTimeRemaining)
+                    Toggle("电流", isOn: $showAmperage)
+                    Toggle("电压", isOn: $showVoltage)
+                    Toggle("电源", isOn: $showWattage)
+                    Toggle("系统负载", isOn: $showSystemLoad)
+                }
+                
+                Section("电源适配器规格") {
+                    Toggle("当前", isOn: $showAdapterCurrent)
+                    Toggle("电压", isOn: $showAdapterVoltage)
+                    Toggle("电源", isOn: $showAdapterPower)
+                }
+                
+                Section("AlDente 状态") {
+                    Toggle("校准模式", isOn: $showAlDenteCalibration)
+                    Toggle("过热保护", isOn: $showAlDenteOverheat)
+                    Toggle("航海模式", isOn: $showAlDenteSailing)
+                    Toggle("充满", isOn: $showAlDenteFull)
+                }
+                
+                Section("菜单栏偏好设置") {
                     HStack {
-                        Image(systemName: "menubar.rectangle")
-                            .frame(width: 20)
-                        Text("Menu Item Spacing")
-                            .font(.system(.body, weight: .medium))
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
+                        Text("菜单项间距")
+                        Slider(value: $menuItemSpacing, in: 0...20, step: 1)
                         Text("\(Int(menuItemSpacing))")
                             .monospacedDigit()
-                            .foregroundColor(.secondary)
                             .frame(width: 24, alignment: .trailing)
-                        Slider(value: $menuItemSpacing, in: 0...20, step: 1)
-                            .frame(width: 150)
-                        Text("20")
-                            .monospacedDigit()
-                            .foregroundColor(.secondary)
-                            .font(.caption)
                     }
                     
                     HStack {
-                        Image(systemName: "clock")
-                            .frame(width: 20)
-                        Text("Menu Update Interval")
-                            .font(.system(.body, weight: .medium))
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        Text("\(Int(menuUpdateInterval))")
-                            .monospacedDigit()
-                            .foregroundColor(.secondary)
-                            .frame(width: 24, alignment: .trailing)
+                        Text("菜单更新间隔")
                         Slider(value: $menuUpdateInterval, in: 2...20, step: 1)
-                            .frame(width: 150)
-                        Text("20")
+                        Text("\(Int(menuUpdateInterval)) 秒")
                             .monospacedDigit()
-                            .foregroundColor(.secondary)
-                            .font(.caption)
+                            .frame(width: 40, alignment: .trailing)
                     }
                     
-                    HStack {
-                        Image(systemName: "square.topthird.inset.filled")
-                            .frame(width: 20)
-                        Text("Menu Bar Right Click")
-                            .font(.system(.body, weight: .medium))
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        Picker("", selection: $menuRightClickAction) {
-                            Text("Same as Left Click").tag("Same as Left Click")
-                            Text("Quit").tag("Quit")
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .frame(width: 150)
+                    Picker("菜单栏右击", selection: $menuRightClickAction) {
+                        Text("同左击").tag("同左击")
+                        Text("退出应用").tag("退出应用")
                     }
                 }
-                .padding(.horizontal, 4)
-                .padding(.top, 8)
                 
-            }
-            .padding(24)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .navigationTitle("Menu Bar Properties")
-    }
-}
-
-// A helper for rows in Menu Item Directory:
-struct MenuDirectoryRow<Content: View>: View {
-    let title: String
-    let subtitle: String?
-    let content: Content
-    let showChevron: Bool
-    
-    init(title: String, subtitle: String? = nil, showChevron: Bool = true, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.subtitle = subtitle
-        self.showChevron = showChevron
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(title).font(.headline).fontWeight(.semibold)
-                if let sub = subtitle {
-                    Text(sub).font(.subheadline).foregroundColor(.secondary)
-                }
-            }
-            
-            HStack(spacing: 8) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        content
+                Section {
+                    HStack {
+                        Spacer()
+                        Button("重置") {
+                            menuItemSpacing = 4
+                            menuUpdateInterval = 2
+                        }
+                        .buttonStyle(.borderless)
+                        
+                        Button("全部清除") {
+                            menuBarIconStyle = "none"
+                            showPercentage = false
+                            showChargingStatus = false
+                            iconLowPowerColor = false
+                            showMaxCapacity = false
+                            showMacOSCapacity = false
+                            showMacOSCondition = false
+                            showCycles = false
+                            showTemperature = false
+                            showTimeRemaining = false
+                            showAmperage = false
+                            showVoltage = false
+                            showWattage = false
+                            showSystemLoad = false
+                            showAdapterCurrent = false
+                            showAdapterVoltage = false
+                            showAdapterPower = false
+                            showAlDenteCalibration = false
+                            showAlDenteOverheat = false
+                            showAlDenteSailing = false
+                            showAlDenteFull = false
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundColor(.red)
                     }
                 }
-                if showChevron {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 4)
-                }
             }
+            .formStyle(.grouped)
+            .navigationTitle("菜单栏属性")
         }
-    }
-}
-
-// MARK: - Toggle Styles & Buttons
-
-struct ChipToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
-            configuration.label
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .foregroundColor(configuration.isOn ? .white : .primary)
-        .background(configuration.isOn ? Color.accentColor : Color.clear)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(configuration.isOn ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: 1.5)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
-            configuration.isOn.toggle()
-        }
-    }
-}
-
-struct ChipButton: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-            Text(title)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .foregroundColor(isSelected ? .white : .primary)
-        .background(isSelected ? Color.accentColor : Color.clear)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isSelected ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: 1.5)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: action)
     }
 }
 

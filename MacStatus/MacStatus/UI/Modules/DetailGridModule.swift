@@ -23,16 +23,15 @@ struct DetailGridModule: View {
                 }
             }
             .padding(.horizontal, 4)
-            .padding(.top, 8)
-            .padding(.bottom, batteryData.adapter != nil ? 0 : 8)
+            .padding(.vertical, 8)
             
             if let adapter = batteryData.adapter {
+                Divider()
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 12)
+                
                 VStack(alignment: .leading, spacing: 10) {
-                    Divider()
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 4)
-                    
-                    Text("Charging Protocol")
+                    Text("Adapter Protocol")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 4)

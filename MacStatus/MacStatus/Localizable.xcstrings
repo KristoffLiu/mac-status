@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
     " -- W" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -27,6 +24,9 @@
       }
     },
     "%lld" : {
+
+    },
+    "%lld 秒" : {
 
     },
     "%lld%%" : {
@@ -120,6 +120,9 @@
         }
       }
     },
+    "2:30" : {
+
+    },
     "2.0 Secs (Power Saving)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -142,6 +145,9 @@
         }
       }
     },
+    "2.0A" : {
+
+    },
     "12.4V" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -152,6 +158,9 @@
           }
         }
       }
+    },
+    "15.0W" : {
+
     },
     "15.2W" : {
       "extractionState" : "manual",
@@ -175,6 +184,9 @@
         }
       }
     },
+    "20.0V" : {
+
+    },
     "32°C" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -186,6 +198,9 @@
         }
       }
     },
+    "40W" : {
+
+    },
     "75%" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -196,6 +211,9 @@
           }
         }
       }
+    },
+    "100%" : {
+
     },
     "120" : {
       "extractionState" : "manual",
@@ -284,6 +302,12 @@
           }
         }
       }
+    },
+    "AlDente 图标" : {
+
+    },
+    "AlDente 状态" : {
+
     },
     "All widgets added" : {
       "extractionState" : "manual",
@@ -673,6 +697,9 @@
         }
       }
     },
+    "iOS 原生" : {
+
+    },
     "Links & Support" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -739,6 +766,9 @@
         }
       }
     },
+    "macOS 原生" : {
+
+    },
     "macOS 容量" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -749,6 +779,9 @@
           }
         }
       }
+    },
+    "macOS 彩色" : {
+
     },
     "macOS 条件" : {
       "extractionState" : "manual",
@@ -1267,6 +1300,15 @@
         }
       }
     },
+    "不要显示" : {
+
+    },
+    "主图标样式" : {
+
+    },
+    "主图标选项" : {
+
+    },
     "仪表盘" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1321,6 +1363,9 @@
           }
         }
       }
+    },
+    "充电状态" : {
+
     },
     "全部清除" : {
       "extractionState" : "manual",
@@ -1409,6 +1454,9 @@
           }
         }
       }
+    },
+    "实时体验预览" : {
+
     },
     "实时监控 Mac 电源与电池状态的极简工具，为您提供精确的系统功耗与电池健康分析。" : {
       "extractionState" : "manual",
@@ -1520,6 +1568,9 @@
         }
       }
     },
+    "样式" : {
+
+    },
     "桑基图能量流 (已启用)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1530,6 +1581,9 @@
           }
         }
       }
+    },
+    "正常" : {
+
     },
     "没有高功耗的应用程序" : {
       "extractionState" : "manual",
@@ -1641,6 +1695,12 @@
         }
       }
     },
+    "电池规格" : {
+
+    },
+    "电流" : {
+
+    },
     "电源" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1662,6 +1722,9 @@
           }
         }
       }
+    },
+    "电源适配器规格" : {
+
     },
     "电量" : {
       "extractionState" : "manual",
@@ -1706,6 +1769,9 @@
           }
         }
       }
+    },
+    "菜单栏偏好设置" : {
+
     },
     "菜单栏右击" : {
       "extractionState" : "manual",
