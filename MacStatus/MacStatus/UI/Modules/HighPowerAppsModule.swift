@@ -7,7 +7,7 @@ struct HighPowerAppsModule: View {
         VStack(alignment: .leading, spacing: 8) {
             if service.highPowerApps.isEmpty {
                 HStack {
-                    Text("没有高功耗的应用程序")
+                    Text("No Applications Using Significant Energy")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -16,7 +16,7 @@ struct HighPowerAppsModule: View {
                 }
                 .padding(.vertical, 4)
             } else {
-                Text("高功耗：")
+                Text("High Power:")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.bottom, 2)

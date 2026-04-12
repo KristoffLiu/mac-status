@@ -4,8 +4,17 @@ import ServiceManagement
 @main
 struct MacStatusApp: App {
     @StateObject private var viewModel = StatusViewModel()
+    
+    // Status Bar Configuration
+    @AppStorage("menuBarIconStyle") private var menuBarIconStyle = "battery"
     @AppStorage("showPercentage") private var showPercentage = true
+    @AppStorage("showChargingStatus") private var showChargingStatus = false
+    @AppStorage("showCycles") private var showCycles = false
+    @AppStorage("showTemperature") private var showTemperature = false
     @AppStorage("showWattage") private var showWattage = false
+    @AppStorage("showVoltage") private var showVoltage = false
+    @AppStorage("showAmperage") private var showAmperage = false
+    @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
 
     init() {
         // Hide the dock icon to make it a pure Menu Bar agent
@@ -27,9 +36,9 @@ struct MacStatusApp: App {
         }
         .menuBarExtraStyle(.window) // This gives the native popover with the 'tip' pointing to the menu bar!
         
-        // Settings Window with Sidebar (Single Instance)
-        Window("MacStatus 设置", id: "settings") {
-            SettingsView()
+        // Main Application Window with Sidebar
+        Window("MacStatus", id: "settings") {
+            MainWindowView()
         }
         .windowToolbarStyle(.unified)
         .windowResizability(.contentSize)
@@ -37,13 +46,36 @@ struct MacStatusApp: App {
     
     @ViewBuilder
     private func menuBarLabel() -> some View {
-        HStack(spacing: 2) {
-            Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
-                .imageScale(.medium)
+        HStack(spacing: menuItemSpacing) {
+            
+            if menuBarIconStyle == "battery" {
+                Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
+                    .imageScale(.medium)
+            }
             
             if showPercentage {
                 Text("\(viewModel.currentCapacity)%")
                     .font(.system(.body, design: .rounded).monospacedDigit())
+            }
+            
+            if showChargingStatus {
+                Image(systemName: viewModel.isCharging ? "bolt.fill" : "bolt.slash.fill")
+            }
+            
+            if showCycles {
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.3.path").font(.caption)
+                    Text("\(viewModel.cycleCount)")
+                }
+                .font(.system(.body, design: .rounded).monospacedDigit())
+                .foregroundColor(.secondary)
+            }
+            
+            if showTemperature {
+                HStack(spacing: 2) {
+                    Text(String(format: "%.0f°C", viewModel.temperature))
+                }
+                .font(.system(.body, design: .rounded).monospacedDigit())
             }
             
             if showWattage {
@@ -54,6 +86,16 @@ struct MacStatusApp: App {
                     Text(String(format: " %.1fW", viewModel.powerFlow.systemPower))
                         .font(.system(.body, design: .rounded).monospacedDigit())
                 }
+            }
+            
+            if showVoltage {
+                Text(String(format: "%.1fV", Double(viewModel.voltage) / 1000.0))
+                    .font(.system(.body, design: .rounded).monospacedDigit())
+            }
+            
+            if showAmperage {
+                Text(String(format: "%.1fA", Double(abs(viewModel.amperage)) / 1000.0))
+                    .font(.system(.body, design: .rounded).monospacedDigit())
             }
         }
     }
