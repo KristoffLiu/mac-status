@@ -68,7 +68,7 @@ struct GeneralSettingsView: View {
                 Picker("面板打开时刷新间隔", selection: $energyManager.activeUpdateInterval) {
                     Text("0.2 秒 (极速)").tag(0.2)
                     Text("0.5 秒 (较快)").tag(0.5)
-                    Text("1.0 秒 (默认, 类似 AlDente)").tag(1.0)
+                    Text("1.0 秒 (正常)").tag(1.0)
                     Text("2.0 秒 (省电)").tag(2.0)
                 }
                 .pickerStyle(.menu)
