@@ -5,7 +5,7 @@ class PowerCalculationService {
     
     private init() {}
     
-    func calculateFlow(from data: BatteryData) -> PowerFlowData {
+    func calculateFlow(from data: BatteryData, mSeriesMetrics: MSeriesPowerMetrics? = nil) -> PowerFlowData {
         let adapterWatts = Double(data.adapterWatts)
         let batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
         
@@ -18,16 +18,16 @@ class PowerCalculationService {
             // Charging
             isCharging = true
             isDischarging = false
-            // We know what goes into the battery, but without SMC, total system power is unknown.
-            // We use -1.0 to represent "Unknown" in the UI.
-            systemWatts = -1.0
+            // Use M-series metrics for system power if available, else fallback to unknown
+            systemWatts = mSeriesMetrics?.totalSystemWatts ?? -1.0
             topology = .topologyA
         } else if data.amperage < 0 {
             // Discharging
             isCharging = false
             isDischarging = true
-            // If we are discharging, the battery power is entirely consumed by the system.
-            systemWatts = batteryWatts
+            // In discharge, the system draw is the battery power (IOKit is accurate here)
+            // But we can cross-reference with M-series metrics for higher precision
+            systemWatts = mSeriesMetrics?.totalSystemWatts ?? batteryWatts
             topology = .topologyB
         } else {
             // Idle / Bypass (Fully charged and connected to AC)
@@ -35,11 +35,12 @@ class PowerCalculationService {
             isDischarging = false
             if adapterWatts > 0 {
                 // Adapter bypass
-                systemWatts = -1.0 // Unknown AC draw without SMC
+                // This is where M-series metrics shine! 
+                systemWatts = mSeriesMetrics?.totalSystemWatts ?? -1.0
                 topology = .topologyA
             } else {
                 // Unknown / no load
-                systemWatts = 0.0
+                systemWatts = mSeriesMetrics?.totalSystemWatts ?? 0.0
                 topology = .topologyB
             }
         }

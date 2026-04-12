@@ -30,13 +30,21 @@ class StatusViewModel: ObservableObject {
                 self?.refresh()
             }
             .store(in: &cancellables)
+            
+        // Also subscribe to high-fidelity M-series metrics
+        MSeriesPowerService.shared.$metrics
+            .sink { [weak self] _ in
+                self?.refresh()
+            }
+            .store(in: &cancellables)
     }
     
     private func refresh() {
         // Run IOKit call on background thread to prevent UI stutter
         DispatchQueue.global(qos: .userInitiated).async {
             let data = BatteryService.shared.fetchBatteryData()
-            let flow = PowerCalculationService.shared.calculateFlow(from: data)
+            let mMetrics = MSeriesPowerService.shared.metrics
+            let flow = PowerCalculationService.shared.calculateFlow(from: data, mSeriesMetrics: mMetrics)
             
             DispatchQueue.main.async {
                 self.batteryData = data

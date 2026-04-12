@@ -52,6 +52,15 @@ struct MacStatusApp: App {
                         
                         // Detail Grid Section
                         DetailGridModule(batteryData: viewModel.batteryData)
+                        
+                        // Subtle separator for High Power Apps
+                        Rectangle()
+                            .fill(Color.primary.opacity(0.1))
+                            .frame(height: 1)
+                            .padding(.horizontal, 12)
+                        
+                        // High Power Apps Section
+                        HighPowerAppsModule()
                     }
                 }
                 .moduleCardStyle()
@@ -89,26 +98,10 @@ struct MacStatusApp: App {
         
         // Settings Window with Sidebar (Single Instance)
         Window("MacStatus 设置", id: "settings") {
-            NavigationSplitView {
-                List {
-                    NavigationLink(destination: Text("通用设置 (General Settings)").padding()) {
-                        Label("通用", systemImage: "gearshape")
-                    }
-                    NavigationLink(destination: Text("外观 (Appearance)").padding()) {
-                        Label("外观", systemImage: "paintbrush")
-                    }
-                    NavigationLink(destination: Text("关于 (About)").padding()) {
-                        Label("关于", systemImage: "info.circle")
-                    }
-                }
-                .navigationTitle("MacStatus")
-            } detail: {
-                Text("请选择左侧菜单")
-                    .foregroundColor(.secondary)
-            }
-            .frame(width: 600, height: 400)
-            .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
+            SettingsView()
+                .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
         }
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
     

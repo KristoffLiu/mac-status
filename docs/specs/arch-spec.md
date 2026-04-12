@@ -1,35 +1,42 @@
 # MacStatus 架构设计规范 (Architecture Specification)
 
-该文档定义了 MacStatus 应用的底层架构与服务划分，确保应用在提供复杂桑基图动画的同时保持绝佳性能（零功耗）。
+该文档定义了 MacStatus 应用的底层架构与服务划分，专注为 Apple Silicon (M-series) 提供极致的功耗监测。
 
-## 1. 核心架构模式 (Core Architecture Pattern)
+## 1. 核心架构模式 (Core Architecture Pattern - M-series Optimized)
 
-推荐采用 **MVVM-C** 或轻量化的单向数据流 (Unidirectional Data Flow) 架构。
-为保证模块级别的解耦，系统将拆分为 **数据服务层 (Data Services)**、**计算与控制层 (Calculation & Control Layer)**、**UI 分发层 (UI Composition)** 与 **展现层 (View)**。
+采用 **MVVM-C** 架构，针对 Apple Silicon 的统一功率域 (Power Domains) 进行模块化设计。
+核心分为 **传感器采集层 (Sensor Capture)**、**功率引擎层 (Power Engine v2)** 与 **声明式视图层 (SwiftUI Views)**。
 
-## 2. 数据服务层 (Data Services)
+## 2. 传感器采集层 (Sensor Capture Layer)
 
 - **`BatteryService.swift`**: 
-  负责与 底层 `IOKit` (`AppleSmartBattery`) 进行通信，抽象为 Swift 的异步接口或 Combine Publisher，不再直接向 UI 暴露原始字典。
-- **`AdapterService.swift`** (或将其并入电源服务): 
-  监听交流适配器连接状态及其设计的额定瓦数。
+  负责与 `IOKit` (`AppleSmartBattery`) 通信，获取电量、电压、健康度等基础信息。
+- **`MSeriesPowerService.swift` (New)**: 
+  核心功率捕获引擎，负责：
+  - **IOReport 订阅**: 调用 `libIOReport.dylib` 私有 API 订阅 CPU、GPU 与 ANE (神经引擎) 的微秒级能量计数。
+  - **PMU 传感器**: 通过 `IOConnectCallStructMethod` 访问 Apple PMU 传感器，获取插电旁路模式下的实时输出功率。
 
 ## 3. 计算与控制层 (Calculation & Control Layer)
 
 - **`PowerCalculationService.swift`**:
-  订阅底层数据，根据电量流入流出，判断此时应用处于哪种**能量拓扑**（如 Topology A/B），算出适配器输出功率、系统总消耗功率。统一处理计算后再通过 ViewModel 暴露。
-- **`EnergyEfficiencyManager.swift`** (极致能控):
-  - **规则**: 在面板置于后台时，动画 Timer 与频繁的 CPU 计算必须终止；当且仅当 `isPresented` (面板打开) 时，启动高频刷新。
-  - **实现**: 拦截或管理全局轮询定时器，根据 UI 状态动态改变派发频率。
+  整合 `BatteryService` 与 `MSeriesPowerService` 的数据。
+  - **能量拓扑判断**: 实时更新拓扑状态 (Topology A/B/C)。
+  - **数据平滑**: 实现 2 秒滑动窗口平滑 (Moving Average)，防止 UI 读数跳变过于剧烈。
+- **`EnergyEfficiencyManager.swift` (极致能控)**:
+  - **按需采样**: 当且仅当面板处于 `Active` (打开) 状态时开启 IOReport 高频订阅；后台时降频至低功耗模式（1% 以下 CPU 占用）。
 
-## 4. UI 架构与模块化 (UI Composition & Modularity)
+## 4. UI 架构与模块化 (UI Composition)
 
 - **`PanelModuleManager.swift`**:
-  管理面板内部区块显示（例如 Sankey 可视化区块、数值详情区块），允许后续加入新的显示内容而不侵入主容器代码。
+  解耦各个显示模块（Sankey、详情网格、高功耗雷达）。
 - **`MenuBarCustomizationManager.swift`**:
-  与 `AppStorage` (UserDefaults) 交互，控制用户想要在菜单栏展示的是图标、数字百分比还是功率。
+  控制菜单栏展示逻辑（图标、百分比、瓦数）。
 
-## 5. 声明式 UI 层 (SwiftUI View)
+## 5. 展现层 (View Layer)
 
-- **`SankeyPowerFlowView.swift`**: 使用 Path 与 Timer/PhaseAnimator 的重绘制，依赖注入了当前能量拓扑状态。
-- **`VisualEffectBackground.swift`**: 基于 `NSViewRepresentable` 对 `NSVisualEffectView` 包装，支撑整体毛玻璃视觉体系。
+- **`SankeyPowerFlowView.swift`**: 
+  使用 `Canvas` 与 `TimelineView` 实现 60fps 的液态能量流动动画。
+- **`VisualEffectBackground.swift`**: 
+  包装 `NSVisualEffectView` 实现 Liquid Glass (毛玻璃) 视觉效果。
+- **`HighPowerAppsModule.swift`**:
+  通过后台 `top` 指令抓取能耗最高的应用列表。
