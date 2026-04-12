@@ -22,15 +22,9 @@ struct PanelContainerView<Content: View>: View {
 // A base modifier for internal sub-cards
 struct CardModifier: ViewModifier {
     func body(content: Content) -> some View {
+        // AlDente style relies on individual nodes having backgrounds, not the whole container.
         content
-            .padding(16)
-            // Use extremely light sheer tint instead of an opaque material
-            .background(Color.primary.opacity(0.03))
-            .clipShape(RoundedRectangle(cornerRadius: UIConstants.squircleRadius - 4, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: UIConstants.squircleRadius - 4, style: .continuous)
-                    .stroke(.quaternary, lineWidth: 1) // Adapts to system contrast natively
-            )
+            .padding(.vertical, 8)
     }
 }
 
