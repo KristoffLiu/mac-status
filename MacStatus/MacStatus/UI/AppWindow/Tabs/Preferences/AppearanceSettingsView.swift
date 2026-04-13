@@ -108,32 +108,35 @@ struct WidgetOptionsSheet: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        VStack {
-
+        Group {
             if widget == .systemMonitor {
                 SystemMonitorConfigView()
-            } else if widget == .powerFlow {
-                PowerFlowConfigView()
             } else {
-                Form {
-                    Text("暂无可用的自定义选项。")
-                        .foregroundColor(.secondary)
+                VStack(spacing: 0) {
+                    if widget == .powerFlow {
+                        PowerFlowConfigView()
+                    } else {
+                        Form {
+                            Text("暂无可用的自定义选项。")
+                                .foregroundColor(.secondary)
+                        }
+                        .formStyle(.grouped)
+                        .frame(width: 380)
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Button("完成") {
+                            dismiss()
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    }
+                    .padding()
                 }
-                .formStyle(.grouped)
-                .frame(width: 380)
+                .background(Color(NSColor.underPageBackgroundColor))
+                .frame(minHeight: 200)
             }
-            
-            HStack {
-                Spacer()
-                Button("完成") {
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-            .padding()
-            .background(Color(NSColor.windowBackgroundColor))
         }
-        .frame(minHeight: 200)
     }
 }
 
@@ -143,54 +146,69 @@ struct SystemMonitorConfigView: View {
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         HStack(spacing: 0) {
-            // 左侧：独立的侧边栏式预览 (无边界白边，均匀距离)
+            // 左侧：独立的侧边栏式预览
             VStack {
                 SystemMonitorModule()
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 20)
                     .background(.regularMaterial)
-                    .cornerRadius(12)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
                 Spacer()
             }
             .padding(20)
-            .frame(width: 300)
+            .frame(width: 320)
             .frame(maxHeight: .infinity)
-            .background(Color(NSColor.windowBackgroundColor))
             
             Divider()
             
             // 右侧：偏好设置详情
-            Form {
-                Section("显示模块") {
-                    Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
-                    Toggle("统一内存", isOn: $showMemory)
-                    Toggle("网络与磁盘", isOn: $showNetDisk)
-                }
-                
-                Section("图表样式 (网络与磁盘)") {
-                    Picker("走势图方向", selection: $symmetricGraph) {
-                        Text("正向堆叠").tag(false)
-                        Text("双向发散").tag(true)
+            VStack(spacing: 0) {
+                Form {
+                    Section("显示模块") {
+                        Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
+                        Toggle("统一内存", isOn: $showMemory)
+                        Toggle("网络与磁盘", isOn: $showNetDisk)
                     }
-                    .pickerStyle(.menu)
-                }
-                
-                Section("全局图表渲染") {
-                    Picker("像素阵列间距", selection: $pixelGap) {
-                        Text("紧密集约 (1.0)").tag(1.0)
-                        Text("标准 (1.5)").tag(1.5)
-                        Text("呼吸松散 (2.5)").tag(2.5)
+                    
+                    Section("图表样式 (网络与磁盘)") {
+                        Picker("走势图方向", selection: $symmetricGraph) {
+                            Text("正向堆叠").tag(false)
+                            Text("双向发散").tag(true)
+                        }
+                        .pickerStyle(.menu)
                     }
-                    .pickerStyle(.menu)
+                    
+                    Section("全局图表渲染") {
+                        Picker("像素阵列间距", selection: $pixelGap) {
+                            Text("紧密集约 (1.0)").tag(1.0)
+                            Text("标准 (1.5)").tag(1.5)
+                            Text("呼吸松散 (2.5)").tag(2.5)
+                        }
+                        .pickerStyle(.menu)
+                    }
                 }
+                .formStyle(.grouped)
+                
+                HStack {
+                    Spacer()
+                    Button("完成") {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                }
+                .padding()
             }
-            .formStyle(.grouped)
-            .frame(width: 360) 
+            .frame(width: 360)
+            .frame(maxHeight: .infinity)
         }
+        .frame(height: 480)
+        .background(Color(NSColor.windowBackgroundColor))
     }
 }
 
