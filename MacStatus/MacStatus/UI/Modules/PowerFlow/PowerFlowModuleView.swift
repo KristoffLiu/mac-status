@@ -133,10 +133,10 @@ struct PowerFlowConfigView: View {
                 // 3. 视图选择
                 Section("显示样式") {
                     HStack(spacing: 12) {
-                        StyleSelectButton(title: "数字孪生", icon: "cube.transparent", style: .twin, currentSelection: $style)
-                        StyleSelectButton(title: "桑基图", icon: "water.waves", style: .sankey, currentSelection: $style)
-                        StyleSelectButton(title: "数据块", icon: "square.grid.2x2", style: .blocks, currentSelection: $style)
-                        StyleSelectButton(title: "卡片", icon: "rectangle.grid.1x2.fill", style: .cards, currentSelection: $style)
+                        StyleSelectButton(title: "数字孪生", icon: "macbook.and.ipad", colors: [.purple, .indigo], style: .twin, currentSelection: $style)
+                        StyleSelectButton(title: "桑基图", icon: "water.waves", colors: [.cyan, .blue], style: .sankey, currentSelection: $style)
+                        StyleSelectButton(title: "数据块", icon: "square.grid.2x2.fill", colors: [.orange, .red], style: .blocks, currentSelection: $style)
+                        StyleSelectButton(title: "卡片", icon: "rectangle.stack.fill", colors: [.green, .mint], style: .cards, currentSelection: $style)
                     }
                     .padding(.vertical, 4)
                 }
@@ -214,6 +214,7 @@ struct PowerFlowConfigView: View {
 struct StyleSelectButton: View {
     let title: String
     let icon: String
+    let colors: [Color]
     let style: PowerFlowStyle
     @Binding var currentSelection: PowerFlowStyle
     
@@ -223,22 +224,34 @@ struct StyleSelectButton: View {
                 currentSelection = style
             }
         }) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
+            VStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 38, height: 38)
+                        .shadow(color: colors.last!.opacity(0.3), radius: 3, x: 0, y: 2)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
                 Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .foregroundColor(currentSelection == style ? .primary : .secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(currentSelection == style ? Color.accentColor.opacity(0.15) : Color(NSColor.controlBackgroundColor).opacity(0.5))
-            .foregroundColor(currentSelection == style ? .accentColor : .primary)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(currentSelection == style ? Color.accentColor.opacity(0.8) : Color.gray.opacity(0.2), lineWidth: 1)
+            .frame(height: 85) // Enforce strictly uniform height
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(currentSelection == style ? Color.accentColor.opacity(0.1) : Color(NSColor.controlBackgroundColor).opacity(0.4))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(currentSelection == style ? Color.accentColor.opacity(0.6) : Color.gray.opacity(0.15), lineWidth: 1)
+            )
+            .scaleEffect(currentSelection == style ? 1.02 : 1.0)
         }
         .buttonStyle(.plain)
     }

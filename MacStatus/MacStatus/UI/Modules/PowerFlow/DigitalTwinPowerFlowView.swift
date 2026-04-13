@@ -73,7 +73,10 @@ struct DigitalTwinPowerFlowView: View {
             }
             // 自动开启屏幕
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                // Critically damped spring (dampingFraction: 1.0) ensures NO overshoot!
+                // This preserves the illusion of the solid 3D rotation, as 2D scale overshoot 
+                // would cause "rubbery" distortion.
+                withAnimation(.spring(response: 0.7, dampingFraction: 1.0)) {
                     isLidOpen = true
                 }
             }
@@ -150,16 +153,18 @@ struct MacAdapter3DView: View {
                     .overlay(RoundedRectangle(cornerRadius: 2).stroke(Color(white: 0.88), lineWidth: 0.5))
                     .offset(x: -29, y: -8) // Authentic off-center top positioning
                 
-                // Metal Prongs (Wall side - Flat Horizontal Plates)
-                VStack(spacing: 5) {
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.6)], startPoint: .top, endPoint: .bottom))
-                        .frame(width: 14, height: 3)
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.6)], startPoint: .top, endPoint: .bottom))
-                        .frame(width: 14, height: 3)
-                }
-                .offset(x: -40, y: -8) // Matches the duckhead height
+                // SINGLE Metal Prong (Orthographic side projection means they perfectly overlap)
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.55)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 10, height: 4) // Shorter plug
+                    .overlay(
+                        // The classic US prong circle hole near the tip
+                        Circle()
+                            .fill(Color(white: 0.4))
+                            .frame(width: 2, height: 2)
+                            .offset(x: 2) // Adjusted hole position
+                    )
+                    .offset(x: -38, y: -8) // Matches the duckhead left edge securely
             }
             
             // Port side (USB-C cutout)
@@ -216,7 +221,10 @@ struct MacBook3DView: View {
             .zIndex(2) // Lip is always conceptually closer to the viewer
         }
         .onTapGesture {
-            withAnimation(.spring(response: 0.7, dampingFraction: 0.75)) {
+            // Unibody metals don't wobble or stretch!
+            // Crucial: Use a critically damped spring (dampingFraction = 1.0) so the 2D scaling
+            // settles perfectly without overshooting. Overlap/Bounce creates rubber-like deformations.
+            withAnimation(.spring(response: 0.6, dampingFraction: 1.0)) {
                 isOpen.toggle()
             }
         }
@@ -356,9 +364,12 @@ struct EnergyWire3D: View {
     var body: some View {
         GeometryReader { geometry in
             // Coordinates tight to the boundaries, allowing the ZStack positioning to handle overlap visually.
-            // Mac Base center offset from geometry vertical center is 54 points down.
             let start = CGPoint(x: 2, y: geometry.size.height / 2) // Snug into adapter's Type-C port
-            let end = CGPoint(x: geometry.size.width - 2, y: geometry.size.height / 2 + 54) // Hits directly on Mac KeyboardBase port
+            
+            // Push X precisely inside the Mac's UI boundary (geometry.size.width + 1)
+            // Since Mac is zIndex(2), the port structurally "vanishes" into the side wall.
+            // Y is tweaked perfectly to center inside the under-taper.
+            let end = CGPoint(x: geometry.size.width + 1, y: geometry.size.height / 2 + 40) // Moved up slightly
             
             // To ensure the connection enters perfectly straight at the end:
             // MUST set `control2.y == end.y` so the approach tangent is purely horizontal!
@@ -372,37 +383,37 @@ struct EnergyWire3D: View {
                     path.addCurve(to: end, control1: control1, control2: control2)
                 }
                 .stroke(
-                    Color(white: 0.8),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                    isActive ? Color(white: 0.15) : Color(white: 0.85),
+                    style: StrokeStyle(lineWidth: 3.5, lineCap: .round)
                 )
                 
-                // Flowing energy core
+                // Simple Flow Animation
                 if isActive {
+                    // Clean flowing data dashes
                     Path { path in
                         path.move(to: start)
                         path.addCurve(to: end, control1: control1, control2: control2)
                     }
                     .stroke(
-                        LinearGradient(colors: [.blue.opacity(0.8), .cyan], startPoint: .leading, endPoint: .trailing),
+                        Color(white: 0.8),
                         style: StrokeStyle(
-                            lineWidth: 2.5,
+                            lineWidth: 2,
                             lineCap: .round,
-                            dash: [12, 10],
+                            dash: [10, 16], // Clean, functional power bursts
                             dashPhase: phase
                         )
                     )
-                    .shadow(color: .blue.opacity(0.6), radius: 3)
                     
                     // Type-C Head (Start)
                     ZStack {
                         Rectangle()
-                            .fill(Color(white: 0.85))
-                            .frame(width: 4, height: 4)
+                            .fill(Color(white: 0.15)) // Match cable dark color
+                            .frame(width: 4, height: 3)
                             .offset(x: 4) // strain relief
                         
                         RoundedRectangle(cornerRadius: 1)
                             .fill(Color(white: 0.75))
-                            .frame(width: 8, height: 6)
+                            .frame(width: 8, height: 5)
                             .offset(x: -2) // metal shell sinks into port
                     }
                     .position(x: start.x, y: start.y)
@@ -410,20 +421,20 @@ struct EnergyWire3D: View {
                     // MagSafe 3 Head (End)
                     ZStack {
                         Rectangle()
-                            .fill(Color(white: 0.85))
-                            .frame(width: 4, height: 4)
-                            .offset(x: -8) // strain relief
+                            .fill(Color(white: 0.15)) // Match cable dark color
+                            .frame(width: 6, height: 3) // Strain relief extended to bridge port
+                            .offset(x: -10)
                             
-                        RoundedRectangle(cornerRadius: 1.5)
+                        RoundedRectangle(cornerRadius: 1.0)
                             .fill(Color(white: 0.85))
-                            .frame(width: 12, height: 7)
-                            .overlay(RoundedRectangle(cornerRadius: 1.5).stroke(Color(white: 0.75), lineWidth: 0.5))
+                            .frame(width: 14, height: 5)
+                            .overlay(RoundedRectangle(cornerRadius: 1.0).stroke(Color(white: 0.75), lineWidth: 0.5))
                         
                         // LED Indicator inside MagSafe connector
                         let ledColor: Color = (batteryLevel >= 100 && !isCharging) ? .green : .orange
                         Circle()
                             .fill(ledColor)
-                            .frame(width: 2.5, height: 2.5)
+                            .frame(width: 2.0, height: 2.0)
                     }
                     .position(x: end.x, y: end.y)
                 }
