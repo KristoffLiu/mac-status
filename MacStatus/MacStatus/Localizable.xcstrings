@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
     " -- W" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14,18 +11,6 @@
           }
         }
       }
-    },
-    " %lld" : {
-
-    },
-    " %lld%%" : {
-
-    },
-    " 2:30" : {
-
-    },
-    " 正常" : {
-
     },
     "(Select One)" : {
       "extractionState" : "manual",

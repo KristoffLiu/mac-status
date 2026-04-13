@@ -20,7 +20,7 @@
 
 - **`PowerCalculationService.swift`**:
   整合 `BatteryService` 与 `MSeriesPowerService` 的数据。
-  - **能量拓扑判断**: 实时更新拓扑状态 (Topology A/B/C)。
+  - **能量拓扑判断**: 实时更新拓扑状态 (Topology A/B/C)。*详见 [供电拓扑与桑基图状态机](./power-state-machine.md)*。
   - **数据平滑**: 实现 2 秒滑动窗口平滑 (Moving Average)，防止 UI 读数跳变过于剧烈。
 - **`EnergyEfficiencyManager.swift` (极致能控)**:
   - **按需采样**: 当且仅当面板处于 `Active` (打开) 状态时开启 IOReport 高频订阅；后台时降频至低功耗模式（1% 以下 CPU 占用）。
