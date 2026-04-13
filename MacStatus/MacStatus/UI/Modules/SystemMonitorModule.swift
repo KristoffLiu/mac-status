@@ -18,9 +18,9 @@ struct SystemMonitorModule: View {
                 }
             }
 
-            // ── 2x2 Grid Layout ──────────────────────────────────────────────
+            // ── 3x2 Grid Layout ──────────────────────────────────────────────
             VStack(spacing: 12) {
-                // Row 1: CPU & Memory
+                // Row 1: Compute (CPU & GPU)
                 HStack(alignment: .top, spacing: 8) {
                     // CPU Card
                     VStack(alignment: .leading, spacing: 5) {
@@ -75,19 +75,30 @@ struct SystemMonitorModule: View {
 
                     Divider().opacity(0.3)
 
-                    // Memory Card
-                    MemMatrixCard(
-                        usedGB:   service.memUsedGB,
-                        totalGB:  service.memTotalGB,
-                        pressure: service.memPressure,
-                        history:  service.memHistory
+                    // GPU Card
+                    GPUMatrixCard(
+                        utilization: service.gpuUtilization,
+                        history: service.gpuHistory
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
 
                 Divider().opacity(0.4).padding(.horizontal, 8)
 
-                // Row 2: Network & Disk
+                // Row 2: Unified Memory
+                UnifiedMemCard(
+                    sysUsedGB: service.memUsedGB,
+                    gpuUsedGB: service.gpuMemUsedGB,
+                    totalGB: service.memTotalGB,
+                    sysHistory: service.memHistory,
+                    gpuHistory: service.gpuMemHistory,
+                    pressure: service.memPressure
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                Divider().opacity(0.4).padding(.horizontal, 8)
+
+                // Row 3: Network & Disk
                 HStack(alignment: .top, spacing: 8) {
                     NetMatrixCard(
                         downKBps:    service.netDownKBps,
@@ -270,101 +281,160 @@ struct PixelBarChartView: View {
     }
 }
 
-// MARK: - Memory Matrix Card (Percentage Grid)
-struct MemMatrixCard: View {
-    let usedGB: Double
+// MARK: - Unified Memory Matrix Card
+struct UnifiedMemCard: View {
+    let sysUsedGB: Double
+    let gpuUsedGB: Double
     let totalGB: Double
+    let sysHistory: [Double]
+    let gpuHistory: [Double]
     let pressure: Double
-    let history: [Double]
 
-    private var usedRatio: Double {
-        totalGB > 0 ? usedGB / totalGB : 0
-    }
+    private var sysRatio: Double { totalGB > 0 ? sysUsedGB / totalGB : 0 }
+    private var gpuRatio: Double { totalGB > 0 ? gpuUsedGB / totalGB : 0 }
     
-    // 自动适配更小的格子排布，与 CPU 热力图保持绝对一致的大小
-    private var columns: [GridItem] {
-        return [GridItem(.adaptive(minimum: 6, maximum: 10), spacing: 2)]
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            // Line 1: 标题和总数值
-            HStack(spacing: 4) {
-                Image(systemName: "memorychip")
-                    .font(.caption.weight(.bold))
-                    .foregroundColor(.purple.opacity(0.8))
-                Text("内存")
-                    .font(.caption.weight(.bold))
-                    .foregroundColor(.primary.opacity(0.7))
-                Spacer()
-                Text(String(format: "%.1f GB", usedGB))
-                    .font(.system(.caption, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
-                    .foregroundColor(pressureColor)
-            }
-
-            // Line 2: 子状态（类似 CPU 的 usr/sys 排列）
-            HStack(spacing: 6) {
-                HStack(spacing: 2) {
-                    Circle().fill(pressureColor).frame(width: 5, height: 5)
-                    Text(String(format: "%.0f%%", usedRatio * 100))
-                        .font(.system(size: 9, design: .rounded).monospacedDigit())
-                        .foregroundColor(.secondary)
-                    Text("压")
-                        .font(.system(size: 8))
-                        .foregroundColor(.secondary.opacity(0.7))
-                }
-                Spacer()
-                Text("共 \(Int(totalGB))GB")
-                    .font(.system(size: 9, design: .rounded))
-                    .foregroundColor(.secondary.opacity(0.65))
-            }
-
-            // Line 3: 容量格子矩阵 (代表物理内存占用比，3行完整填充的8x8正方形格子)
-            GeometryReader { geo in
-                let spacing: CGFloat = 2
-                let cellSize: CGFloat = 8
-                // 根据实际宽度计算最多能放下多少列
-                let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
-                let actualCols = max(cols, 1)
-                let c = actualCols * 3 // 固定3行
-                let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
-                
-                LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
-                    ForEach(0..<c, id: \.self) { i in
-                        let threshold = Double(i) / Double(c)
-                        let isActive = usedRatio > threshold
-                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                            .fill(isActive ? pressureColor.opacity(0.8) : Color.primary.opacity(0.09))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                    .stroke(isActive ? pressureColor.opacity(0.3) : Color.clear, lineWidth: 0.5)
-                            )
-                            .frame(width: cellSize, height: cellSize)
-                    }
-                }
-            }
-            .frame(height: 28) // 固定高度 (8 * 3) + (2 * 2) = 28
-            
-            Spacer(minLength: 0)
-            
-            // 内存历史走势
-            PixelBarChartView(
-                data: history,
-                maxRows: 8,
-                baseColor: pressureColor,
-                gap: 1.5
-            )
-            .frame(height: 40)
-            .clipShape(RoundedRectangle(cornerRadius: 2))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-    }
-
     private var pressureColor: Color {
         if pressure > 0.85 { return .red }
         if pressure > 0.65 { return .orange }
         return .purple.opacity(0.8)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Header
+            HStack(spacing: 4) {
+                Image(systemName: "memorychip")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(pressureColor)
+                Text("统一内存")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.primary.opacity(0.7))
+                
+                Spacer()
+                
+                // Detailed Breakdown
+                HStack(spacing: 6) {
+                    HStack(spacing: 2) {
+                        Circle().fill(pressureColor).frame(width: 5, height: 5)
+                        Text(String(format: "系统: %.1fGB", sysUsedGB))
+                            .font(.system(size: 9, design: .rounded).monospacedDigit())
+                            .foregroundColor(.secondary)
+                    }
+                    HStack(spacing: 2) {
+                        Circle().fill(Color.teal.opacity(0.8)).frame(width: 5, height: 5)
+                        Text(String(format: "图形: %.1fGB", gpuUsedGB))
+                            .font(.system(size: 9, design: .rounded).monospacedDigit())
+                            .foregroundColor(.secondary)
+                    }
+                    Text(String(format: "(共%.0fGB)", totalGB))
+                        .font(.system(size: 9, design: .rounded))
+                        .foregroundColor(.secondary.opacity(0.65))
+                }
+            }
+
+            HStack(alignment: .top, spacing: 8) {
+                // 左侧: 堆叠时序走势图
+                StackedPixelBarChartView(
+                    bottomData: sysHistory,
+                    topData: gpuHistory,
+                    maxRows: 11,
+                    bottomColor: pressureColor,
+                    topColor: .teal,
+                    gap: 1.5
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 2))
+                
+                Divider().opacity(0.3)
+                
+                // 右侧: 热力图阵列 (增加到 6 行)
+                GeometryReader { geo in
+                    let spacing: CGFloat = 2
+                    let cellSize: CGFloat = 8
+                    let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
+                    let actualCols = max(cols, 1)
+                    let c = actualCols * 6 
+                    let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
+                    
+                    LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
+                        ForEach(0..<c, id: \.self) { i in
+                            let threshold = Double(i) / Double(c)
+                            let isSys = threshold < sysRatio
+                            let isGpu = threshold >= sysRatio && threshold < (sysRatio + gpuRatio)
+                            
+                            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                        .stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5)
+                                )
+                                .frame(width: cellSize, height: cellSize)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .frame(height: 58)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
+// MARK: - Stacked Pixel Bar Chart View
+struct StackedPixelBarChartView: View {
+    let bottomData: [Double]
+    let topData: [Double]
+    let maxRows: Int
+    let bottomColor: Color
+    let topColor: Color
+    let gap: CGFloat
+    
+    var body: some View {
+        GeometryReader { geo in
+            let size = (geo.size.height - gap * CGFloat(max(maxRows - 1, 0))) / CGFloat(maxRows)
+            let c = Int((geo.size.width + gap) / (size + gap))
+            let actualCols = max(1, c)
+            
+            let bData = bottomData.suffix(actualCols)
+            let tData = topData.suffix(actualCols)
+            let bVisible = Array(repeating: 0.0, count: max(0, actualCols - bData.count)) + bData
+            let tVisible = Array(repeating: 0.0, count: max(0, actualCols - tData.count)) + tData
+            
+            let totalW = size * CGFloat(actualCols) + gap * CGFloat(max(actualCols - 1, 0))
+            let totalH = size * CGFloat(maxRows) + gap * CGFloat(max(maxRows - 1, 0))
+            let offsetX = geo.size.width - totalW
+            let offsetY = (geo.size.height - totalH) / 2
+            
+            let maxVal = 1.0 
+            
+            Canvas { ctx, _ in
+                for col in 0..<actualCols {
+                    let bRatio = bVisible[col] / maxVal
+                    let tRatio = tVisible[col] / maxVal
+                    
+                    let bFillRows = Int(ceil(bRatio * Double(maxRows)))
+                    let tFillRows = Int(ceil(tRatio * Double(maxRows)))
+                    
+                    for row in 0..<maxRows {
+                        let isBottomFilled = (maxRows - 1 - row) < bFillRows
+                        let isTopFilled = (maxRows - 1 - row) >= bFillRows && (maxRows - 1 - row) < (bFillRows + tFillRows)
+                        
+                        let x = offsetX + (size + gap) * CGFloat(col)
+                        let y = offsetY + (size + gap) * CGFloat(row)
+                        let rect = CGRect(x: x, y: y, width: size, height: size)
+                        let path = Path(roundedRect: rect, cornerRadius: 1.0)
+                        
+                        if isBottomFilled {
+                            ctx.fill(path, with: .color(bottomColor.opacity(0.85)))
+                        } else if isTopFilled {
+                            ctx.fill(path, with: .color(topColor.opacity(0.85)))
+                        } else {
+                            ctx.fill(path, with: .color(bottomColor.opacity(0.1)))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -546,3 +616,90 @@ struct TempBadgeView: View {
         return .secondary
     }
 }
+
+// MARK: - GPU Matrix Card
+struct GPUMatrixCard: View {
+    let utilization: Double
+    let history: [Double]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 4) {
+                Text("GPU")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.primary.opacity(0.7))
+                Spacer()
+                Text(String(format: "%.1f%%", utilization * 100))
+                    .font(.system(.caption, design: .rounded).monospacedDigit())
+                    .foregroundColor(gpuColor)
+                    .fontWeight(.semibold)
+            }
+            
+            HStack(spacing: 6) {
+                HStack(spacing: 2) {
+                    Circle().fill(gpuColor).frame(width: 5, height: 5)
+                    // a placeholder text to match CPU's "usr" label height
+                    Text("渲染")
+                        .font(.system(size: 8))
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+            }
+            
+            // Faux heatmap matching CPU's P-cores width
+            GPUHeatmapView(load: utilization)
+            
+            Spacer(minLength: 0)
+            
+            PixelBarChartView(
+                data: history,
+                maxRows: 8,
+                baseColor: gpuColor,
+                gap: 1.5
+            )
+            .frame(height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
+        }
+    }
+    
+    private var gpuColor: Color {
+        if utilization > 0.85 { return .red }
+        if utilization > 0.5 { return .orange }
+        return .indigo.opacity(0.8)
+    }
+}
+
+struct GPUHeatmapView: View {
+    let load: Double
+    
+    var body: some View {
+        // 与内存矩阵一致，使用高度为28的3行方格阵列来填满区域并完美对齐 CPU
+        GeometryReader { geo in
+            let spacing: CGFloat = 2
+            let cellSize: CGFloat = 8
+            let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
+            let actualCols = max(cols, 1)
+            let c = actualCols * 3 
+            let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
+            
+            LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
+                ForEach(0..<c, id: \.self) { i in
+                    let threshold = Double(i) / Double(c)
+                    let loadRatio = load // GPU Utilization
+                    let isActive = loadRatio > threshold
+                    
+                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                        // 使用 HeatCell 的渲染逻辑或自定义的主题色
+                        .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                .stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5)
+                        )
+                        .frame(width: cellSize, height: cellSize)
+                }
+            }
+        }
+        .frame(height: 28) // 精准锁定高度，与 CPU/内存 齐平
+    }
+}
+
+

@@ -33,6 +33,12 @@ class SystemMonitorService: ObservableObject {
     @Published var diskReadHistory:  [Double] = Array(repeating: 0, count: 60)
     @Published var diskWriteHistory: [Double] = Array(repeating: 0, count: 60)
 
+    // MARK: - GPU
+    @Published var gpuUtilization: Double = 0.0
+    @Published var gpuHistory: [Double] = Array(repeating: 0, count: 60)
+    @Published var gpuMemUsedGB: Double = 0.0
+    @Published var gpuMemHistory: [Double] = Array(repeating: 0, count: 60)
+
     // MARK: - CPU Temperature (from SMCService)
     @Published var cpuTemperature: Double = 0.0
 
@@ -103,6 +109,7 @@ class SystemMonitorService: ObservableObject {
             let mem   = self.collectMemory()
             let net   = self.collectNetwork()
             let disk  = self.collectDisk()
+            let gpu   = self.collectGPU()
             let temp  = SMCService.shared.readFloat(key: "Tp09") ?? SMCService.shared.readFloat(key: "TC0P") ?? 0.0
             DispatchQueue.main.async {
                 self.coreLoads  = cpu.cores
@@ -117,6 +124,8 @@ class SystemMonitorService: ObservableObject {
                 self.diskReadMBps  = disk.read
                 self.diskWriteMBps = disk.write
                 self.cpuTemperature = temp
+                self.gpuUtilization = gpu.utilization
+                self.gpuMemUsedGB   = Double(gpu.memUsedBytes) / 1_073_741_824.0
 
                 // --- History updates ---
                 // CPU total history
@@ -126,6 +135,15 @@ class SystemMonitorService: ObservableObject {
                 // Memory pressure history
                 self.memHistory.removeFirst()
                 self.memHistory.append(min(1, max(0, mem.pressure)))
+
+                // GPU history
+                self.gpuHistory.removeFirst()
+                self.gpuHistory.append(min(1, max(0, gpu.utilization)))
+
+                // GPU VRAM history (ratio of total physical memory)
+                self.gpuMemHistory.removeFirst()
+                let gpuMemRatio = self.memTotalGB > 0 ? self.gpuMemUsedGB / self.memTotalGB : 0
+                self.gpuMemHistory.append(min(1, max(0, gpuMemRatio)))
 
                 // Network — rolling peak normalisation
                 let maxNet = max(net.up, net.down, 1.0)
@@ -303,5 +321,42 @@ class SystemMonitorService: ObservableObject {
         prevDiskRead = totalRead; prevDiskWrite = totalWrite; prevDiskTimestamp = now
 
         return DiskResult(read: max(0, readMBps), write: max(0, writeMBps))
+    }
+
+    // MARK: - GPU
+    private struct GPUResult { var utilization: Double; var memUsedBytes: UInt64 }
+
+    private func collectGPU() -> GPUResult {
+        let matching = IOServiceMatching("IOAccelerator")
+        var iter: io_iterator_t = 0
+        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS else {
+            return GPUResult(utilization: 0, memUsedBytes: 0)
+        }
+        defer { IOObjectRelease(iter) }
+
+        var service = IOIteratorNext(iter)
+        var util: Double = 0
+        var memBytes: UInt64 = 0
+
+        while service != 0 {
+            defer { IOObjectRelease(service); service = IOIteratorNext(iter) }
+            
+            var props: Unmanaged<CFMutableDictionary>?
+            IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
+            if let dict = props?.takeRetainedValue() as? [String: Any],
+               let perfStats = dict["PerformanceStatistics"] as? [String: Any] {
+                
+                if let devR = perfStats["Device Utilization %"] as? Int {
+                    util = Double(devR) / 100.0
+                } else if let devD = perfStats["Device Utilization %"] as? Double {
+                    util = devD / 100.0
+                }
+                
+                if let mem = perfStats["In use system memory"] as? UInt64 {
+                    memBytes = mem
+                }
+            }
+        }
+        return GPUResult(utilization: max(0, min(1, util)), memUsedBytes: memBytes)
     }
 }
