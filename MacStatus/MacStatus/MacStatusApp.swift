@@ -25,7 +25,6 @@ struct MacStatusApp: App {
             MainPanelView(viewModel: viewModel)
         } label: {
             MenuBarLabelView(viewModel: viewModel)
-                .id(settingsUpdateTrigger)
         }
         .menuBarExtraStyle(.window) // This gives the native popover with the 'tip' pointing to the menu bar!
         
@@ -79,44 +78,53 @@ struct MenuBarLabelView: View {
     @AppStorage("showAlDenteFull") private var showAlDenteFull = false
     
     var body: some View {
-        var str = Text("")
+        return buildLabel().font(.system(.body, design: .rounded).monospacedDigit())
+    }
+    
+    private func buildLabel() -> Text {
+        var str: Text? = nil
         let space = Text(String(repeating: " ", count: max(1, Int(menuItemSpacing) / 3)))
         
-        if menuBarIconStyle != "none" {
-            if menuBarIconStyle == "battery" { str = str + Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")) + space }
-            else if menuBarIconStyle == "ios_native" { str = str + Text(Image(systemName: "battery.75")) + space }
-            else if menuBarIconStyle == "macos_color" { str = str + Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")).foregroundColor(.green) + space }
-            else if menuBarIconStyle == "aldente_status" { str = str + Text(Image(systemName: "minus.plus.batteryblock.fill")) + space }
-            else if menuBarIconStyle == "aldente_icon" { str = str + Text(Image(systemName: "leaf")) + space }
-            else { str = str + Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")) + space }
+        func append(_ t: Text) {
+            if str == nil { str = t }
+            else { str = str! + space + t }
         }
         
-        if showPercentage { str = str + Text("\(viewModel.currentCapacity)%") + space }
-        if showChargingStatus { str = str + Text(Image(systemName: viewModel.isCharging ? "bolt.fill" : "bolt.slash.fill")) + space }
-        if iconLowPowerColor { str = str + Text(Image(systemName: "circle.fill")).foregroundColor(.orange) + space }
+        if menuBarIconStyle != "none" {
+            if menuBarIconStyle == "battery" { append(Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100"))) }
+            else if menuBarIconStyle == "ios_native" { append(Text(Image(systemName: "battery.75"))) }
+            else if menuBarIconStyle == "macos_color" { append(Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")).foregroundColor(.green)) }
+            else if menuBarIconStyle == "aldente_status" { append(Text(Image(systemName: "minus.plus.batteryblock.fill"))) }
+            else if menuBarIconStyle == "aldente_icon" { append(Text(Image(systemName: "leaf"))) }
+            else { append(Text(Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100"))) }
+        }
         
-        if showMaxCapacity { str = str + Text(Image(systemName: "stethoscope")) + Text(" \(viewModel.batteryData.maxCapacity)") + space }
-        if showMacOSCapacity { str = str + Text(Image(systemName: "info.circle")) + Text(" \(viewModel.currentCapacity)%") + space }
-        if showMacOSCondition { str = str + Text(Image(systemName: "cross.case")) + Text(" 正常") + space }
-        if showCycles { str = str + Text(Image(systemName: "arrow.3.path")) + Text(" \(viewModel.cycleCount)") + space }
+        if showPercentage { append(Text("\(viewModel.currentCapacity)%")) }
+        if showChargingStatus { append(Text(Image(systemName: viewModel.isCharging ? "bolt.fill" : "bolt.slash.fill"))) }
+        if iconLowPowerColor { append(Text(Image(systemName: "circle.fill")).foregroundColor(.orange)) }
         
-        if showTemperature { str = str + Text(Image(systemName: "thermometer")) + Text(String(format: " %.0f°C", viewModel.temperature)) + space }
-        if showTimeRemaining { str = str + Text(Image(systemName: "clock")) + Text(" 2:30") + space }
-        if showAmperage { str = str + Text(Image(systemName: "a.square")) + Text(String(format: " %.1fA", Double(abs(viewModel.amperage)) / 1000.0)) + space }
-        if showVoltage { str = str + Text(Image(systemName: "v.square")) + Text(String(format: " %.1fV", Double(viewModel.voltage) / 1000.0)) + space }
-        if showWattage { str = str + Text(Image(systemName: "bolt.fill")) + Text(String(format: " %.1fW", viewModel.batteryData.adapter?.realTimeWatts ?? 0.0)) + space }
-        if showSystemLoad { str = str + Text(Image(systemName: "laptopcomputer")) + Text(String(format: " %.1fW", abs(Double(viewModel.voltage) * Double(viewModel.amperage) / 1_000_000.0))) + space }
+        if showMaxCapacity { append(Text(Image(systemName: "stethoscope")) + Text(" \(viewModel.batteryData.maxCapacity)")) }
+        if showMacOSCapacity { append(Text(Image(systemName: "info.circle")) + Text(" \(viewModel.currentCapacity)%")) }
+        if showMacOSCondition { append(Text(Image(systemName: "cross.case")) + Text(" 正常")) }
+        if showCycles { append(Text(Image(systemName: "arrow.3.path")) + Text(" \(viewModel.cycleCount)")) }
         
-        if showAdapterCurrent { str = str + Text(Image(systemName: "powerplug")) + Text(String(format: " %.1fA", viewModel.batteryData.adapter?.activeProfile?.maxCurrent ?? 0.0)) + space }
-        if showAdapterVoltage { str = str + Text(Image(systemName: "v.square")) + Text(String(format: " %.1fV", viewModel.batteryData.adapter?.activeProfile?.maxVoltage ?? 0.0)) + space }
-        if showAdapterPower { str = str + Text(Image(systemName: "bolt.fill")) + Text(String(format: " %.0fW", viewModel.batteryData.adapterWatts)) + space }
+        if showTemperature { append(Text(Image(systemName: "thermometer")) + Text(String(format: " %.0f°C", viewModel.temperature))) }
+        if showTimeRemaining { append(Text(Image(systemName: "clock")) + Text(" 2:30")) }
+        if showAmperage { append(Text(Image(systemName: "a.square")) + Text(String(format: " %.1fA", Double(abs(viewModel.amperage)) / 1000.0))) }
+        if showVoltage { append(Text(Image(systemName: "v.square")) + Text(String(format: " %.1fV", Double(viewModel.voltage) / 1000.0))) }
+        if showWattage { append(Text(Image(systemName: "bolt.fill")) + Text(String(format: " %.1fW", viewModel.batteryData.adapter?.realTimeWatts ?? 0.0))) }
+        if showSystemLoad { append(Text(Image(systemName: "laptopcomputer")) + Text(String(format: " %.1fW", abs(Double(viewModel.voltage) * Double(viewModel.amperage) / 1_000_000.0)))) }
         
-        if showAlDenteCalibration { str = str + Text(Image(systemName: "slider.vertical.3")) + space }
-        if showAlDenteOverheat { str = str + Text(Image(systemName: "flame")) + space }
-        if showAlDenteSailing { str = str + Text(Image(systemName: "paperplane")) + space }
-        if showAlDenteFull { str = str + Text(Image(systemName: "plus.circle")) + space }
+        if showAdapterCurrent { append(Text(Image(systemName: "powerplug")) + Text(String(format: " %.1fA", viewModel.batteryData.adapter?.activeProfile?.maxCurrent ?? 0.0))) }
+        if showAdapterVoltage { append(Text(Image(systemName: "v.square")) + Text(String(format: " %.1fV", viewModel.batteryData.adapter?.activeProfile?.maxVoltage ?? 0.0))) }
+        if showAdapterPower { append(Text(Image(systemName: "bolt.fill")) + Text(String(format: " %.0fW", viewModel.batteryData.adapterWatts))) }
         
-        return str.font(.system(.body, design: .rounded).monospacedDigit())
+        if showAlDenteCalibration { append(Text(Image(systemName: "slider.vertical.3"))) }
+        if showAlDenteOverheat { append(Text(Image(systemName: "flame"))) }
+        if showAlDenteSailing { append(Text(Image(systemName: "paperplane"))) }
+        if showAlDenteFull { append(Text(Image(systemName: "plus.circle"))) }
+        
+        return str ?? Text("")
     }
 
 }

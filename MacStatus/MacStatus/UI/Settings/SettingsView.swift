@@ -420,7 +420,7 @@ struct DashboardSettingsView: View {
                     // Left Column
                     VStack(spacing: 20) {
                         // 电池规格 Card
-                        DashboardCard(title: "电池规格", icon: "bolt.fill") {
+                        DashboardCard(title: "电池规格", icon: "bolt.fill", iconColor: .blue) {
                             VStack(spacing: 12) {
                                 DataRow(label: "Current", value: String(format: "%.2f A", Double(batteryData.amperage) / 1000.0))
                                 DataRow(label: "Voltage", value: String(format: "%.2f V", Double(batteryData.voltage) / 1000.0))
@@ -431,7 +431,7 @@ struct DashboardSettingsView: View {
                         }
                         
                         // 电源适配器规格 Card
-                        DashboardCard(title: "电源适配器规格", icon: "powerplug.fill") {
+                        DashboardCard(title: "电源适配器规格", icon: "powerplug.fill", iconColor: .teal) {
                             VStack(spacing: 12) {
                                 let maxC = batteryData.adapter?.activeProfile?.maxCurrent ?? 0
                                 let maxV = batteryData.adapter?.activeProfile?.maxVoltage ?? 0
@@ -446,7 +446,7 @@ struct DashboardSettingsView: View {
                     // Right Column
                     VStack(spacing: 20) {
                         // 电池健康 Card
-                        DashboardCard(title: "电池健康", icon: "heart.fill") {
+                        DashboardCard(title: "电池健康", icon: "heart.fill", iconColor: .red) {
                             VStack(spacing: 12) {
                                 DataRow(label: "Design Capacity", value: "\(batteryData.designCapacity) mAh")
                                 DataRow(label: "Maximum Capacity", value: "\(batteryData.maxCapacity) mAh")
@@ -463,17 +463,20 @@ struct DashboardSettingsView: View {
                     DashboardSimpleCard(
                         title: "Battery Level", 
                         value: "\(batteryData.maxCapacity > 0 ? Int((Double(batteryData.currentCapacity) / Double(batteryData.maxCapacity)) * 100) : 0) %", 
-                        icon: batteryData.maxCapacity > 0 ? "battery.100" : "battery.0"
+                        icon: batteryData.maxCapacity > 0 ? "battery.100" : "battery.0",
+                        iconColor: .green
                     )
                     DashboardSimpleCard(
                         title: "Battery Temperature", 
                         value: batteryData.temperature > 0 ? String(format: "%.1f°C", batteryData.temperature) : "--", 
-                        icon: "thermometer"
+                        icon: "thermometer",
+                        iconColor: .orange
                     )
                     DashboardSimpleCard(
                         title: "Charging State", 
                         value: batteryData.isCharging ? "Charging" : "Discharging", 
-                        icon: batteryData.isCharging ? "bolt.fill" : "battery.25"
+                        icon: batteryData.isCharging ? "bolt.fill" : "battery.25",
+                        iconColor: batteryData.isCharging ? .yellow : .blue
                     )
                 }
             }
@@ -494,11 +497,13 @@ struct DashboardSettingsView: View {
 struct DashboardCard<Content: View>: View {
     let title: String
     let icon: String
+    let iconColor: Color
     let content: Content
     
-    init(title: String, icon: String, @ViewBuilder content: () -> Content) {
+    init(title: String, icon: String, iconColor: Color, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
+        self.iconColor = iconColor
         self.content = content()
     }
     
@@ -507,7 +512,7 @@ struct DashboardCard<Content: View>: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(iconColor)
                 Text(LocalizedStringKey(title))
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
@@ -526,24 +531,34 @@ struct DashboardSimpleCard: View {
     let title: String
     let value: String
     let icon: String
+    let iconColor: Color
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(LocalizedStringKey(title))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.secondary)
-            
-            HStack(alignment: .bottom) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-                Spacer()
+        HStack(spacing: 14) {
+            // Colored Icon Badge
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(iconColor)
             }
+            
+            // Text Group
+            VStack(alignment: .leading, spacing: 4) {
+                Text(LocalizedStringKey(title))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                
+                Text(value)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+            
+            Spacer(minLength: 0)
         }
-        .padding(20)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
