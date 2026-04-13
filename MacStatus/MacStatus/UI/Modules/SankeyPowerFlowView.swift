@@ -18,13 +18,15 @@ struct SankeyPowerFlowView: View {
                         // System Path
                         let totalSource = max(powerFlow.adapterPower, 0.1)
                         let sysFlowWatts = powerFlow.systemPower
-                        let sysFraction = sysFlowWatts / totalSource
+                        let batChargeWatts = max(powerFlow.batteryPower, 0.0)
+                        let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
+                        let sysFraction = sysFlowWatts / effectiveTotalForFractions
+                        let batFraction = batChargeWatts / effectiveTotalForFractions
                         
                         let topHeight = 35.0 + 35.0 * sysFraction
                         
-                        HStack(spacing: -12) {
+                        HStack(alignment: .top, spacing: -12) {
                             let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
-                            let batFraction = powerFlow.batteryPower / totalSource
                             let botThick = max(12.0, CGFloat(batFraction) * 40.0)
                             let globalConvergence = topHeight + 6.0
                             
@@ -39,16 +41,15 @@ struct SankeyPowerFlowView: View {
                             )
                             .zIndex(0)
                             
-                            NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
+                            NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary, stretchHeight: true)
                                 .zIndex(1)
                         }
                         .frame(height: topHeight)
                         
                         // Battery Path
-                        if powerFlow.batteryPower > 0.1 {
-                            let batFraction = powerFlow.batteryPower / totalSource
+                        if batChargeWatts > 0.1 {
                             let botHeight = 35.0 + 35.0 * batFraction
-                            HStack(spacing: -12) {
+                            HStack(alignment: .bottom, spacing: -12) {
                                 let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
                                 let botThick = max(12.0, CGFloat(batFraction) * 40.0)
                                 let globalConvergence = topHeight + 6.0
@@ -64,7 +65,7 @@ struct SankeyPowerFlowView: View {
                                 )
                                 .zIndex(0)
                                 
-                                NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
+                                NodePill(icon: "battery.100.bolt", value: "\(Int(batChargeWatts))W", iconColor: .green, isSubNode: false, stretchHeight: true)
                                     .zIndex(1)
                             }
                             .frame(height: botHeight)
@@ -85,8 +86,8 @@ struct SankeyPowerFlowView: View {
                             let botHeight = 35.0 + 35.0 * batFraction
                             let globalConvergence = topHeight + 6.0
                             
-                            HStack(spacing: -12) {
-                                NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
+                            HStack(alignment: .top, spacing: -12) {
+                                NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
                                     .zIndex(1)
                                 ThickFlowBlock(
                                     watts: powerFlow.adapterPower,
@@ -99,8 +100,8 @@ struct SankeyPowerFlowView: View {
                                 ).zIndex(0)
                             }.frame(height: topHeight)
                             
-                            HStack(spacing: -12) {
-                                NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
+                            HStack(alignment: .bottom, spacing: -12) {
+                                NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: false, stretchHeight: true)
                                     .zIndex(1)
                                 ThickFlowBlock(
                                     watts: powerFlow.batteryPower,
@@ -162,7 +163,7 @@ struct NodePill: View {
         }
         .padding(.vertical, 8)
         .frame(width: 60)
-        .frame(height: stretchHeight ? nil : (isSubNode ? 35 : 70))
+        .frame(height: stretchHeight ? nil : 70)
         .frame(maxHeight: stretchHeight ? .infinity : nil)
         .background(
             RoundedRectangle(cornerRadius: 12)
