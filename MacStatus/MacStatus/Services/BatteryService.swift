@@ -17,6 +17,7 @@ struct AdapterInfo {
     var id: Int
     var familyCode: Int
     var name: String
+    var manufacturer: String?
     var designWatts: Int
     var realTimeWatts: Double // Real-time intake from PMU
     var activeProfileIndex: Int
@@ -121,7 +122,8 @@ class BatteryService {
                         data.adapter = AdapterInfo(
                             id: adapterDetails["AdapterID"] as? Int ?? 0,
                             familyCode: adapterDetails["FamilyCode"] as? Int ?? 0,
-                            name: adapterDetails["Description"] as? String ?? "Unknown",
+                            name: adapterDetails["Name"] as? String ?? adapterDetails["Description"] as? String ?? "Unknown",
+                            manufacturer: adapterDetails["Manufacturer"] as? String,
                             designWatts: data.adapterWatts,
                             realTimeWatts: realTimeIntake,
                             activeProfileIndex: adapterDetails["UsbHvcHvcIndex"] as? Int ?? 0,

@@ -47,7 +47,12 @@ struct CardsPowerFlowView: View {
                         if let adapter = batteryData?.adapter {
                             details.append("峰值: \(adapter.designWatts)W")
                             if let pd = adapter.activeProfile {
-                                details.append("协议: \(Int(pd.maxVoltage))V/\(Int(pd.maxCurrent))A")
+                                let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
+                                let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
+                                details.append("协议: \(vStr)V/\(cStr)A")
+                            }
+                            if let mfg = adapter.manufacturer, !mfg.isEmpty {
+                                details.append("厂商: \(mfg)")
                             }
                             details.append("FmCode: \(adapter.familyCode)")
                         }
@@ -56,8 +61,9 @@ struct CardsPowerFlowView: View {
                     return []
                 }()
                 
+                let adapterTitle = batteryData?.adapter?.name ?? "适配器"
                 card(icon: "powerplug.fill", 
-                     title: "适配器", 
+                     title: adapterTitle, 
                      power: hasAdapter ? powerFlow.adapterPower : -1, 
                      color: (hasAdapter && !powerFlow.isDischarging) ? .blue : .secondary.opacity(0.5), 
                      details: adapterDetails)
@@ -195,6 +201,8 @@ struct CardsPowerFlowView: View {
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primary.opacity(0.9))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                     .padding(.top, 4)
                 
                 // Details List

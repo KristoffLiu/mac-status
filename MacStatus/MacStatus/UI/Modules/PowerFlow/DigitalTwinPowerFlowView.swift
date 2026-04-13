@@ -11,9 +11,9 @@ struct DigitalTwinPowerFlowView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            HStack(spacing: 40) {
+            HStack(spacing: 0) { // Seamless integrated connection
                 
-                // 1. 3D 物理适配器 (Power Adapter)
+                // 1. 适配器 (Power Adapter)
                 VStack {
                     Spacer()
                     MacAdapter3DView(
@@ -21,32 +21,31 @@ struct DigitalTwinPowerFlowView: View {
                         hasAdapter: powerFlow.adapterPower > 2,
                         adapterName: batteryData?.adapter?.name
                     )
-                    // 透视浮动动画
-                    .rotation3DEffect(
-                        .degrees(15 + adapterRotation),
-                        axis: (x: 0.2, y: 1.0, z: 0)
-                    )
+                    .scaleEffect(adapterRotation != 0 ? 1.05 : 1.0)
                     .onHover { hover in
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                            adapterRotation = hover ? -15 : 0
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                            adapterRotation = hover ? 1 : 0
                         }
                     }
                     Spacer()
                 }
-                .frame(width: 100)
-                .zIndex(2)
+                .frame(width: 65)
+                .zIndex(2) // Ensure it clips the wire
                 
-                // 2. 3D 立体线缆 (Hanging Wire)
+                // 2. 能量连线 (Energy Wire)
                 EnergyWire3D(
                     isActive: powerFlow.adapterPower > 2,
                     phase: flowPhase,
-                    isAnimated: isAnimated
+                    isAnimated: isAnimated,
+                    isCharging: powerFlow.isCharging,
+                    batteryLevel: batteryData?.currentCapacity ?? 0
                 )
-                .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: 60)
-                .offset(x: -20, y: 15) // align with adapter port and mac side
-                .zIndex(1)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Overlap perfectly to embed into the ports
+                .padding(.horizontal, -1)
+                .zIndex(1) // Goes behind adapter and macbook
                 
-                // 3. 3D 开合 MacBook (MacBook Twin)
+                // 3. 开合 MacBook (MacBook Twin)
                 VStack {
                     Spacer()
                     MacBook3DView(
@@ -58,8 +57,8 @@ struct DigitalTwinPowerFlowView: View {
                     )
                     Spacer()
                 }
-                .frame(width: 200)
-                .zIndex(2)
+                .frame(width: 180)
+                .zIndex(2) // Ensure it clips the wire
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 20)
@@ -90,75 +89,85 @@ struct MacAdapter3DView: View {
     var adapterName: String?
     
     var body: some View {
-        ZStack {
-            // Shadow Drop corresponding to the 3D tilt
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.15))
-                .frame(width: 70, height: 70)
-                .offset(x: 10, y: 15)
-                .blur(radius: 6)
+        ZStack(alignment: .center) {
+            // Shadow Drop
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.black.opacity(0.12))
+                .frame(width: 54, height: 54)
+                .offset(y: 3)
+                .blur(radius: 5)
             
-            // Base Block (The Charger Brick)
-            ZStack {
-                // Back depth face
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(white: 0.85))
-                    .frame(width: 70, height: 70)
-                    .offset(x: 4, y: 0)
-                
-                // Main front face
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white, Color(white: 0.95)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
+            // Base Block (The Charger Brick - Sleek Orthogonal)
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white, Color(white: 0.95)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
                     )
-                    .frame(width: 70, height: 70)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white, lineWidth: 1) // Highlighting edge
-                    )
-                
-                // Details on front face
-                if hasAdapter {
-                    VStack(spacing: 2) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(white: 0.8))
-                        
-                        Text("\(Int(power))W")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(white: 0.4))
-                    }
-                } else {
-                    Image(systemName: "powerplug")
-                        .font(.system(size: 24))
-                        .foregroundColor(Color(white: 0.8))
+                )
+                .frame(width: 54, height: 54)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.white, lineWidth: 1.5)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(white: 0.85), lineWidth: 0.5)
+                )
+            
+            // Apple style separation line for the AC plug head
+            HStack {
+                Rectangle().fill(Color(white: 0.85)).frame(width: 1)
+                Spacer()
+            }
+            .frame(width: 54, height: 54)
+            .padding(.leading, 15) // Positioned near the prongs
+            .mask(RoundedRectangle(cornerRadius: 6))
+            
+            // Details on front face
+            if hasAdapter {
+                VStack(spacing: 2) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(white: 0.7))
+                    
+                    Text("\(Int(power))W")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(white: 0.4))
                 }
+                .offset(x: 4) // adjust rightward to clear plug line
+            } else {
+                Image(systemName: "powerplug")
+                    .font(.system(size: 18))
+                    .foregroundColor(Color(white: 0.8))
             }
             
-            // Metal Prongs (Wall side)
-            HStack(spacing: 8) {
+            if hasAdapter {
+                // Duckhead Base Block
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(
-                        LinearGradient(colors: [Color(white: 0.9), Color(white: 0.6)], startPoint: .top, endPoint: .bottom)
-                    )
-                    .frame(width: 6, height: 16)
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(
-                        LinearGradient(colors: [Color(white: 0.9), Color(white: 0.6)], startPoint: .top, endPoint: .bottom)
-                    )
-                    .frame(width: 6, height: 16)
+                    .fill(Color(white: 0.98))
+                    .frame(width: 8, height: 22) // More compact
+                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(Color(white: 0.88), lineWidth: 0.5))
+                    .offset(x: -29, y: -8) // Authentic off-center top positioning
+                
+                // Metal Prongs (Wall side - Flat Horizontal Plates)
+                VStack(spacing: 5) {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.6)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 14, height: 3)
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.6)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 14, height: 3)
+                }
+                .offset(x: -40, y: -8) // Matches the duckhead height
             }
-            .offset(x: -38, y: 0) // Left side
-            .rotation3DEffect(.degrees(15), axis: (x: 0, y: 1, z: 0))
             
             // Port side (USB-C cutout)
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color(white: 0.3))
-                .frame(width: 6, height: 20)
-                .offset(x: 35, y: 0) // Right side
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color(white: 0.9))
+                .frame(width: 4, height: 10)
+                .overlay(RoundedRectangle(cornerRadius: 1).stroke(Color(white: 0.7), lineWidth: 0.5))
+                .offset(x: 27) // Snaps beautifully onto the right edge
         }
         .opacity(hasAdapter ? 1.0 : 0.4)
     }
@@ -175,8 +184,10 @@ struct MacBook3DView: View {
     @Binding var isOpen: Bool
     
     var body: some View {
-        VStack(spacing: 0) { // Sharing the exact centerline
-            // 1. The Screen Lid
+        // Deep drop-hinge using Bottom ZStack anchoring!
+        // This flawlessly overlaps the Lid and the Base at their absolute bottom edges.
+        ZStack(alignment: .bottom) {
+            // The Screen Lid
             MacBookScreenLid(
                 systemPower: systemPower,
                 batteryPower: batteryPower,
@@ -184,31 +195,23 @@ struct MacBook3DView: View {
                 isCharging: isCharging,
                 isOpen: isOpen
             )
-            // HERO HINGE: 0 = Face-on. -180 = Folded correctly downwards.
+            // Screen folds forward to hover over the invisible keyboard
+            // By using perspective: 0.0, we use a perfect orthographic projection.
+            // When it reaches 90 degrees, it has exactly 0 pixel visual height and vanishes flawlessly!
             .rotation3DEffect(
-                .degrees(isOpen ? 0 : -180), 
+                .degrees(isOpen ? 0 : -90), 
                 axis: (x: 1, y: 0, z: 0),
                 anchor: .bottom,
-                perspective: 0.3
+                perspective: 0.0
             )
-            .zIndex(2) // ensure screen renders over keyboard when folded
+            .zIndex(1) // Lid dips BEHIND the chassis front lip
             
-            // 2. The Bottom Chassis (Hero profile - Flat elegant vector)
+            // The Bottom Chassis 
+            // Stays perfectly static! It visually covers the bottom 9 points of the Screen Lid,
+            // creating an authentic MacBook Drop-Hinge effect.
             MacBookKeyboardBase()
-            // THE FIX: The base lip used to stay glued to the hinge when closed, making the entire laptop look upside down or backwards!
-            // Now, when the 90pt screen folds down into the empty space, we physically slide the front lip down 90 points to catch it perfectly!
-            .offset(y: isOpen ? 0 : 90)
-            .zIndex(1)
+            .zIndex(2) // Lip is always conceptually closer to the viewer
         }
-        // DYNAMIC GLOBAL TILT
-        // Open: 0 tilt, perfect straight-on hero shot.
-        // Closed: Tilt global to properly display the top shell and the perfectly caught lip.
-        .rotation3DEffect(
-            .degrees(isOpen ? 0 : -30), 
-            axis: (x: 1, y: 0, z: 0),
-            anchor: .center,
-            perspective: 0.5
-        )
         .onTapGesture {
             withAnimation(.spring(response: 0.7, dampingFraction: 0.75)) {
                 isOpen.toggle()
@@ -238,20 +241,20 @@ struct MacBookKeyboardBase: View {
                         startPoint: .top, endPoint: .bottom
                     )
                 )
-                .frame(width: 140, height: 7)
+                .frame(width: 180, height: 9)
                 // Subtle grounding shadow
                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
             
             // Thumb Notch for opening
-            RoundedRectangle(cornerRadius: 1, style: .continuous)
+            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [Color(white: 0.5), Color(white: 0.3)],
                         startPoint: .top, endPoint: .bottom
                     )
                 )
-                .frame(width: 26, height: 2)
-                .offset(y: 1)
+                .frame(width: 32, height: 2)
+                .offset(y: 1.5)
         }
     }
 }
@@ -266,76 +269,70 @@ struct MacBookScreenLid: View {
     
     var body: some View {
         ZStack {
-            // A Plane (Lid Top) - Metal
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            // A Plane (Lid Back) - Metal - Sharper corners
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [Color(white: 0.7), Color(white: 0.5)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 140, height: 90)
-            
-            // Apple Logo (Outside)
-            Image(systemName: "applelogo")
-                .font(.system(size: 26))
-                .foregroundColor(Color.white.opacity(0.6))
-                // Because lid folds -180 degrees backwards, it's upside down!
-                .rotationEffect(.degrees(180))
-                .opacity(isOpen ? 0 : 1) // only visible when closed
+                .frame(width: 180, height: 116)
             
             // Display Plane (Inside)
             if isOpen {
                 ZStack {
                     // Bezel
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.black)
-                        .frame(width: 136, height: 86)
+                        .frame(width: 174, height: 110)
+                        .offset(y: -1) // nudge up slightly to clear the drop hinge Overlap
                     
                     let bgGrad = LinearGradient(
                         colors: [Color(white: 0.1), Color(white: 0.2)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                     
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(bgGrad)
-                        .frame(width: 130, height: 80)
+                        .frame(width: 168, height: 104)
+                        .offset(y: -1)
                     
                     // Inspired by user's M3 wallapper: Dynamic floating vertical capsules
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         // System Capsule
                         Capsule()
                             .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.6)], startPoint: .top, endPoint: .bottom))
-                            .frame(width: 24, height: CGFloat(max(30, min(70, 30 + systemPower * 0.8))))
+                            .frame(width: 28, height: CGFloat(max(30, min(80, 30 + systemPower * 0.8))))
                         
                         // Battery Capsule
                         let batCol: [Color] = isCharging ? [.green.opacity(0.8), .mint.opacity(0.6)] : [.blue.opacity(0.5), .purple.opacity(0.4)]
                         Capsule()
                             .fill(LinearGradient(colors: batCol, startPoint: .top, endPoint: .bottom))
-                            .frame(width: 24, height: CGFloat(max(20, min(70, 70 * Double(batteryLevel) / 100.0))))
+                            .frame(width: 28, height: CGFloat(max(20, min(80, 80 * Double(batteryLevel) / 100.0))))
                     }
                     
                     // Holographic UI Overlay on vertical capsules
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         VStack(spacing: 4) {
                             Image(systemName: "cpu")
-                                .font(.system(size: 10))
+                                .font(.system(size: 11))
                                 .foregroundColor(.white)
                             Text("\(String(format: "%.0f", systemPower))W")
-                                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                .font(.system(size: 11, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
                         }
-                        .frame(width: 30)
+                        .frame(width: 34)
                         
                         VStack(spacing: 4) {
                             Image(systemName: "battery.100")
-                                .font(.system(size: 10))
+                                .font(.system(size: 11))
                                 .foregroundColor(.white)
                             Text("\(batteryLevel)%")
-                                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                .font(.system(size: 11, weight: .heavy, design: .rounded))
                                 .foregroundColor(.white)
                         }
-                        .frame(width: 30)
+                        .frame(width: 34)
                     }
                     .shadow(color: .black.opacity(0.5), radius: 2)
                 }
@@ -351,45 +348,84 @@ struct EnergyWire3D: View {
     var isActive: Bool
     var phase: CGFloat
     var isAnimated: Bool
+    var isCharging: Bool
+    var batteryLevel: Int
     
     var body: some View {
         GeometryReader { geometry in
+            // Coordinates tight to the boundaries, allowing the ZStack positioning to handle overlap visually.
+            // Mac Base center offset from geometry vertical center is 54 points down.
+            let start = CGPoint(x: 2, y: geometry.size.height / 2) // Snug into adapter's Type-C port
+            let end = CGPoint(x: geometry.size.width - 2, y: geometry.size.height / 2 + 54) // Hits directly on Mac KeyboardBase port
+            
+            // To ensure the connection enters perfectly straight at the end:
+            // MUST set `control2.y == end.y` so the approach tangent is purely horizontal!
+            let control1 = CGPoint(x: geometry.size.width * 0.4, y: start.y + 10)
+            let control2 = CGPoint(x: geometry.size.width * 0.75, y: end.y)
+            
             ZStack {
-                // Suspended 3D Wire Path
+                // Suspended Wire Path
                 Path { path in
-                    path.move(to: CGPoint(x: 0, y: geometry.size.height / 2))
-                    path.addQuadCurve(
-                        to: CGPoint(x: geometry.size.width, y: geometry.size.height - 10),
-                        control: CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
-                    )
+                    path.move(to: start)
+                    path.addCurve(to: end, control1: control1, control2: control2)
                 }
                 .stroke(
-                    Color.gray.opacity(0.3),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    Color(white: 0.8),
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
                 
                 // Flowing energy core
                 if isActive {
                     Path { path in
-                        path.move(to: CGPoint(x: 0, y: geometry.size.height / 2))
-                        path.addQuadCurve(
-                            to: CGPoint(x: geometry.size.width, y: geometry.size.height - 10),
-                            control: CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
-                        )
+                        path.move(to: start)
+                        path.addCurve(to: end, control1: control1, control2: control2)
                     }
                     .stroke(
-                        Color.blue,
+                        LinearGradient(colors: [.blue.opacity(0.8), .cyan], startPoint: .leading, endPoint: .trailing),
                         style: StrokeStyle(
-                            lineWidth: 2,
+                            lineWidth: 2.5,
                             lineCap: .round,
-                            dash: [8, 12],
+                            dash: [12, 10],
                             dashPhase: phase
                         )
                     )
-                    .shadow(color: .blue.opacity(0.8), radius: 3)
+                    .shadow(color: .blue.opacity(0.6), radius: 3)
+                    
+                    // Type-C Head (Start)
+                    ZStack {
+                        Rectangle()
+                            .fill(Color(white: 0.85))
+                            .frame(width: 4, height: 4)
+                            .offset(x: 4) // strain relief
+                        
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color(white: 0.75))
+                            .frame(width: 8, height: 6)
+                            .offset(x: -2) // metal shell sinks into port
+                    }
+                    .position(x: start.x, y: start.y)
+                    
+                    // MagSafe 3 Head (End)
+                    ZStack {
+                        Rectangle()
+                            .fill(Color(white: 0.85))
+                            .frame(width: 4, height: 4)
+                            .offset(x: -8) // strain relief
+                            
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(Color(white: 0.85))
+                            .frame(width: 12, height: 7)
+                            .overlay(RoundedRectangle(cornerRadius: 1.5).stroke(Color(white: 0.75), lineWidth: 0.5))
+                        
+                        // LED Indicator inside MagSafe connector
+                        let ledColor: Color = (batteryLevel >= 100 && !isCharging) ? .green : .orange
+                        Circle()
+                            .fill(ledColor)
+                            .frame(width: 2.5, height: 2.5)
+                    }
+                    .position(x: end.x, y: end.y)
                 }
             }
-            .rotation3DEffect(.degrees(10), axis: (x: 1, y: 0, z: 0)) // Give wire some X-axis depth
         }
     }
 }
