@@ -250,8 +250,7 @@ struct ThickFlowBlock: View {
                 .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
                 .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .frame(height: baseHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .onAppear {
             phase = 1.0
         }
@@ -306,22 +305,24 @@ struct WatchBandShape: Shape {
         var rightTopY = defaultRightTopY
         var rightBotY = defaultRightBotY
         
+        let mergeSpread = safeThick * 1.5 + 12.0
+        
         // Apply Left merges
         if mergeMode == .topMerge, let convergence = localConvergenceY {
             leftBotY = convergence
-            leftTopY = leftBotY - safeThick - 16.0
+            leftTopY = convergence - mergeSpread // Expands dynamically to form a visually substantial Y-fork
         } else if mergeMode == .bottomMerge, let convergence = localConvergenceY {
             leftTopY = convergence
-            leftBotY = leftTopY + safeThick + 16.0
+            leftBotY = convergence + mergeSpread
         }
         
         // Apply Right merges
         if mergeMode == .rightTopMerge, let convergence = localConvergenceY {
             rightBotY = convergence
-            rightTopY = rightBotY - safeThick - 16.0
+            rightTopY = convergence - mergeSpread
         } else if mergeMode == .rightBottomMerge, let convergence = localConvergenceY {
             rightTopY = convergence
-            rightBotY = rightTopY + safeThick + 16.0
+            rightBotY = convergence + mergeSpread
         }
         
         path.move(to: CGPoint(x: 0, y: leftTopY))
