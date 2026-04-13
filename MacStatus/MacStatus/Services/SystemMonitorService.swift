@@ -280,8 +280,8 @@ class SystemMonitorService: ObservableObject {
 
         let now = Date()
         let dt  = max(0.1, now.timeIntervalSince(prevNetTimestamp))
-        let downKBps = prevNetDown  > 0 ? Double(totalIn  - prevNetDown)  / dt / 1024.0 : 0
-        let upKBps   = prevNetUp    > 0 ? Double(totalOut - prevNetUp)    / dt / 1024.0 : 0
+        let downKBps = (prevNetDown > 0 && totalIn >= prevNetDown) ? Double(totalIn - prevNetDown) / dt / 1024.0 : 0
+        let upKBps   = (prevNetUp > 0 && totalOut >= prevNetUp) ? Double(totalOut - prevNetUp) / dt / 1024.0 : 0
         prevNetDown = totalIn; prevNetUp = totalOut; prevNetTimestamp = now
 
         return NetResult(up: max(0, upKBps), down: max(0, downKBps))
@@ -316,8 +316,8 @@ class SystemMonitorService: ObservableObject {
 
         let now = Date()
         let dt  = max(0.1, now.timeIntervalSince(prevDiskTimestamp))
-        let readMBps  = prevDiskRead  > 0 ? Double(totalRead  - prevDiskRead)  / dt / 1_048_576.0 : 0
-        let writeMBps = prevDiskWrite > 0 ? Double(totalWrite - prevDiskWrite) / dt / 1_048_576.0 : 0
+        let readMBps  = (prevDiskRead > 0 && totalRead >= prevDiskRead) ? Double(totalRead - prevDiskRead) / dt / 1_048_576.0 : 0
+        let writeMBps = (prevDiskWrite > 0 && totalWrite >= prevDiskWrite) ? Double(totalWrite - prevDiskWrite) / dt / 1_048_576.0 : 0
         prevDiskRead = totalRead; prevDiskWrite = totalWrite; prevDiskTimestamp = now
 
         return DiskResult(read: max(0, readMBps), write: max(0, writeMBps))

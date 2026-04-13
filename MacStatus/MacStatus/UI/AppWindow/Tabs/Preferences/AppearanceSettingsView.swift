@@ -140,7 +140,6 @@ struct WidgetOptionsSheet: View {
                     }
                     .padding()
                 }
-                .background(Color(NSColor.underPageBackgroundColor))
                 .frame(minHeight: 200)
             } else {
                 VStack(spacing: 0) {
@@ -151,7 +150,6 @@ struct WidgetOptionsSheet: View {
                     }
                     .padding()
                 }
-                .background(Color(NSColor.underPageBackgroundColor))
                 .frame(minHeight: 200)
             }
         }
@@ -170,20 +168,22 @@ struct SystemMonitorConfigView: View {
         HStack(spacing: 0) {
             // 左侧：独立的侧边栏式预览
             VStack {
+                Spacer()
+                
                 SystemMonitorModule()
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 20)
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
+                    .frame(width: 400)
+                    .padding(.top, 20)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 4) // 刻意缩减下边距以补偿视觉差异
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                
                 Spacer()
             }
-            .padding(20)
-            .frame(width: 320)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .frame(maxHeight: .infinity)
-            
-            Divider()
             
             // 右侧：偏好设置详情
             VStack(spacing: 0) {
@@ -212,6 +212,7 @@ struct SystemMonitorConfigView: View {
                     }
                 }
                 .formStyle(.grouped)
+                .scrollContentBackground(.hidden)
                 
                 HStack {
                     Spacer()
