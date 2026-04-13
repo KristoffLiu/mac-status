@@ -10,6 +10,7 @@ class SystemMonitorService: ObservableObject {
     @Published var cpuTotal: Double = 0.0         // average
     @Published var cpuUser: Double = 0.0
     @Published var cpuSystem: Double = 0.0
+    @Published var cpuHistory: [Double] = Array(repeating: 0, count: 60)
 
     // MARK: - Memory
     @Published var memUsedGB: Double = 0.0
@@ -102,6 +103,10 @@ class SystemMonitorService: ObservableObject {
                 self.cpuTemperature = temp
 
                 // --- History updates ---
+                // CPU total history
+                self.cpuHistory.removeFirst()
+                self.cpuHistory.append(min(1, max(0, cpu.total)))
+
                 // Memory pressure history
                 self.memHistory.removeFirst()
                 self.memHistory.append(min(1, max(0, mem.pressure)))

@@ -58,6 +58,16 @@ struct SystemMonitorModule: View {
 
                         // 正方形热力图
                         CPUHeatmapView(loads: service.coreLoads)
+                        
+                        // CPU历史走势方格矩阵
+                        PixelBarChartView(
+                            data: service.cpuHistory,
+                            maxRows: 8,
+                            baseColor: cpuTotalColor(service.cpuTotal),
+                            gap: 1.5
+                        )
+                        .frame(height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
                     }
                     .frame(maxWidth: .infinity, alignment: .top)
 
@@ -113,15 +123,15 @@ struct CPUHeatmapView: View {
     let loads: [Double]
 
     private var columns: [GridItem] {
-        // 使用 adaptive 自动排布格子，最小宽度设为 12 就会让格子变小
-        return [GridItem(.adaptive(minimum: 12, maximum: 16), spacing: 3)]
+        // 使用固定的 8pt 尺寸，确保与内存格子大小完全同步
+        return [GridItem(.adaptive(minimum: 8, maximum: 8), spacing: 2)]
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 3) {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 2) {
             ForEach(0..<loads.count, id: \.self) { i in
                 HeatCell(load: loads[i])
-                    .aspectRatio(1, contentMode: .fit)
+                    .frame(width: 8, height: 8)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: loads)
@@ -132,13 +142,13 @@ struct HeatCell: View {
     let load: Double
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
             .fill(cellColor)
             .overlay(
-                RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
                     .stroke(cellColor.opacity(0.3), lineWidth: 0.5)
             )
-            .shadow(color: load > 0.75 ? cellColor.opacity(0.55) : .clear, radius: 2.5)
+            .shadow(color: load > 0.75 ? cellColor.opacity(0.55) : .clear, radius: 1.5)
     }
 
     private var cellColor: Color {
@@ -161,23 +171,30 @@ struct PixelBarChartView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let c = data.count > 0 ? data.count : 1
-            let cellW = (geo.size.width - gap * CGFloat(max(c - 1, 0))) / CGFloat(c)
+            // 1. 我们基于高度决定单个正方形格子的尺寸
             let cellH = (geo.size.height - gap * CGFloat(max(maxRows - 1, 0))) / CGFloat(max(maxRows, 1))
-            let size = min(cellW, cellH) // 正方形
+            let size = cellH // 维持绝对的正方形视觉
             
-            // 居中偏移
+            // 2. 算出现在这个宽度下能塞下多少列（向上取整，以确保左边缘被完填满）
+            let maxCols = Int(ceil((geo.size.width + gap) / (size + gap)))
+            let cols = maxCols > 0 ? maxCols : 1
+            
+            // 3. 从数据末尾（最新）往前取对应数量，不够则全取
+            let visibleData = data.count > cols ? Array(data.suffix(cols)) : data
+            let c = visibleData.count > 0 ? visibleData.count : 1
+            
+            // 居右偏移（确保最新的波形一直咬着右边缘，左侧超出部分由负的offsetX切除）
             let totalW = size * CGFloat(c) + gap * CGFloat(max(c - 1, 0))
             let totalH = size * CGFloat(maxRows) + gap * CGFloat(max(maxRows - 1, 0))
-            let offsetX = (geo.size.width - totalW) / 2
+            let offsetX = geo.size.width - totalW
             let offsetY = (geo.size.height - totalH) / 2
 
-            // 根据数据动态确定最高刻度
-            let maxVal = max(data.max() ?? 10.0, 10.0)
+            // 数据已经在 service 中归一化为 0.0~1.0，所以满载刻度固定为 1.0
+            let maxVal = 1.0
 
             Canvas { ctx, _ in
                 for col in 0..<c {
-                    let v = data[col]
+                    let v = visibleData[col]
                     // 根据相对比例决定亮起几个格子
                     let ratio = v / maxVal
                     let fillRows = Int(ceil(ratio * Double(maxRows))) // ceil 确保有一点数据就会亮一格
@@ -214,8 +231,10 @@ struct MemMatrixCard: View {
         totalGB > 0 ? usedGB / totalGB : 0
     }
     
-    // 2行10列的格子，代表内存百分比
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 3), count: 10)
+    // 自动适配更小的格子排布，与 CPU 热力图保持绝对一致的大小
+    private var columns: [GridItem] {
+        return [GridItem(.adaptive(minimum: 6, maximum: 10), spacing: 2)]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -251,20 +270,38 @@ struct MemMatrixCard: View {
                     .foregroundColor(.secondary.opacity(0.65))
             }
 
-            // Line 3: 容量格子矩阵
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 3) {
-                ForEach(0..<20, id: \.self) { i in
-                    let threshold = Double(i) / 20.0
-                    let isActive = usedRatio > threshold
-                    RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-                        .fill(isActive ? pressureColor.opacity(0.8) : Color.primary.opacity(0.09))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-                                .stroke(isActive ? pressureColor.opacity(0.3) : Color.clear, lineWidth: 0.5)
-                        )
-                        .aspectRatio(1, contentMode: .fit)
+            // Line 3: 容量格子矩阵 (动态计算格子数量，完美撑满一行且近似正方形)
+            GeometryReader { geo in
+                let spacing: CGFloat = 2.0
+                let targetBlockW: CGFloat = 8.0 // 预期的方块宽度
+                let count = Int((geo.size.width + spacing) / (targetBlockW + spacing))
+                let c = max(count, 1)
+
+                HStack(spacing: spacing) {
+                    ForEach(0..<c, id: \.self) { i in
+                        let threshold = Double(i) / Double(c)
+                        let isActive = usedRatio > threshold
+                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                            .fill(isActive ? pressureColor.opacity(0.8) : Color.primary.opacity(0.09))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                    .stroke(isActive ? pressureColor.opacity(0.3) : Color.clear, lineWidth: 0.5)
+                            )
+                            .frame(width: targetBlockW, height: targetBlockW)
+                    }
                 }
             }
+            .frame(height: 8) // 锁定单行高度
+            
+            // 内存历史走势
+            PixelBarChartView(
+                data: history,
+                maxRows: 8,
+                baseColor: pressureColor,
+                gap: 1.5
+            )
+            .frame(height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -303,7 +340,7 @@ struct NetMatrixCard: View {
 
             // ↓ 下行条形图
             PixelBarChartView(
-                data: Array(downHistory.suffix(30)),
+                data: downHistory,
                 maxRows: 5,
                 baseColor: .cyan,
                 gap: 1.5
@@ -313,7 +350,7 @@ struct NetMatrixCard: View {
 
             // ↑ 上行条形图
             PixelBarChartView(
-                data: Array(upHistory.suffix(30)),
+                data: upHistory,
                 maxRows: 5,
                 baseColor: .green,
                 gap: 1.5
@@ -370,7 +407,7 @@ struct DiskMatrixCard: View {
 
             // 读条形图
             PixelBarChartView(
-                data: Array(readHistory.suffix(30)),
+                data: readHistory,
                 maxRows: 5,
                 baseColor: .yellow,
                 gap: 1.5
@@ -380,7 +417,7 @@ struct DiskMatrixCard: View {
 
             // 写条形图
             PixelBarChartView(
-                data: Array(writeHistory.suffix(30)),
+                data: writeHistory,
                 maxRows: 5,
                 baseColor: .orange,
                 gap: 1.5
