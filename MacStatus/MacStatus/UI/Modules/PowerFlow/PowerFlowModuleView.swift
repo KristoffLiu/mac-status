@@ -1,0 +1,186 @@
+import SwiftUI
+
+enum PowerFlowStyle: String, CaseIterable {
+    case sankey = "sankey"
+    case blocks = "blocks"
+}
+
+struct PowerFlowModuleView: View {
+    var powerFlow: PowerFlowData
+    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
+    
+    var body: some View {
+        switch style {
+        case .sankey:
+            SankeyPowerFlowView(powerFlow: powerFlow)
+        case .blocks:
+            BlockPowerFlowView(powerFlow: powerFlow)
+        }
+    }
+}
+
+// MARK: - Plugin Definition
+struct PowerFlowPlugin: AppWidgetPlugin {
+    let id = "powerFlow"
+    let name = "实时能耗流"
+    let icon = "bolt.horizontal"
+    let hasSettings = true
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(PowerFlowPluginContentView())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(PowerFlowConfigView())
+    }
+}
+
+private struct PowerFlowPluginContentView: View {
+    @EnvironmentObject var viewModel: StatusViewModel
+    
+    var body: some View {
+        PowerFlowModuleView(powerFlow: viewModel.powerFlow)
+    }
+}
+
+struct PowerFlowConfigView: View {
+    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
+    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var simSystemPower: Double = 25.0
+    @State private var simAdapterPower: Double = 65.0
+    @State private var simIsBatteryFull: Bool = false
+    @State private var isSimulatorExpanded: Bool = false
+    
+    var currentPreviewData: PowerFlowData {
+        var effectiveAdapterPower = simAdapterPower
+        
+        if simIsBatteryFull && effectiveAdapterPower > simSystemPower {
+            effectiveAdapterPower = simSystemPower
+        }
+        
+        let diff = effectiveAdapterPower - simSystemPower
+        let batteryWatts = abs(diff)
+        
+        if effectiveAdapterPower < 0.1 {
+            // 纯电池供电
+            return PowerFlowData(adapterPower: 0, batteryPower: simSystemPower, systemPower: simSystemPower, isCharging: false, isDischarging: true, topology: .topologyB, adapterVoltage: nil, adapterCurrent: nil)
+        } else if effectiveAdapterPower >= simSystemPower {
+            // 适配器供电充足：旁路 + 充电(或闲置)
+            let isCharging = !simIsBatteryFull && batteryWatts > 0.1
+            return PowerFlowData(adapterPower: effectiveAdapterPower, batteryPower: batteryWatts, systemPower: simSystemPower, isCharging: isCharging, isDischarging: false, topology: .topologyA, adapterVoltage: 20.0, adapterCurrent: effectiveAdapterPower / 20.0)
+        } else {
+            // 供电不足：电池与适配器混合供电
+            return PowerFlowData(adapterPower: effectiveAdapterPower, batteryPower: batteryWatts, systemPower: simSystemPower, isCharging: false, isDischarging: true, topology: .topologyB, adapterVoltage: 20.0, adapterCurrent: effectiveAdapterPower / 20.0)
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Form {
+                // 1. 预览区域与调节
+                Section {
+                    VStack(spacing: 0) {
+                        PowerFlowModuleView(powerFlow: currentPreviewData)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 8)
+                    }
+                    .frame(width: 400)
+                    .background(.regularMaterial)
+                    .cornerRadius(12)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    HStack {
+                        Label("预览调节", systemImage: "slider.horizontal.3")
+                        Spacer()
+                        Button("设置电源参数...") {
+                            isSimulatorExpanded.toggle()
+                        }
+                        .popover(isPresented: $isSimulatorExpanded, arrowEdge: .trailing) {
+                            simulatorPanelView()
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                
+                // 3. 视图选择
+                Section("显示样式") {
+                    Picker("样式", selection: $style) {
+                        Text("桑基图 (Sankey)").tag(PowerFlowStyle.sankey)
+                        Text("数据块 (Blocks)").tag(PowerFlowStyle.blocks)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                
+                // 4. 桑基图设置
+                if style == .sankey {
+                    Section("桑基图微调") {
+                        Toggle("播放流动动画", isOn: $isAnimated)
+                        Toggle("在管道上显示具体瓦数", isOn: $showValues)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            
+            HStack {
+                Spacer()
+                Button("完成") {
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding()
+        }
+        .frame(minHeight: 200)
+        .background(Color(NSColor.underPageBackgroundColor))
+    }
+    
+    @ViewBuilder
+    private func simulatorPanelView() -> some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("系统消耗")
+                    .frame(width: 80, alignment: .leading)
+                Slider(value: $simSystemPower, in: 2.0...120.0)
+                Text("\(Int(simSystemPower)) W")
+                    .frame(width: 45, alignment: .trailing)
+                    .monospacedDigit()
+            }
+            
+            HStack {
+                Text("适配器输入")
+                    .frame(width: 80, alignment: .leading)
+                Slider(value: $simAdapterPower, in: 0.0...140.0)
+                Text("\(Int(simAdapterPower)) W")
+                    .frame(width: 45, alignment: .trailing)
+                    .monospacedDigit()
+            }
+            
+            Toggle("电池已满电自动拒充", isOn: $simIsBatteryFull)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 2)
+            
+            let effectiveAdapterPower = (simIsBatteryFull && simAdapterPower > simSystemPower) ? simSystemPower : simAdapterPower
+            let batDiff = effectiveAdapterPower - simSystemPower
+            let batLabel = batDiff > 0.1 ? "电池充电" : (batDiff < -0.1 ? "电池输出" : "电池闲置")
+            
+            HStack {
+                Text(batLabel)
+                    .frame(width: 80, alignment: .leading)
+                Spacer()
+                Text("\(Int(abs(batDiff))) W")
+                    .frame(width: 45, alignment: .trailing)
+                    .monospacedDigit()
+            }
+            .foregroundColor(abs(batDiff) > 0.1 ? .secondary : .secondary.opacity(0.5))
+        }
+        .padding()
+        .frame(width: 320)
+    }
+}
+

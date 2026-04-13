@@ -734,32 +734,82 @@ struct GPUHeatmapView: View {
 }
 
 // MARK: - Plugin Definition & Settings
-struct SystemMonitorSettingsView: View {
+struct SystemMonitorConfigView: View {
     @AppStorage("sysMonShowCompute") private var showCompute = true
     @AppStorage("sysMonShowMemory") private var showMemory = true
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
-
+    @Environment(\.dismiss) var dismiss
+    
     var body: some View {
-        Form {
-            Section("组件显示") {
-                Toggle("计算资源 (CPU/GPU)", isOn: $showCompute)
-                Toggle("统一内存", isOn: $showMemory)
-                Toggle("网络与磁盘", isOn: $showNetDisk)
-            }
-            Divider()
-            Section("图表设置") {
-                Toggle("非对称网络/磁盘图表", isOn: $symmetricGraph)
-                VStack(alignment: .leading) {
-                    Text("像素间距: \(pixelGap, specifier: "%.1f")")
-                        .font(.caption)
-                    Slider(value: $pixelGap, in: 0...5, step: 0.5)
+        HStack(spacing: 0) {
+            // 左侧：独立的侧边栏式预览（可滚动容器禁止内部组件被拉伸）
+            ScrollView(showsIndicators: false) {
+                VStack {
+                    Spacer(minLength: 20)
+                    
+                    SystemMonitorModule()
+                        .frame(width: 400)
+                        .padding(.top, 20)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 4) // 刻意缩减下边距以补偿视觉差异
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                    
+                    Spacer(minLength: 20)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 472) // 480 - vertical.padding(4)*2，确保在非滚动时能完美居中
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(maxHeight: .infinity)
+            
+            // 右侧：偏好设置详情
+            VStack(spacing: 0) {
+                Form {
+                    Section("显示模块") {
+                        Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
+                        Toggle("统一内存", isOn: $showMemory)
+                        Toggle("网络与磁盘", isOn: $showNetDisk)
+                    }
+                    
+                    Section("图表样式 (网络与磁盘)") {
+                        Picker("走势图方向", selection: $symmetricGraph) {
+                            Text("正向堆叠").tag(false)
+                            Text("双向发散").tag(true)
+                        }
+                        .pickerStyle(.menu)
+                    }
+                    
+                    Section("全局图表渲染") {
+                        Picker("像素阵列间距", selection: $pixelGap) {
+                            Text("紧密集约 (1.0)").tag(1.0)
+                            Text("标准 (1.5)").tag(1.5)
+                            Text("呼吸松散 (2.5)").tag(2.5)
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+                .formStyle(.grouped)
+                .scrollContentBackground(.hidden)
+                
+                HStack {
+                    Spacer()
+                    Button("完成") {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                }
+                .padding()
+            }
+            .frame(width: 360)
+            .frame(maxHeight: .infinity)
         }
-        .padding(.vertical, 8)
-        .frame(width: 260)
+        .frame(height: 480)
+        .background(Color(NSColor.windowBackgroundColor))
     }
 }
 
@@ -776,7 +826,6 @@ struct SystemMonitorPlugin: AppWidgetPlugin {
     
     @MainActor
     var settingsView: AnyView {
-        AnyView(SystemMonitorSettingsView())
+        AnyView(SystemMonitorConfigView())
     }
 }
-
