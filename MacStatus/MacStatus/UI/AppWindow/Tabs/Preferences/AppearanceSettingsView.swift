@@ -140,7 +140,6 @@ struct WidgetOptionsSheet: View {
                     .padding()
                 }
                 .frame(minHeight: 200)
-                .background(Color(NSColor.underPageBackgroundColor))
             }
         }
     }

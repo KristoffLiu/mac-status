@@ -2,17 +2,21 @@ import SwiftUI
 
 enum PowerFlowStyle: String, CaseIterable {
     case sankey = "sankey"
+    case cards = "cards"
     case blocks = "blocks"
 }
 
 struct PowerFlowModuleView: View {
     var powerFlow: PowerFlowData
-    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
+    var batteryData: BatteryData?
+    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .cards
     
     var body: some View {
         switch style {
         case .sankey:
             SankeyPowerFlowView(powerFlow: powerFlow)
+        case .cards:
+            CardsPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
         case .blocks:
             BlockPowerFlowView(powerFlow: powerFlow)
         }
@@ -41,7 +45,7 @@ private struct PowerFlowPluginContentView: View {
     @EnvironmentObject var viewModel: StatusViewModel
     
     var body: some View {
-        PowerFlowModuleView(powerFlow: viewModel.powerFlow)
+        PowerFlowModuleView(powerFlow: viewModel.powerFlow, batteryData: viewModel.batteryData)
     }
 }
 
@@ -79,13 +83,22 @@ struct PowerFlowConfigView: View {
         }
     }
     
+    var currentPreviewBatteryData: BatteryData {
+        var data = BatteryData.empty
+        data.currentCapacity = 80
+        data.voltage = 11400
+        data.amperage = 1500
+        data.adapter = AdapterInfo(id: 1, familyCode: 1, name: "Simulation Adapter", designWatts: 140, realTimeWatts: simAdapterPower, activeProfileIndex: 1, profiles: [], current: 3.25, voltage: 20.0, watts: simAdapterPower)
+        return data
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             Form {
                 // 1. 预览区域与调节
                 Section {
                     VStack(spacing: 0) {
-                        PowerFlowModuleView(powerFlow: currentPreviewData)
+                        PowerFlowModuleView(powerFlow: currentPreviewData, batteryData: currentPreviewBatteryData)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 8)
                     }
@@ -113,6 +126,7 @@ struct PowerFlowConfigView: View {
                     Picker("样式", selection: $style) {
                         Text("桑基图 (Sankey)").tag(PowerFlowStyle.sankey)
                         Text("数据块 (Blocks)").tag(PowerFlowStyle.blocks)
+                        Text("卡片 (Cards)").tag(PowerFlowStyle.cards)
                     }
                     .pickerStyle(.segmented)
                 }
@@ -137,7 +151,6 @@ struct PowerFlowConfigView: View {
             .padding()
         }
         .frame(minHeight: 200)
-        .background(Color(NSColor.underPageBackgroundColor))
     }
     
     @ViewBuilder

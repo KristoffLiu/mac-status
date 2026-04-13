@@ -744,24 +744,20 @@ struct SystemMonitorConfigView: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            // 左侧：独立的侧边栏式预览（可滚动容器禁止内部组件被拉伸）
-            ScrollView(showsIndicators: false) {
-                VStack {
-                    Spacer(minLength: 20)
-                    
-                    SystemMonitorModule()
-                        .frame(width: 400)
-                        .padding(.top, 20)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 4) // 刻意缩减下边距以补偿视觉差异
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
-                    
-                    Spacer(minLength: 20)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 472) // 480 - vertical.padding(4)*2，确保在非滚动时能完美居中
+            // 左侧：独立的侧边栏式预览
+            VStack {
+                Spacer()
+                
+                SystemMonitorModule()
+                    .frame(width: 400)
+                    .padding(.top, 20)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 4) // 刻意缩减下边距以补偿视觉差异
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                
+                Spacer()
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
