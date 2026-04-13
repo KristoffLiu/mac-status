@@ -29,7 +29,7 @@ struct MacStatusApp: App {
         .menuBarExtraStyle(.window) // This gives the native popover with the 'tip' pointing to the menu bar!
         
         Window("MacStatus", id: "settings") {
-            MainWindowView()
+            AppWindowView()
                 .onChange(of: viewModel.isCharging) { _ in settingsUpdateTrigger = UUID() }
                 .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
                     settingsUpdateTrigger = UUID()

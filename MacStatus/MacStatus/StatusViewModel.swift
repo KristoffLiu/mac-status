@@ -40,8 +40,12 @@ class StatusViewModel: ObservableObject {
     }
     
     private var lastBatteryFetch: Date = .distantPast
+    private var isFetching = false
     
     private func refresh() {
+        guard !isFetching else { return }
+        isFetching = true
+        
         DispatchQueue.global(qos: .userInitiated).async {
             // AppleSmartBattery queries (IOKit) can be slow (up to 500ms) on state changes.
             // We only query it every 2 seconds, but we query ultra-fast SMC data on every tick.
@@ -49,15 +53,20 @@ class StatusViewModel: ObservableObject {
             var data = self.batteryData
             if now.timeIntervalSince(self.lastBatteryFetch) >= 2.0 {
                 data = BatteryService.shared.fetchBatteryData()
-                self.lastBatteryFetch = now
+                
+                // Keep the state on the main thread consistent
+                DispatchQueue.main.async { [weak self] in
+                    self?.lastBatteryFetch = now
+                }
             }
             
             // SMC fetch is instantaneous (~0.01ms) and will now never be blocked by battery PMU latency
             let flow = PowerCalculationService.shared.calculateFlow(from: data)
             
-            DispatchQueue.main.async {
-                self.batteryData = data
-                self.powerFlow = flow
+            DispatchQueue.main.async { [weak self] in
+                self?.batteryData = data
+                self?.powerFlow = flow
+                self?.isFetching = false
             }
         }
     }

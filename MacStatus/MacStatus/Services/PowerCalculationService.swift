@@ -25,18 +25,26 @@ class PowerCalculationService {
         var isCharging = false
         var isDischarging = false
         
-        if data.amperage > 0 {
+        let actualAmperage = data.amperage
+        
+        if !isTrueAC {
+            // Physically unplugged. Override stale battery data.
+            isCharging = false
+            isDischarging = true
+            // If SMC system watts is there, use it as battery watts; else estimate
+            systemWatts = smcSystemWatts ?? batteryWatts
+            topology = .topologyB
+        } else if actualAmperage > 0 {
             // Charging
             isCharging = true
             isDischarging = false
             // Real-time system power is preferred, otherwise fallback to adapter - battery
             systemWatts = smcSystemWatts ?? (adapterWatts - batteryWatts)
             topology = .topologyA
-        } else if data.amperage < 0 {
-            // Discharging
+        } else if actualAmperage < 0 {
+            // Discharging alongside adapter
             isCharging = false
             isDischarging = true
-            // In discharge, the system draw is the battery power, but SMC 'PSTR' is even more accurate
             systemWatts = smcSystemWatts ?? batteryWatts
             topology = .topologyB
         } else {
@@ -70,8 +78,8 @@ class PowerCalculationService {
         } else if isDischarging {
             // When discharging, the adapter might be assisting (rare but possible under heavy load).
             // Trust the real-time intake watts from the PMU if present.
-            // Ensure if we are physically unplugged (adapter == nil), it stays at 0.
-            if data.adapter == nil {
+            // Ensure if we are physically unplugged (adapter == nil or !isTrueAC), it stays at 0.
+            if data.adapter == nil || !isTrueAC {
                 trueAdapterWatts = 0.0
             } else {
                 trueAdapterWatts = adapterWatts
