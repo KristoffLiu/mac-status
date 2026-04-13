@@ -99,11 +99,25 @@ class PowerCalculationService {
         
         // For the visual flow logic (adapterPower rendering)
         // If systemWatts > 0 and we are in bypass, trueAdapterWatts is systemWatts + batteryWatts.
+        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
+        let smcAdapterVolts = SMCService.shared.adapterVoltage
+        let smcAdapterAmps = SMCService.shared.adapterCurrent
+        
+        var smcAdapterWatts: Double? = nil
+        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 0, a > 0 {
+            smcAdapterWatts = v * a
+        }
+
         var trueAdapterWatts = actualAdapterWatts
         if isCharging {
-            trueAdapterWatts = systemWatts + batteryWatts
+            if let realAdapter = smcAdapterWatts, let realSystem = smcSystemWatts {
+                batteryWatts = max(0.0, realAdapter - realSystem)
+                trueAdapterWatts = realAdapter
+            } else {
+                trueAdapterWatts = systemWatts + batteryWatts
+            }
         } else if !isDischarging && topology == .topologyA {
-            trueAdapterWatts = systemWatts
+            trueAdapterWatts = smcAdapterWatts ?? systemWatts
         } else if isDischarging {
             // When discharging, the adapter might be assisting (rare but possible under heavy load).
             // Trust the real-time intake watts from the PMU if present.
@@ -111,13 +125,11 @@ class PowerCalculationService {
             if data.adapter == nil || !isTrueAC {
                 trueAdapterWatts = 0.0
             } else {
-                trueAdapterWatts = actualAdapterWatts
+                trueAdapterWatts = smcAdapterWatts ?? actualAdapterWatts
             }
         }
         
-        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
-        let smcAdapterVolts = SMCService.shared.adapterVoltage
-        let smcAdapterAmps = SMCService.shared.adapterCurrent
+
         
         return PowerFlowData(
             adapterPower: trueAdapterWatts,

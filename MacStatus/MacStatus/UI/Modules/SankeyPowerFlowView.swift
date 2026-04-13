@@ -6,89 +6,109 @@ struct SankeyPowerFlowView: View {
     var body: some View {
         VStack(spacing: 12) {
             
-            // MAIN SYSTEM ROW: Adapter -> System (or Battery -> System if unplugged)
             HStack(spacing: -12) {
-                // Main Source: Adapter if plugged in, else Battery
-                if powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA {
-                    NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
+                
+                if powerFlow.topology == .topologyA {
+                    // Topology A: Adapter provides all power
+                    NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
                         .zIndex(1)
-                } else {
-                    NodePill(icon: "battery.100", value: nil, iconColor: .blue)
-                        .zIndex(1)
-                }
-                
-                // Base absolute reference mapping for proportional flow
-                let totalSource = max(powerFlow.adapterPower, powerFlow.batteryPower, 0.1)
-                
-                // Flow Block for System
-                let sysFlowWatts = powerFlow.systemPower > 0 ? powerFlow.systemPower : (powerFlow.adapterPower > 0 ? powerFlow.adapterPower : powerFlow.batteryPower)
-                let sysFraction = sysFlowWatts / totalSource
-                
-                ThickFlowBlock(
-                    watts: sysFlowWatts,
-                    fraction: min(sysFraction, 1.0),
-                    startColor: (powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA) ? .yellow.opacity(0.8) : .blue,
-                    endColor: .gray.opacity(0.2),
-                    isSubFlow: false,
-                    leftConnectHeight: 70,
-                    rightConnectHeight: 70
-                )
-                .zIndex(0)
-                
-                // Main Sink: System
-                NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
-                    .zIndex(1)
-            }
-            .frame(height: 70)
-            
-            // SUB ROW: Battery Charging/Discharging (only if Battery is active and NOT the main source)
-            if powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0.1 {
-                let totalSource = max(powerFlow.adapterPower, 0.1)
-                let batFraction = powerFlow.batteryPower / totalSource
-                
-                HStack(spacing: -12) {
                     
-                    if powerFlow.topology == .topologyA {
-                        // Invisible spacer node on left to align with above (Adapter)
-                        Color.clear.frame(width: 60)
+                    // Paths VStack
+                    VStack(spacing: 12) {
+                        // System Path
+                        let totalSource = max(powerFlow.adapterPower, 0.1)
+                        let sysFlowWatts = powerFlow.systemPower
+                        let sysFraction = sysFlowWatts / totalSource
                         
-                        // Adapter -> Battery (Charging)
-                        ThickFlowBlock(
-                            watts: powerFlow.batteryPower,
-                            fraction: min(batFraction, 1.0),
-                            startColor: .yellow.opacity(0.8),
-                            endColor: .green,
-                            isSubFlow: true,
-                            leftConnectHeight: nil,
-                            rightConnectHeight: 35
-                        )
-                        .zIndex(0)
+                        HStack(spacing: -12) {
+                            ThickFlowBlock(
+                                watts: sysFlowWatts,
+                                fraction: min(sysFraction, 1.0),
+                                startColor: .yellow.opacity(0.8),
+                                endColor: .gray.opacity(0.2),
+                                isSubFlow: false
+                            )
+                            .zIndex(0)
+                            
+                            NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
+                                .zIndex(1)
+                        }
+                        .frame(height: 70)
                         
-                        NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
-                            .frame(width: 60, alignment: .center)
-                            .zIndex(1)
-                    } else {
-                        // Battery -> System (Discharging alongside Adapter)
-                        NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
-                            .frame(width: 60, alignment: .center)
-                            .zIndex(1)
-                        
-                        ThickFlowBlock(
-                            watts: powerFlow.batteryPower,
-                            fraction: min(batFraction, 1.0),
-                            startColor: .blue,
-                            endColor: .gray.opacity(0.2),
-                            isSubFlow: true,
-                            leftConnectHeight: 35,
-                            rightConnectHeight: nil
-                        )
-                        .zIndex(0)
-                        
-                        // Invisible spacer on right to align with System above
-                        Color.clear.frame(width: 60)
+                        // Battery Path
+                        if powerFlow.batteryPower > 0.1 {
+                            let batFraction = powerFlow.batteryPower / totalSource
+                            HStack(spacing: -12) {
+                                ThickFlowBlock(
+                                    watts: powerFlow.batteryPower,
+                                    fraction: min(batFraction, 1.0),
+                                    startColor: .yellow.opacity(0.8),
+                                    endColor: .green,
+                                    isSubFlow: true
+                                )
+                                .zIndex(0)
+                                
+                                NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
+                                    .frame(width: 60, alignment: .center)
+                                    .zIndex(1)
+                            }
+                            .frame(height: 35)
+                        }
                     }
+                    .zIndex(0)
+                } else {
+                    // Topology B: System is the sink
+                    VStack(spacing: 12) {
+                        // Is Adapter present?
+                        if powerFlow.adapterPower > 0 {
+                            // Adapter is MAIN source, Battery is Sub source
+                            let totalSource = powerFlow.adapterPower + powerFlow.batteryPower
+                            let adFraction = powerFlow.adapterPower / max(totalSource, 0.1)
+                            HStack(spacing: -12) {
+                                NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
+                                    .zIndex(1)
+                                ThickFlowBlock(
+                                    watts: powerFlow.adapterPower,
+                                    fraction: min(adFraction, 1.0),
+                                    startColor: .yellow.opacity(0.8),
+                                    endColor: .gray.opacity(0.2),
+                                    isSubFlow: false
+                                ).zIndex(0)
+                            }.frame(height: 70)
+                            
+                            let batFraction = powerFlow.batteryPower / max(totalSource, 0.1)
+                            HStack(spacing: -12) {
+                                NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
+                                    .zIndex(1)
+                                ThickFlowBlock(
+                                    watts: powerFlow.batteryPower,
+                                    fraction: min(batFraction, 1.0),
+                                    startColor: .blue,
+                                    endColor: .gray.opacity(0.2),
+                                    isSubFlow: true
+                                ).zIndex(0)
+                            }.frame(height: 35)
+                        } else {
+                            // Battery is MAIN and ONLY source
+                            let batFraction = 1.0
+                            HStack(spacing: -12) {
+                                NodePill(icon: "battery.100", value: nil, iconColor: .blue)
+                                    .zIndex(1)
+                                ThickFlowBlock(
+                                    watts: powerFlow.batteryPower,
+                                    fraction: batFraction,
+                                    startColor: .blue,
+                                    endColor: .gray.opacity(0.2),
+                                    isSubFlow: false
+                                ).zIndex(0)
+                            }.frame(height: 70)
+                        }
+                    }
+                    .zIndex(0)
+                    
+                    NodePill(icon: "laptopcomputer", value: "\(Int(powerFlow.systemPower))W", iconColor: .primary, stretchHeight: true)
+                        .zIndex(1)
                 }
-                .frame(height: 40)
             }
         }
         .padding(.vertical, 8)
@@ -103,6 +123,7 @@ struct NodePill: View {
     var value: String?
     var iconColor: Color
     var isSubNode: Bool = false
+    var stretchHeight: Bool = false
     
     var body: some View {
         VStack(spacing: 4) {
@@ -116,7 +137,9 @@ struct NodePill: View {
                     .foregroundColor(.primary)
             }
         }
-        .frame(width: isSubNode ? 50 : 60, height: isSubNode ? 35 : 70)
+        .frame(width: isSubNode ? 50 : 60)
+        .frame(height: stretchHeight ? nil : (isSubNode ? 35 : 70))
+        .frame(maxHeight: stretchHeight ? .infinity : nil)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -143,9 +166,11 @@ struct ThickFlowBlock: View {
     }
     
     var body: some View {
-        let leftH = leftConnectHeight ?? thickness
-        let rightH = rightConnectHeight ?? thickness
         let baseHeight: CGFloat = isSubFlow ? 35 : 70
+        // Left connection overlaps the flat "back" of the left node, so it safely supports a larger flare.
+        let leftH = leftConnectHeight ?? min(thickness + 16.0, max(thickness, baseHeight - 8.0))
+        // Right connection hits the leading rounded corner of the right node, so it MUST be strictly clamped to the flat plane (height - 24).
+        let rightH = rightConnectHeight ?? min(thickness + 16.0, max(thickness, baseHeight - 24.0))
         
         ZStack {
             // White base behind everything
@@ -225,7 +250,7 @@ struct WatchBandShape: Shape {
         let halfLeft = clampedLeft / 2.0
         let halfRight = clampedRight / 2.0
         
-        let curveW: CGFloat = 16.0
+        let curveW: CGFloat = 48.0
         
         path.move(to: CGPoint(x: 0, y: centerY - halfLeft))
         
