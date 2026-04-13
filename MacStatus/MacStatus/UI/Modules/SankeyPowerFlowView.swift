@@ -21,12 +21,19 @@ struct SankeyPowerFlowView: View {
                         let sysFraction = sysFlowWatts / totalSource
                         
                         HStack(spacing: -12) {
+                            let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
+                            let batFraction = powerFlow.batteryPower / totalSource
+                            let botThick = max(12.0, CGFloat(batFraction) * 40.0)
+                            let globalConvergence = 58.5 + (topThick - botThick) / 2.0
+                            
                             ThickFlowBlock(
                                 watts: sysFlowWatts,
                                 fraction: min(sysFraction, 1.0),
                                 startColor: .yellow.opacity(0.8),
                                 endColor: .gray.opacity(0.2),
-                                isSubFlow: false
+                                isSubFlow: false,
+                                mergeMode: (powerFlow.batteryPower > 0.1) ? .topMerge : .none,
+                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil
                             )
                             .zIndex(0)
                             
@@ -39,12 +46,18 @@ struct SankeyPowerFlowView: View {
                         if powerFlow.batteryPower > 0.1 {
                             let batFraction = powerFlow.batteryPower / totalSource
                             HStack(spacing: -12) {
+                                let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
+                                let botThick = max(12.0, CGFloat(batFraction) * 40.0)
+                                let globalConvergence = 58.5 + (topThick - botThick) / 2.0
+                                
                                 ThickFlowBlock(
                                     watts: powerFlow.batteryPower,
                                     fraction: min(batFraction, 1.0),
                                     startColor: .yellow.opacity(0.8),
                                     endColor: .green,
-                                    isSubFlow: true
+                                    isSubFlow: true,
+                                    mergeMode: .bottomMerge,
+                                    localConvergenceY: globalConvergence - 82.0
                                 )
                                 .zIndex(0)
                                 
@@ -147,6 +160,11 @@ struct NodePill: View {
         )
     }
 }
+enum FlowMergeMode {
+    case none
+    case topMerge    // Stretches the bottom-left anchor down to bridge the gap
+    case bottomMerge // Stretches the top-left anchor up to bridge the gap
+}
 
 struct ThickFlowBlock: View {
     var watts: Double
@@ -156,29 +174,31 @@ struct ThickFlowBlock: View {
     var isSubFlow: Bool = false
     var leftConnectHeight: CGFloat? = nil
     var rightConnectHeight: CGFloat? = nil
+    var mergeMode: FlowMergeMode = .none
+    var localConvergenceY: CGFloat? = nil
     
     @State private var phase = 0.0
     
-    // True Sankey logic: thickness is proportional to its fraction of total power
+    // True Sankey logic: thickness is proportional to its fraction of total power globally
     private var thickness: CGFloat {
-        let maxThickness: CGFloat = isSubFlow ? 24.0 : 40.0
+        let maxThickness: CGFloat = 40.0 // True global maximum for any path
         return max(12.0, CGFloat(fraction) * maxThickness)
     }
     
     var body: some View {
         let baseHeight: CGFloat = isSubFlow ? 35 : 70
-        // Left connection overlaps the flat "back" of the left node, so it safely supports a larger flare.
-        let leftH = leftConnectHeight ?? min(thickness + 16.0, max(thickness, baseHeight - 8.0))
+        // The left connection should flare naturally based purely on flow thickness (proportional).
+        let leftH = leftConnectHeight ?? (thickness + 16.0)
         // Right connection hits the leading rounded corner of the right node, so it MUST be strictly clamped to the flat plane (height - 24).
         let rightH = rightConnectHeight ?? min(thickness + 16.0, max(thickness, baseHeight - 24.0))
         
         ZStack {
             // White base behind everything
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
                 .fill(Color.white)
             
             // The Block
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -191,7 +211,7 @@ struct ThickFlowBlock: View {
                 )
                 .overlay(
                     // Flow animation overlay
-                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
+                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
                         .fill(
                             LinearGradient(
                                 stops: [
@@ -204,7 +224,7 @@ struct ThickFlowBlock: View {
                             )
                         )
                         .blendMode(.overlay)
-                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH))
+                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY))
                         .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
                 )
             
@@ -229,6 +249,8 @@ struct WatchBandShape: Shape {
     var thickness: CGFloat
     var leftHeight: CGFloat
     var rightHeight: CGFloat
+    var mergeMode: FlowMergeMode = .none
+    var localConvergenceY: CGFloat? = nil
     
     var animatableData: CGFloat {
         get { thickness }
@@ -241,40 +263,68 @@ struct WatchBandShape: Shape {
         let h = rect.height
         let centerY = h / 2.0
         
-        // Ensure values are sane
+        // By allowing the constraint clamping boundary to dip below safeThick,
+        // it enables dynamic Funnel-tapering for very thick pipes squeezing into narrow terminal node slots.
         let safeThick = min(thickness, h)
-        let clampedLeft = min(max(safeThick, leftHeight), h)
-        let clampedRight = min(max(safeThick, rightHeight), h)
+        let clampedLeft = min(leftHeight, h)
+        let clampedRight = min(rightHeight, h)
         
         let halfThick = safeThick / 2.0
         let halfLeft = clampedLeft / 2.0
         let halfRight = clampedRight / 2.0
         
-        let curveW: CGFloat = 48.0
+        let leftCurveW: CGFloat = w * 0.75 // Left S-curve sweep spans 75% of the total width for maximum smoothness
+        let rightCurveW: CGFloat = min(w - leftCurveW, 32.0) // Right flare is a short, snappy 32pt transition
         
-        path.move(to: CGPoint(x: 0, y: centerY - halfLeft))
+        // Dynamic Anchor Calculations for contiguous Y-gap bridging
+        let defaultTopY = centerY - halfLeft
+        let defaultBotY = centerY + halfLeft
         
-        path.addCurve(to: CGPoint(x: curveW, y: centerY - halfThick),
-                      control1: CGPoint(x: curveW * 0.5, y: centerY - halfLeft),
-                      control2: CGPoint(x: curveW * 0.5, y: centerY - halfThick))
+        var leftTopY = defaultTopY
+        var leftBotY = defaultBotY
         
-        path.addLine(to: CGPoint(x: max(curveW, w - curveW), y: centerY - halfThick))
+        if mergeMode == .topMerge, let convergence = localConvergenceY {
+            // Inner edge merges exactly at convergence point
+            leftBotY = convergence
+            // Outer edge sweeps with standard flare relative to thickness
+            leftTopY = leftBotY - safeThick - 16.0
+        } else if mergeMode == .bottomMerge, let convergence = localConvergenceY {
+            // Inner edge merges exactly at convergence point
+            leftTopY = convergence
+            // Outer edge sweeps with standard flare relative to thickness
+            leftBotY = leftTopY + safeThick + 16.0
+        }
         
+        path.move(to: CGPoint(x: 0, y: leftTopY))
+        
+        // Left sweep (Top Edge)
+        path.addCurve(to: CGPoint(x: leftCurveW, y: centerY - halfThick),
+                      control1: CGPoint(x: leftCurveW * 0.5, y: leftTopY),
+                      control2: CGPoint(x: leftCurveW * 0.5, y: centerY - halfThick))
+        
+        // Straight segment to the right flare
+        path.addLine(to: CGPoint(x: w - rightCurveW, y: centerY - halfThick))
+        
+        // Right flare (Top Edge)
         path.addCurve(to: CGPoint(x: w, y: centerY - halfRight),
-                      control1: CGPoint(x: w - curveW * 0.5, y: centerY - halfThick),
-                      control2: CGPoint(x: w - curveW * 0.5, y: centerY - halfRight))
+                      control1: CGPoint(x: w - rightCurveW * 0.5, y: centerY - halfThick),
+                      control2: CGPoint(x: w - rightCurveW * 0.5, y: centerY - halfRight))
         
+        // Right edge
         path.addLine(to: CGPoint(x: w, y: centerY + halfRight))
         
-        path.addCurve(to: CGPoint(x: max(curveW, w - curveW), y: centerY + halfThick),
-                      control1: CGPoint(x: w - curveW * 0.5, y: centerY + halfRight),
-                      control2: CGPoint(x: w - curveW * 0.5, y: centerY + halfThick))
+        // Right flare (Bottom Edge)
+        path.addCurve(to: CGPoint(x: w - rightCurveW, y: centerY + halfThick),
+                      control1: CGPoint(x: w - rightCurveW * 0.5, y: centerY + halfRight),
+                      control2: CGPoint(x: w - rightCurveW * 0.5, y: centerY + halfThick))
         
-        path.addLine(to: CGPoint(x: curveW, y: centerY + halfThick))
+        // Straight segment back to the left curve
+        path.addLine(to: CGPoint(x: leftCurveW, y: centerY + halfThick))
         
-        path.addCurve(to: CGPoint(x: 0, y: centerY + halfLeft),
-                      control1: CGPoint(x: curveW * 0.5, y: centerY + halfThick),
-                      control2: CGPoint(x: curveW * 0.5, y: centerY + halfLeft))
+        // Left sweep (Bottom Edge)
+        path.addCurve(to: CGPoint(x: 0, y: leftBotY),
+                      control1: CGPoint(x: leftCurveW * 0.5, y: centerY + halfThick),
+                      control2: CGPoint(x: leftCurveW * 0.5, y: leftBotY))
         
         path.closeSubpath()
         return path

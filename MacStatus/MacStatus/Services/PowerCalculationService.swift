@@ -8,9 +8,18 @@ class PowerCalculationService {
     
     func calculateFlow(from data: BatteryData) -> PowerFlowData {
         // High-Fidelity Power Fetching via AppleSMC
-        // 'PSTR' gets the true total system draw in real-time
         let smcSystemWatts = SMCService.shared.systemTotalPower
         
+        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
+        let smcAdapterVolts = SMCService.shared.adapterVoltage
+        let smcAdapterAmps = SMCService.shared.adapterCurrent
+        
+        var smcAdapterWatts: Double? = nil
+        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 0, a > 0 {
+            smcAdapterWatts = v * a
+        }
+        
+        // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
         let powerSourceType = IOPSGetProvidingPowerSourceType(nil)?.takeRetainedValue() as? String ?? ""
         let isTrueAC = (powerSourceType == "AC Power") || (data.adapter != nil) || (data.adapterWatts > 0)
         
@@ -37,8 +46,8 @@ class PowerCalculationService {
             // If SMC system watts is there, use it as battery watts; else estimate
             systemWatts = smcSystemWatts ?? batteryWatts
             topology = .topologyB
-        } else if actualAmperage > 0 {
-            // Charging
+        } else if actualAmperage > 0 || (smcSystemWatts != nil && smcAdapterWatts != nil && (smcAdapterWatts! - smcSystemWatts!) > 2.0) {
+            // Charging (either confirmed by battery controller OR deduced instantly by SMC high-frequency surplus)
             isCharging = true
             isDischarging = false
             // Real-time system power is preferred, otherwise fallback to adapter - battery
@@ -62,7 +71,16 @@ class PowerCalculationService {
                 (smcSystemWatts != nil && theoreticalTotalSource > currentSystemDraw + 15.0)
             )
             
-            if isGhost || (isTrueAC && actualAdapterWatts > currentSystemDraw) {
+            // Re-check smc instant charge to avoid false negatives completely over-riding to bypass
+            let smcSurplus = (smcAdapterWatts ?? actualAdapterWatts) - (smcSystemWatts ?? actualAdapterWatts)
+            
+            if smcSurplus > 2.0 {
+                isCharging = true
+                isDischarging = false
+                systemWatts = smcSystemWatts ?? actualAdapterWatts
+                batteryWatts = smcSurplus
+                topology = .topologyA
+            } else if isGhost || (isTrueAC && actualAdapterWatts > currentSystemDraw) {
                 // False negative: It's just transient lag. Force bypass/charging state logic.
                 isCharging = false
                 isDischarging = false
@@ -81,6 +99,14 @@ class PowerCalculationService {
             isCharging = false
             isDischarging = false
             
+            let smcSurplus = (smcAdapterWatts ?? actualAdapterWatts) - (smcSystemWatts ?? actualAdapterWatts)
+            if isTrueAC, smcSurplus > 2.0 {
+                // Caught late bypass false-negative!
+                isCharging = true
+                systemWatts = smcSystemWatts ?? actualAdapterWatts
+                batteryWatts = smcSurplus
+                topology = .topologyA
+            }
             // In bypass, the total system power comes entirely from the adapter.
             // PSTR tells us exactly what the system is drawing right now.
             if let smcWatts = smcSystemWatts {
@@ -98,19 +124,11 @@ class PowerCalculationService {
         }
         
         // For the visual flow logic (adapterPower rendering)
-        // If systemWatts > 0 and we are in bypass, trueAdapterWatts is systemWatts + batteryWatts.
-        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
-        let smcAdapterVolts = SMCService.shared.adapterVoltage
-        let smcAdapterAmps = SMCService.shared.adapterCurrent
-        
-        var smcAdapterWatts: Double? = nil
-        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 0, a > 0 {
-            smcAdapterWatts = v * a
-        }
 
         var trueAdapterWatts = actualAdapterWatts
         if isCharging {
             if let realAdapter = smcAdapterWatts, let realSystem = smcSystemWatts {
+                // Smooth out microscopic jitter where adapter drops below system momentarily
                 batteryWatts = max(0.0, realAdapter - realSystem)
                 trueAdapterWatts = realAdapter
             } else {
