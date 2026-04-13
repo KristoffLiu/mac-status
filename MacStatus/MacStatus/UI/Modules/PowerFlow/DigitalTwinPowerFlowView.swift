@@ -57,7 +57,7 @@ struct DigitalTwinPowerFlowView: View {
                     )
                     Spacer()
                 }
-                .frame(width: 180)
+                .frame(width: 180) // Matches strictly when closed
                 .zIndex(2) // Ensure it clips the wire
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -195,19 +195,22 @@ struct MacBook3DView: View {
                 isCharging: isCharging,
                 isOpen: isOpen
             )
-            // Screen folds forward to hover over the invisible keyboard
-            // By using perspective: 0.0, we use a perfect orthographic projection.
-            // When it reaches 90 degrees, it has exactly 0 pixel visual height and vanishes flawlessly!
-            .rotation3DEffect(
-                .degrees(isOpen ? 0 : -90), 
-                axis: (x: 1, y: 0, z: 0),
-                anchor: .bottom,
-                perspective: 0.0
+            // Emulate 3D physical folding with superior 2D constraints and NO Metal rendering bugs:
+            // 1. Z-axis perspective: lid gets narrower when open (x: 0.90)
+            // 2. Y-axis folding: collapses to ~4px thickness (0.035 scale) instead of 0px to maintain the Top Shell volume!
+            .scaleEffect(
+                x: isOpen ? 0.90 : 1.0, 
+                y: isOpen ? 0.96 : 0.035, // 0.035 * 116 ≈ 4pt thick top metal shell
+                anchor: .bottom
             )
-            .zIndex(1) // Lid dips BEHIND the chassis front lip
+            // 3. Drop Hinge Dynamics: 
+            // When opened (0), the lid anchors at the bottom, so its bottom 9pt are covered by the chassis lip.
+            // When closed (-9), it shifts UP to sit exquisitely stacked ON TOP of the chassis!
+            .offset(y: isOpen ? 0 : -9)
+            .zIndex(1) 
             
             // The Bottom Chassis 
-            // Stays perfectly static! It visually covers the bottom 9 points of the Screen Lid,
+            // Stays perfectly static! It visually covers the bottom 9 points of the Screen Lid when open,
             // creating an authentic MacBook Drop-Hinge effect.
             MacBookKeyboardBase()
             .zIndex(2) // Lip is always conceptually closer to the viewer
@@ -241,7 +244,7 @@ struct MacBookKeyboardBase: View {
                         startPoint: .top, endPoint: .bottom
                     )
                 )
-                .frame(width: 180, height: 9)
+                .frame(width: 180, height: 9) // 闭合时与屏幕尺寸严丝合缝
                 // Subtle grounding shadow
                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
             
@@ -280,64 +283,63 @@ struct MacBookScreenLid: View {
                 .frame(width: 180, height: 116)
             
             // Display Plane (Inside)
-            if isOpen {
-                ZStack {
-                    // Bezel
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color.black)
-                        .frame(width: 174, height: 110)
-                        .offset(y: -1) // nudge up slightly to clear the drop hinge Overlap
+            ZStack {
+                // Bezel
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.black)
+                    .frame(width: 174, height: 110)
+                    .offset(y: -1) // nudge up slightly to clear the drop hinge Overlap
+                
+                let bgGrad = LinearGradient(
+                    colors: [Color(white: 0.1), Color(white: 0.2)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+                
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(bgGrad)
+                    .frame(width: 168, height: 104)
+                    .offset(y: -1)
+                
+                // Inspired by user's M3 wallapper: Dynamic floating vertical capsules
+                HStack(spacing: 16) {
+                    // System Capsule
+                    Capsule()
+                        .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 28, height: CGFloat(max(30, min(80, 30 + systemPower * 0.8))))
                     
-                    let bgGrad = LinearGradient(
-                        colors: [Color(white: 0.1), Color(white: 0.2)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                    
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(bgGrad)
-                        .frame(width: 168, height: 104)
-                        .offset(y: -1)
-                    
-                    // Inspired by user's M3 wallapper: Dynamic floating vertical capsules
-                    HStack(spacing: 16) {
-                        // System Capsule
-                        Capsule()
-                            .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.6)], startPoint: .top, endPoint: .bottom))
-                            .frame(width: 28, height: CGFloat(max(30, min(80, 30 + systemPower * 0.8))))
-                        
-                        // Battery Capsule
-                        let batCol: [Color] = isCharging ? [.green.opacity(0.8), .mint.opacity(0.6)] : [.blue.opacity(0.5), .purple.opacity(0.4)]
-                        Capsule()
-                            .fill(LinearGradient(colors: batCol, startPoint: .top, endPoint: .bottom))
-                            .frame(width: 28, height: CGFloat(max(20, min(80, 80 * Double(batteryLevel) / 100.0))))
-                    }
-                    
-                    // Holographic UI Overlay on vertical capsules
-                    HStack(spacing: 16) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "cpu")
-                                .font(.system(size: 11))
-                                .foregroundColor(.white)
-                            Text("\(String(format: "%.0f", systemPower))W")
-                                .font(.system(size: 11, weight: .heavy, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(width: 34)
-                        
-                        VStack(spacing: 4) {
-                            Image(systemName: "battery.100")
-                                .font(.system(size: 11))
-                                .foregroundColor(.white)
-                            Text("\(batteryLevel)%")
-                                .font(.system(size: 11, weight: .heavy, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(width: 34)
-                    }
-                    .shadow(color: .black.opacity(0.5), radius: 2)
+                    // Battery Capsule
+                    let batCol: [Color] = isCharging ? [.green.opacity(0.8), .mint.opacity(0.6)] : [.blue.opacity(0.5), .purple.opacity(0.4)]
+                    Capsule()
+                        .fill(LinearGradient(colors: batCol, startPoint: .top, endPoint: .bottom))
+                        .frame(width: 28, height: CGFloat(max(20, min(80, 80 * Double(batteryLevel) / 100.0))))
                 }
-                .transition(.opacity) // prevent flickering
+                
+                // Holographic UI Overlay on vertical capsules
+                HStack(spacing: 16) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "cpu")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white)
+                        Text("\(String(format: "%.0f", systemPower))W")
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 34)
+                    
+                    VStack(spacing: 4) {
+                        Image(systemName: "battery.100")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white)
+                        Text("\(batteryLevel)%")
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 34)
+                }
+                .shadow(color: .black.opacity(0.5), radius: 2)
             }
+            // Screen contents fade out realistically as the physical lid closes
+            .opacity(isOpen ? 1.0 : 0.0)
         }
     }
 }
