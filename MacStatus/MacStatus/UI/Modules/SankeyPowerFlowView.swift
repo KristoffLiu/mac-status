@@ -20,11 +20,13 @@ struct SankeyPowerFlowView: View {
                         let sysFlowWatts = powerFlow.systemPower
                         let sysFraction = sysFlowWatts / totalSource
                         
+                        let topHeight = 35.0 + 35.0 * sysFraction
+                        
                         HStack(spacing: -12) {
                             let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
                             let batFraction = powerFlow.batteryPower / totalSource
                             let botThick = max(12.0, CGFloat(batFraction) * 40.0)
-                            let globalConvergence = 58.5 + (topThick - botThick) / 2.0
+                            let globalConvergence = topHeight + 6.0
                             
                             ThickFlowBlock(
                                 watts: sysFlowWatts,
@@ -40,15 +42,16 @@ struct SankeyPowerFlowView: View {
                             NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
                                 .zIndex(1)
                         }
-                        .frame(height: 70)
+                        .frame(height: topHeight)
                         
                         // Battery Path
                         if powerFlow.batteryPower > 0.1 {
                             let batFraction = powerFlow.batteryPower / totalSource
+                            let botHeight = 35.0 + 35.0 * batFraction
                             HStack(spacing: -12) {
                                 let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
                                 let botThick = max(12.0, CGFloat(batFraction) * 40.0)
-                                let globalConvergence = 58.5 + (topThick - botThick) / 2.0
+                                let globalConvergence = topHeight + 6.0
                                 
                                 ThickFlowBlock(
                                     watts: powerFlow.batteryPower,
@@ -57,15 +60,14 @@ struct SankeyPowerFlowView: View {
                                     endColor: .green,
                                     isSubFlow: true,
                                     mergeMode: .bottomMerge,
-                                    localConvergenceY: globalConvergence - 82.0
+                                    localConvergenceY: globalConvergence - (topHeight + 12.0)
                                 )
                                 .zIndex(0)
                                 
                                 NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
-                                    .frame(width: 60, alignment: .center)
                                     .zIndex(1)
                             }
-                            .frame(height: 35)
+                            .frame(height: botHeight)
                         }
                     }
                     .zIndex(0)
@@ -75,8 +77,14 @@ struct SankeyPowerFlowView: View {
                         // Is Adapter present?
                         if powerFlow.adapterPower > 0 {
                             // Adapter is MAIN source, Battery is Sub source
-                            let totalSource = powerFlow.adapterPower + powerFlow.batteryPower
-                            let adFraction = powerFlow.adapterPower / max(totalSource, 0.1)
+                            let totalSource = max(powerFlow.adapterPower + powerFlow.batteryPower, 0.1)
+                            let adFraction = powerFlow.adapterPower / totalSource
+                            let batFraction = powerFlow.batteryPower / totalSource
+                            
+                            let topHeight = 35.0 + 35.0 * adFraction
+                            let botHeight = 35.0 + 35.0 * batFraction
+                            let globalConvergence = topHeight + 6.0
+                            
                             HStack(spacing: -12) {
                                 NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
                                     .zIndex(1)
@@ -85,11 +93,12 @@ struct SankeyPowerFlowView: View {
                                     fraction: min(adFraction, 1.0),
                                     startColor: .yellow.opacity(0.8),
                                     endColor: .gray.opacity(0.2),
-                                    isSubFlow: false
+                                    isSubFlow: false,
+                                    mergeMode: .rightTopMerge,
+                                    localConvergenceY: globalConvergence
                                 ).zIndex(0)
-                            }.frame(height: 70)
+                            }.frame(height: topHeight)
                             
-                            let batFraction = powerFlow.batteryPower / max(totalSource, 0.1)
                             HStack(spacing: -12) {
                                 NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
                                     .zIndex(1)
@@ -98,9 +107,11 @@ struct SankeyPowerFlowView: View {
                                     fraction: min(batFraction, 1.0),
                                     startColor: .blue,
                                     endColor: .gray.opacity(0.2),
-                                    isSubFlow: true
+                                    isSubFlow: true,
+                                    mergeMode: .rightBottomMerge,
+                                    localConvergenceY: globalConvergence - (topHeight + 12.0)
                                 ).zIndex(0)
-                            }.frame(height: 35)
+                            }.frame(height: botHeight)
                         } else {
                             // Battery is MAIN and ONLY source
                             let batFraction = 1.0
@@ -141,16 +152,16 @@ struct NodePill: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: isSubNode ? 14 : 20, weight: .regular))
+                .font(.system(size: 20, weight: .regular))
                 .foregroundColor(iconColor)
             
             if let val = value {
                 Text(val)
-                    .font(.system(size: isSubNode ? 10 : 12, weight: .medium, design: .rounded))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 12, weight: .medium))
             }
         }
-        .frame(width: isSubNode ? 50 : 60)
+        .padding(.vertical, 8)
+        .frame(width: 60)
         .frame(height: stretchHeight ? nil : (isSubNode ? 35 : 70))
         .frame(maxHeight: stretchHeight ? .infinity : nil)
         .background(
@@ -162,8 +173,10 @@ struct NodePill: View {
 }
 enum FlowMergeMode {
     case none
-    case topMerge    // Stretches the bottom-left anchor down to bridge the gap
-    case bottomMerge // Stretches the top-left anchor up to bridge the gap
+    case topMerge    // Left-side top pipe merging down
+    case bottomMerge // Left-side bottom pipe merging up
+    case rightTopMerge // Right-side top pipe merging down
+    case rightBottomMerge // Right-side bottom pipe merging up
 }
 
 struct ThickFlowBlock: View {
@@ -273,58 +286,74 @@ struct WatchBandShape: Shape {
         let halfLeft = clampedLeft / 2.0
         let halfRight = clampedRight / 2.0
         
-        let leftCurveW: CGFloat = w * 0.75 // Left S-curve sweep spans 75% of the total width for maximum smoothness
-        let rightCurveW: CGFloat = min(w - leftCurveW, 32.0) // Right flare is a short, snappy 32pt transition
+        var realLeftCurveW: CGFloat = w * 0.75 // Default sweep side
+        var realRightCurveW: CGFloat = min(w - realLeftCurveW, 32.0)
+        
+        if mergeMode == .rightTopMerge || mergeMode == .rightBottomMerge {
+            // Swap sweep lengths so the long graceful sweep happens on the right side
+            realRightCurveW = w * 0.75
+            realLeftCurveW = min(w - realRightCurveW, 32.0)
+        }
         
         // Dynamic Anchor Calculations for contiguous Y-gap bridging
         let defaultTopY = centerY - halfLeft
         let defaultBotY = centerY + halfLeft
+        let defaultRightTopY = centerY - halfRight
+        let defaultRightBotY = centerY + halfRight
         
         var leftTopY = defaultTopY
         var leftBotY = defaultBotY
+        var rightTopY = defaultRightTopY
+        var rightBotY = defaultRightBotY
         
+        // Apply Left merges
         if mergeMode == .topMerge, let convergence = localConvergenceY {
-            // Inner edge merges exactly at convergence point
             leftBotY = convergence
-            // Outer edge sweeps with standard flare relative to thickness
             leftTopY = leftBotY - safeThick - 16.0
         } else if mergeMode == .bottomMerge, let convergence = localConvergenceY {
-            // Inner edge merges exactly at convergence point
             leftTopY = convergence
-            // Outer edge sweeps with standard flare relative to thickness
             leftBotY = leftTopY + safeThick + 16.0
+        }
+        
+        // Apply Right merges
+        if mergeMode == .rightTopMerge, let convergence = localConvergenceY {
+            rightBotY = convergence
+            rightTopY = rightBotY - safeThick - 16.0
+        } else if mergeMode == .rightBottomMerge, let convergence = localConvergenceY {
+            rightTopY = convergence
+            rightBotY = rightTopY + safeThick + 16.0
         }
         
         path.move(to: CGPoint(x: 0, y: leftTopY))
         
-        // Left sweep (Top Edge)
-        path.addCurve(to: CGPoint(x: leftCurveW, y: centerY - halfThick),
-                      control1: CGPoint(x: leftCurveW * 0.5, y: leftTopY),
-                      control2: CGPoint(x: leftCurveW * 0.5, y: centerY - halfThick))
+        // Left sweep/flare (Top Edge)
+        path.addCurve(to: CGPoint(x: realLeftCurveW, y: centerY - halfThick),
+                      control1: CGPoint(x: realLeftCurveW * 0.5, y: leftTopY),
+                      control2: CGPoint(x: realLeftCurveW * 0.5, y: centerY - halfThick))
         
-        // Straight segment to the right flare
-        path.addLine(to: CGPoint(x: w - rightCurveW, y: centerY - halfThick))
+        // Straight segment
+        path.addLine(to: CGPoint(x: w - realRightCurveW, y: centerY - halfThick))
         
-        // Right flare (Top Edge)
-        path.addCurve(to: CGPoint(x: w, y: centerY - halfRight),
-                      control1: CGPoint(x: w - rightCurveW * 0.5, y: centerY - halfThick),
-                      control2: CGPoint(x: w - rightCurveW * 0.5, y: centerY - halfRight))
+        // Right sweep/flare (Top Edge)
+        path.addCurve(to: CGPoint(x: w, y: rightTopY),
+                      control1: CGPoint(x: w - realRightCurveW * 0.5, y: centerY - halfThick),
+                      control2: CGPoint(x: w - realRightCurveW * 0.5, y: rightTopY))
         
         // Right edge
-        path.addLine(to: CGPoint(x: w, y: centerY + halfRight))
+        path.addLine(to: CGPoint(x: w, y: rightBotY))
         
-        // Right flare (Bottom Edge)
-        path.addCurve(to: CGPoint(x: w - rightCurveW, y: centerY + halfThick),
-                      control1: CGPoint(x: w - rightCurveW * 0.5, y: centerY + halfRight),
-                      control2: CGPoint(x: w - rightCurveW * 0.5, y: centerY + halfThick))
+        // Right sweep/flare (Bottom Edge)
+        path.addCurve(to: CGPoint(x: w - realRightCurveW, y: centerY + halfThick),
+                      control1: CGPoint(x: w - realRightCurveW * 0.5, y: rightBotY),
+                      control2: CGPoint(x: w - realRightCurveW * 0.5, y: centerY + halfThick))
         
-        // Straight segment back to the left curve
-        path.addLine(to: CGPoint(x: leftCurveW, y: centerY + halfThick))
+        // Straight segment back
+        path.addLine(to: CGPoint(x: realLeftCurveW, y: centerY + halfThick))
         
-        // Left sweep (Bottom Edge)
+        // Left sweep/flare (Bottom Edge)
         path.addCurve(to: CGPoint(x: 0, y: leftBotY),
-                      control1: CGPoint(x: leftCurveW * 0.5, y: centerY + halfThick),
-                      control2: CGPoint(x: leftCurveW * 0.5, y: leftBotY))
+                      control1: CGPoint(x: realLeftCurveW * 0.5, y: centerY + halfThick),
+                      control2: CGPoint(x: realLeftCurveW * 0.5, y: leftBotY))
         
         path.closeSubpath()
         return path
