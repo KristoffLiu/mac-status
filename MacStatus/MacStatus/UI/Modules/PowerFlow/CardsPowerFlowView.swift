@@ -34,15 +34,16 @@ struct CardsPowerFlowView: View {
             }
             .padding(.horizontal, 12)
             
-            // 3 Cards Layout, Custom Carousel
+            // 3/2 Cards Layout, Custom Carousel
             ZStack {
-                // Adapter Card
                 let hasAdapter = powerFlow.adapterPower > 2
-                let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
-                let adapterA = powerFlow.adapterCurrent ?? (batteryData?.adapter?.current ?? 0)
                 
-                let adapterDetails: [String] = {
-                    if hasAdapter {
+                // Card 1: Adapter (if hasAdapter) OR Battery Output (if pure battery)
+                if hasAdapter {
+                    let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
+                    let adapterA = powerFlow.adapterCurrent ?? (batteryData?.adapter?.current ?? 0)
+                    
+                    let adapterDetails: [String] = {
                         var details = [String(format: "实测: %.2fV %.2fA", adapterV, adapterA)]
                         if let adapter = batteryData?.adapter {
                             details.append("峰值: \(adapter.designWatts)W")
@@ -57,29 +58,39 @@ struct CardsPowerFlowView: View {
                             details.append("FmCode: \(adapter.familyCode)")
                         }
                         return details
-                    }
-                    return []
-                }()
-                
-                let adapterTitle = batteryData?.adapter?.name ?? "适配器"
-                card(icon: "powerplug.fill", 
-                     title: adapterTitle, 
-                     power: hasAdapter ? powerFlow.adapterPower : -1, 
-                     color: (hasAdapter && !powerFlow.isDischarging) ? .blue : .secondary.opacity(0.5), 
-                     details: adapterDetails)
-                    .offset(x: isExpanded ? -180 : -110)
-                    .zIndex(3)
-                    .id(1)
-                    .onTapGesture { handleTap(1) }
+                    }()
+                    
+                    card(icon: "powerplug.fill", 
+                         title: batteryData?.adapter?.name ?? "适配器", 
+                         power: powerFlow.adapterPower, 
+                         color: !powerFlow.isDischarging ? .blue : .secondary.opacity(0.5), 
+                         details: adapterDetails)
+                        .offset(x: isExpanded ? -180 : -110)
+                        .zIndex(3)
+                        .id(1)
+                        .onTapGesture { handleTap(1) }
+                } else {
+                    let batV = Double(batteryData?.voltage ?? 0) / 1000.0
+                    let batA = Double(batteryData?.amperage ?? 0) / 1000.0
+                    card(icon: "battery.100.bolt",
+                         title: "电池输出",
+                         power: powerFlow.batteryPower,
+                         color: .blue, // Act as the main source, blue indicates standard power flow
+                         details: ["\(batteryData?.currentCapacity ?? 0)% 余量", String(format: "实测: %.1fV %.2fA", batV, abs(batA))])
+                        .offset(x: isExpanded ? -180 : -110)
+                        .zIndex(3)
+                        .id(1)
+                        .onTapGesture { handleTap(1) }
+                }
                 
                 if isExpanded {
                     Image(systemName: "arrow.right")
-                        .foregroundColor(hasAdapter && !powerFlow.isDischarging ? .gray.opacity(0.5) : .gray.opacity(0.2))
+                        .foregroundColor(hasAdapter && !powerFlow.isDischarging ? .gray.opacity(0.5) : (!hasAdapter ? .blue.opacity(0.7) : .gray.opacity(0.2)))
                         .font(.system(size: 14, weight: .bold))
                         .offset(x: -90)
                 }
                 
-                // System Card
+                // Card 2: System Card
                 card(icon: "laptopcomputer", 
                      title: "系统", 
                      power: powerFlow.systemPower, 
@@ -90,29 +101,31 @@ struct CardsPowerFlowView: View {
                     .id(2)
                     .onTapGesture { handleTap(2) }
                 
-                let arrowColor: Color = powerFlow.isCharging ? .green.opacity(0.7) : (powerFlow.isDischarging ? .blue.opacity(0.7) : .gray.opacity(0.2))
-                let arrowIcon = powerFlow.isDischarging ? "arrow.left" : "arrow.right"
-                
-                if isExpanded {
-                    Image(systemName: arrowIcon)
-                        .foregroundColor(arrowColor)
-                        .font(.system(size: 14, weight: .bold))
-                        .offset(x: 90)
+                // Card 3: Battery Card (Only present if adapter is connected)
+                if hasAdapter {
+                    let arrowColor: Color = powerFlow.isCharging ? .green.opacity(0.7) : (powerFlow.isDischarging ? .blue.opacity(0.7) : .gray.opacity(0.2))
+                    let arrowIcon = powerFlow.isDischarging ? "arrow.left" : "arrow.right"
+                    
+                    if isExpanded {
+                        Image(systemName: arrowIcon)
+                            .foregroundColor(arrowColor)
+                            .font(.system(size: 14, weight: .bold))
+                            .offset(x: 90)
+                    }
+                    
+                    let batV = Double(batteryData?.voltage ?? 0) / 1000.0
+                    let batA = Double(batteryData?.amperage ?? 0) / 1000.0
+                    let batPowerValue = (powerFlow.isCharging || powerFlow.isDischarging) ? powerFlow.batteryPower : nil
+                    card(icon: powerFlow.isCharging ? "battery.100.bolt" : "battery.100", 
+                         title: "电池", 
+                         power: batPowerValue,
+                         color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary),
+                          details: ["\(batteryData?.currentCapacity ?? 0)%", "\(String(format: "%.1fV", batV)) \(String(format: "%.2fA", abs(batA)))"])
+                        .offset(x: isExpanded ? 180 : 110)
+                        .zIndex(1)
+                        .id(3)
+                        .onTapGesture { handleTap(3) }
                 }
-                
-                // Battery Card
-                let batV = Double(batteryData?.voltage ?? 0) / 1000.0
-                let batA = Double(batteryData?.amperage ?? 0) / 1000.0
-                let batPowerValue = (powerFlow.isCharging || powerFlow.isDischarging) ? powerFlow.batteryPower : nil
-                card(icon: powerFlow.isCharging ? "battery.100.bolt" : "battery.100", 
-                     title: "电池", 
-                     power: batPowerValue,
-                     color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary),
-                      details: ["\(batteryData?.currentCapacity ?? 0)%", "\(String(format: "%.1fV", batV)) \(String(format: "%.2fA", abs(batA)))"])
-                    .offset(x: isExpanded ? 180 : 110)
-                    .zIndex(1)
-                    .id(3)
-                    .onTapGesture { handleTap(3) }
             }
             .offset(x: dragOffset)
             .frame(width: 400, alignment: .center)
@@ -121,29 +134,47 @@ struct CardsPowerFlowView: View {
                 DragGesture()
                     .onChanged { value in
                         guard isExpanded else { return }
+                        let hasAdapter = powerFlow.adapterPower > 2
                         let proposedOffset = savedOffset + value.translation.width
-                        dragOffset = min(max(proposedOffset, -70), 70)
+                        let minBound: CGFloat = hasAdapter ? -70 : 0
+                        dragOffset = min(max(proposedOffset, minBound), 70)
                     }
                     .onEnded { value in
                         guard isExpanded else { return }
+                        let hasAdapter = powerFlow.adapterPower > 2
+                        let minBound: CGFloat = hasAdapter ? -70 : 0
                         let finalOffset = dragOffset
                         let targetOffset: CGFloat
                         if finalOffset > 35 { targetOffset = 70; focusedCard = 1 }
-                        else if finalOffset < -35 { targetOffset = -70; focusedCard = 3 }
+                        else if finalOffset < -35 && hasAdapter { targetOffset = -70; focusedCard = 3 }
                         else { targetOffset = 0; focusedCard = 2 }
                         
+                        // Fallback logic incase state changes radically
+                        let safeTarget = min(max(targetOffset, minBound), 70)
+                        
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            dragOffset = targetOffset
+                            dragOffset = safeTarget
                         }
-                        savedOffset = targetOffset
+                        savedOffset = safeTarget
                     }
             )
             .padding(.vertical, 8)
+            .onChange(of: powerFlow.adapterPower) { newValue in
+                // Auto-center bounds recovery if unplugged while focused on card 3
+                if newValue <= 2 && savedOffset < 0 {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        dragOffset = 0
+                        savedOffset = 0
+                        focusedCard = 2
+                    }
+                }
+            }
         }
         .padding(.vertical, 8)
     }
 
     private func handleTap(_ id: Int) {
+        let hasAdapter = powerFlow.adapterPower > 2
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
             if isExpanded && focusedCard == id {
                 isExpanded = false
@@ -157,7 +188,8 @@ struct CardsPowerFlowView: View {
                 let targetOffset: CGFloat
                 if id == 1 { targetOffset = 70 }
                 else if id == 2 { targetOffset = 0 }
-                else { targetOffset = -70 }
+                else if id == 3 && hasAdapter { targetOffset = -70 }
+                else { targetOffset = 0 }
                 
                 dragOffset = targetOffset
                 savedOffset = targetOffset

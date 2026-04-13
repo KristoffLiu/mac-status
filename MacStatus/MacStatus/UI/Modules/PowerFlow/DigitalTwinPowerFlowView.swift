@@ -317,124 +317,102 @@ struct MacBookScreenLid: View {
                     .offset(y: -1)
                 
                 // MacBook Style Lock Screen / Widget Dashboard
-                ZStack {
+                ZStack(alignment: .topLeading) {
                     // Top Menu Bar
                     VStack {
-                        HStack(spacing: 3) {
+                        HStack {
                             Spacer()
-                            Text("10:09")
-                                .font(.system(size: 4.5, weight: .medium))
                             
                             // Miniature macOS Status Bar Battery
                             ZStack(alignment: .leading) {
+                                // Main body container
                                 RoundedRectangle(cornerRadius: 1)
                                     .stroke(Color.white.opacity(0.8), lineWidth: 0.5)
-                                    .frame(width: 12, height: 6)
+                                    .frame(width: 10, height: 5)
                                     
+                                // Battery level fill
                                 RoundedRectangle(cornerRadius: 0.5)
                                     .fill(isCharging ? Color.green : Color.white)
-                                    // 10 points max width inside the 12 point container
-                                    .frame(width: max(0, CGFloat(batteryLevel) / 100.0 * 10), height: 4)
+                                    .frame(width: max(0, CGFloat(batteryLevel) / 100.0 * 8), height: 3)
                                     .padding(.leading, 1)
                                 
                                 // Battery terminal nip
-                                Path { path in
-                                    path.move(to: CGPoint(x: 12, y: 2))
-                                    path.addLine(to: CGPoint(x: 13, y: 2))
-                                    path.addLine(to: CGPoint(x: 13, y: 4))
-                                    path.addLine(to: CGPoint(x: 12, y: 4))
-                                }
-                                .fill(Color.white.opacity(0.8))
+                                RoundedRectangle(cornerRadius: 0.5)
+                                    .fill(Color.white.opacity(0.8))
+                                    .frame(width: 1, height: 2)
+                                    .offset(x: 10.5)
                                 
                                 if isCharging {
                                     Image(systemName: "bolt.fill")
-                                        .font(.system(size: 4))
+                                        .font(.system(size: 3))
                                         .foregroundColor(batteryLevel >= 100 ? .black : .white)
-                                        .offset(x: 4)
+                                        .offset(x: 3.5)
                                 }
                             }
+                            .frame(width: 12, height: 5)
                         }
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 6)
-                        .padding(.top, 2)
+                        .padding(.trailing, 4)
+                        .padding(.top, 4)
                         
                         Spacer()
                     }
                     
-                    // Desktop Widgets
-                    HStack(spacing: 8) {
-                        // Widget 1: Battery Widget
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color.white.opacity(0.1))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .fill(Color.black.opacity(0.2)) // subtle blur/back plane
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                                )
-                                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
-                            
-                            VStack(spacing: 3) {
-                                ZStack {
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.15), lineWidth: 3)
-                                        .frame(width: 22, height: 22)
-                                    
-                                    Circle()
-                                        .trim(from: 0, to: CGFloat(batteryLevel) / 100.0)
-                                        .stroke(
-                                            isCharging ? Color.green : Color.white,
-                                            style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                                        )
-                                        .frame(width: 22, height: 22)
-                                        .rotationEffect(.degrees(-90))
-                                    
-                                    Text("\(batteryLevel)%")
-                                        .font(.system(size: 6, weight: .bold, design: .rounded))
-                                        .foregroundColor(.white)
-                                }
-                                Text("Battery")
-                                    .font(.system(size: 5, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                        .frame(width: 44, height: 44)
+                    // Top-Left Desktop Widget
+                    // Redesigned to native macOS Sonoma style: clean typography, frosted glass, large readable values
+                    ZStack(alignment: .topLeading) {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.white.opacity(0.12))
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color.black.opacity(0.2)) // subtle blur/darken plane
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(LinearGradient(
+                                        colors: [Color.white.opacity(0.4), Color.white.opacity(0.05)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    ), lineWidth: 0.5)
+                            )
+                            .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
                         
-                        // Widget 2: CPU Power Widget
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color.white.opacity(0.1))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .fill(Color.black.opacity(0.2))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                                )
-                                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Top row: Graphic / Context
+                            Image(systemName: "bolt.batteryblock.fill")
+                                .font(.system(size: 7))
+                                .foregroundColor(isCharging ? .green : .white.opacity(0.9))
+                                .padding(.bottom, 3)
                             
-                            VStack(spacing: 3) {
-                                Image(systemName: "cpu")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.cyan)
-                                
-                                Text("\(Int(systemPower)) W")
-                                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                            // Large Battery Percentage Typography
+                            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                                Text("\(batteryLevel)")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
-                                
-                                Text("System")
-                                    .font(.system(size: 5, weight: .medium))
+                                Text("%")
+                                    .font(.system(size: 8, weight: .semibold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.7))
                             }
+                            
+                            Spacer(minLength: 0)
+                            
+                            // System Power Status
+                            HStack(spacing: 2) {
+                                Image(systemName: "cpu")
+                                    .font(.system(size: 5, weight: .bold))
+                                Text("\(Int(systemPower)) W")
+                                    .font(.system(size: 6, weight: .semibold, design: .rounded))
+                            }
+                            .foregroundColor(.cyan)
                         }
-                        .frame(width: 44, height: 44)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 6)
                     }
-                    .offset(y: 4) // Center aesthetically below menu bar
+                    .frame(width: 48, height: 48)
+                    .padding(.leading, 8)
+                    .padding(.top, 14) // Offset clear below the top menu bar
                 }
+                .frame(width: 168, height: 104) // STRICTLY BOUND TO SCREEN TO PREVENT SPACERS FROM EXPANDING MACBOOK LAYOUT
+
+
                 .shadow(color: .black.opacity(0.4), radius: 3)
             }
             // Screen contents fade out realistically as the physical lid closes
