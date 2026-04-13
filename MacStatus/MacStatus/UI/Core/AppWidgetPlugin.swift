@@ -17,7 +17,6 @@ extension AppWidgetPlugin {
     var iconColor: Color {
         switch self.id {
         case "powerFlow": return .green
-        case "powerStatus": return .yellow
         case "batterySpecs": return .blue
         case "batteryHealth": return .red
         case "highPowerApps": return .orange

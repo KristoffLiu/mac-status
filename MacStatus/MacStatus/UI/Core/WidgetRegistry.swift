@@ -8,7 +8,6 @@ class WidgetRegistry: ObservableObject {
     
     private init() {
         register(PowerFlowPlugin())
-        register(PowerStatusPlugin())
         register(BatterySpecsPlugin())
         register(BatteryHealthPlugin())
         register(HighPowerAppsPlugin())

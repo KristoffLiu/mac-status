@@ -92,49 +92,77 @@ struct CardsPowerFlowView: View {
     }
 
     private func card(icon: String, title: String, power: Double?, color: Color, details: [String]) -> some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.system(size: 18, weight: .medium))
-                .padding(.bottom, 4)
-            
-            if let p = power, p >= 0 {
-                Text(String(format: "%.1fW", p))
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(color == .secondary ? .primary : color)
-            } else if title == "电池" && power == nil {
-                Text("待机")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.secondary)
-            } else {
-                Text("--")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(.secondary.opacity(0.5))
-            }
-            
-            Text(title)
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 2)
-            
-            if !details.isEmpty {
-                VStack(spacing: 2) {
-                    ForEach(details, id: \.self) { text in
-                        Text(text)
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.secondary.opacity(0.8))
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .leading, spacing: 2) {
+                // Top row layout
+                // Left: Big wattage
+                if let p = power, p >= 0 {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(format: "%.1f", p))
+                            .font(.system(size: 24, weight: .heavy, design: .rounded))
+                            .foregroundColor(color == .secondary ? .primary : color)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                        Text("W")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
+                } else if title == "电池" && power == nil {
+                    Text("待机")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                } else {
+                    Text("--")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .foregroundColor(.secondary.opacity(0.3))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
+                
+                // Title
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.primary.opacity(0.9))
+                    .padding(.top, 4)
+                
+                // Details List
+                if !details.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        ForEach(details, id: \.self) { text in
+                            Text(text)
+                                .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                .foregroundColor(.secondary.opacity(0.8))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+                
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            
+            // Right: Icon Badge
+            Image(systemName: icon)
+                .foregroundColor(color == .secondary ? .primary : color)
+                .font(.system(size: 14, weight: .bold))
+                .frame(width: 28, height: 28)
+                .background((color == .secondary ? Color.primary : color).opacity(0.1))
+                .clipShape(Circle())
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 4)
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        )
     }
-
+    
     private var statusText: String {
         if powerFlow.isCharging { return "电池充电" }
         if powerFlow.isDischarging { return "电池供电" }

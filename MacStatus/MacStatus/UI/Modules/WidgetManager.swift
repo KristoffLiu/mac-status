@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 class WidgetManager: ObservableObject {
     static let shared = WidgetManager()
     
-    @Published var activeWidgets: [String] = ["powerFlow", "powerStatus", "batterySpecs", "batteryHealth", "systemMonitor"] {
+    @Published var activeWidgets: [String] = ["powerFlow", "batterySpecs", "batteryHealth", "systemMonitor"] {
         didSet {
             save()
         }
@@ -55,7 +55,7 @@ class WidgetManager: ObservableObject {
                 strings.removeAll { $0 == "powerData" || $0 == "batteryData" || $0 == "batteryDetail" }
                 
                 // Re-insert new group structure
-                var insertions: [String] = ["powerStatus", "batterySpecs", "batteryHealth"]
+                var insertions: [String] = ["batterySpecs", "batteryHealth"]
                 // Place them after powerFlow if it exists
                 if let index = strings.firstIndex(of: "powerFlow") {
                     strings.insert(contentsOf: insertions, at: index + 1)

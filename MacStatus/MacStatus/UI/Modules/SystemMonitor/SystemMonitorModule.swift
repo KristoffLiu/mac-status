@@ -140,6 +140,7 @@ struct SystemMonitorModule: View {
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 8)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func cpuTotalColor(_ v: Double) -> Color {
@@ -746,21 +747,20 @@ struct SystemMonitorConfigView: View {
         HStack(spacing: 0) {
             // 左侧：独立的侧边栏式预览
             VStack {
-                Spacer()
-                
                 SystemMonitorModule()
                     .frame(width: 400)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 20)
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 4) // 刻意缩减下边距以补偿视觉差异
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+                    .padding(.bottom, 20)
                 
-                Spacer()
+                Spacer(minLength: 0)
             }
+            .background(Color(NSColor.controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
             .frame(maxHeight: .infinity)
             
             // 右侧：偏好设置详情
