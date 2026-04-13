@@ -749,7 +749,6 @@ struct SystemMonitorConfigView: View {
             VStack {
                 SystemMonitorModule()
                     .frame(width: 400)
-                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 20)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)

@@ -4,6 +4,7 @@ enum PowerFlowStyle: String, CaseIterable {
     case sankey = "sankey"
     case cards = "cards"
     case blocks = "blocks"
+    case twin = "twin"
 }
 
 struct PowerFlowModuleView: View {
@@ -19,6 +20,8 @@ struct PowerFlowModuleView: View {
             CardsPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
         case .blocks:
             BlockPowerFlowView(powerFlow: powerFlow)
+        case .twin:
+            DigitalTwinPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
         }
     }
 }
@@ -52,6 +55,7 @@ private struct PowerFlowPluginContentView: View {
 struct PowerFlowConfigView: View {
     @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
     @Environment(\.dismiss) var dismiss
     
@@ -123,12 +127,13 @@ struct PowerFlowConfigView: View {
                 
                 // 3. 视图选择
                 Section("显示样式") {
-                    Picker("样式", selection: $style) {
-                        Text("桑基图 (Sankey)").tag(PowerFlowStyle.sankey)
-                        Text("数据块 (Blocks)").tag(PowerFlowStyle.blocks)
-                        Text("卡片 (Cards)").tag(PowerFlowStyle.cards)
+                    HStack(spacing: 12) {
+                        StyleSelectButton(title: "数字孪生", icon: "cube.transparent", style: .twin, currentSelection: $style)
+                        StyleSelectButton(title: "桑基图", icon: "water.waves", style: .sankey, currentSelection: $style)
+                        StyleSelectButton(title: "数据块", icon: "square.grid.2x2", style: .blocks, currentSelection: $style)
+                        StyleSelectButton(title: "卡片", icon: "rectangle.grid.1x2.fill", style: .cards, currentSelection: $style)
                     }
-                    .pickerStyle(.segmented)
+                    .padding(.vertical, 4)
                 }
                 
                 // 4. 桑基图设置
@@ -136,6 +141,10 @@ struct PowerFlowConfigView: View {
                     Section("桑基图微调") {
                         Toggle("播放流动动画", isOn: $isAnimated)
                         Toggle("在管道上显示具体瓦数", isOn: $showValues)
+                    }
+                } else if style == .twin {
+                    Section("数字孪生微调") {
+                        Toggle("播放流动动画", isOn: $isTwinAnimated)
                     }
                 }
             }
@@ -197,3 +206,35 @@ struct PowerFlowConfigView: View {
     }
 }
 
+struct StyleSelectButton: View {
+    let title: String
+    let icon: String
+    let style: PowerFlowStyle
+    @Binding var currentSelection: PowerFlowStyle
+    
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentSelection = style
+            }
+        }) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(currentSelection == style ? Color.accentColor.opacity(0.15) : Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .foregroundColor(currentSelection == style ? .accentColor : .primary)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(currentSelection == style ? Color.accentColor.opacity(0.8) : Color.gray.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}

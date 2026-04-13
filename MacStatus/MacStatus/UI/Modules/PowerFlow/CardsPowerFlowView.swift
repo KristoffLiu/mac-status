@@ -3,6 +3,8 @@ import SwiftUI
 struct CardsPowerFlowView: View {
     var powerFlow: PowerFlowData
     var batteryData: BatteryData?
+    @State private var isExpanded: Bool = false
+    @State private var focusedCard: Int? = nil
     
     var body: some View {
         VStack(spacing: 12) {
@@ -31,7 +33,9 @@ struct CardsPowerFlowView: View {
             .padding(.horizontal, 4)
             
             // 3 Cards Layout
-            HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                ScrollViewReader { proxy in
+                    HStack(spacing: isExpanded ? 8 : -60) {
                 // Adapter Card
                 let hasAdapter = powerFlow.adapterPower > 2
                 let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
@@ -57,10 +61,15 @@ struct CardsPowerFlowView: View {
                      power: hasAdapter ? powerFlow.adapterPower : -1, 
                      color: (hasAdapter && !powerFlow.isDischarging) ? .blue : .secondary.opacity(0.5), 
                      details: adapterDetails)
+                    .zIndex(3)
+                    .id(1)
+                    .onTapGesture { handleTap(1, proxy: proxy) }
                 
-                Image(systemName: "arrow.right")
-                    .foregroundColor(hasAdapter && !powerFlow.isDischarging ? .gray.opacity(0.5) : .gray.opacity(0.2))
-                    .font(.system(size: 14, weight: .bold))
+                if isExpanded {
+                    Image(systemName: "arrow.right")
+                        .foregroundColor(hasAdapter && !powerFlow.isDischarging ? .gray.opacity(0.5) : .gray.opacity(0.2))
+                        .font(.system(size: 14, weight: .bold))
+                }
                 
                 // System Card
                 card(icon: "laptopcomputer", 
@@ -68,13 +77,18 @@ struct CardsPowerFlowView: View {
                      power: powerFlow.systemPower, 
                      color: .primary, 
                      details: [])
+                    .zIndex(2)
+                    .id(2)
+                    .onTapGesture { handleTap(2, proxy: proxy) }
                 
                 let arrowColor: Color = powerFlow.isCharging ? .green.opacity(0.7) : (powerFlow.isDischarging ? .blue.opacity(0.7) : .gray.opacity(0.2))
                 let arrowIcon = powerFlow.isDischarging ? "arrow.left" : "arrow.right"
                 
-                Image(systemName: arrowIcon)
-                    .foregroundColor(arrowColor)
-                    .font(.system(size: 14, weight: .bold))
+                if isExpanded {
+                    Image(systemName: arrowIcon)
+                        .foregroundColor(arrowColor)
+                        .font(.system(size: 14, weight: .bold))
+                }
                 
                 // Battery Card
                 let batV = Double(batteryData?.voltage ?? 0) / 1000.0
@@ -84,11 +98,35 @@ struct CardsPowerFlowView: View {
                      title: "电池", 
                      power: batPowerValue,
                      color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary),
-                     details: ["\(batteryData?.currentCapacity ?? 0)%", "\(String(format: "%.1fV", batV)) \(String(format: "%.2fA", abs(batA)))"])
+                      details: ["\(batteryData?.currentCapacity ?? 0)%", "\(String(format: "%.1fV", batV)) \(String(format: "%.2fA", abs(batA)))"])
+                    .zIndex(1)
+                    .id(3)
+                    .onTapGesture { handleTap(3, proxy: proxy) }
+            }
+            .padding(.horizontal, isExpanded ? 20 : 4)
+            .padding(.vertical, 8)
+        }
+        }
+    }
+    .padding(.vertical, 8)
+    .padding(.horizontal, 4)
+}
+
+    private func handleTap(_ id: Int, proxy: ScrollViewProxy) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            if isExpanded && focusedCard == id {
+                isExpanded = false
+                focusedCard = nil
+            } else {
+                isExpanded = true
+                focusedCard = id
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 4)
     }
 
     private func card(icon: String, title: String, power: Double?, color: Color, details: [String]) -> some View {
@@ -156,6 +194,7 @@ struct CardsPowerFlowView: View {
                 .clipShape(Circle())
         }
         .padding(14)
+        .frame(width: 160)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor))
