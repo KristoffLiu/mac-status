@@ -204,6 +204,9 @@
     "40W" : {
 
     },
+    "75" : {
+
+    },
     "75%" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1534,6 +1537,9 @@
           }
         }
       }
+    },
+    "数字内置" : {
+
     },
     "显示百分比" : {
       "extractionState" : "manual",

@@ -43,6 +43,7 @@ struct MenuBarSettingsView: View {
             Section("主图标样式") {
                 Picker("样式", selection: $menuBarIconStyle) {
                     Text("不要显示").tag("none")
+                    Text("数字内置").tag("battery_numeric")
                     Text("AlDente 图标").tag("aldente_icon")
                     Text("AlDente 状态").tag("aldente_status")
                     Text("macOS 原生").tag("battery")
@@ -164,6 +165,7 @@ struct MenuBarSettingsView: View {
                 HStack(spacing: menuItemSpacing) {
                     if menuBarIconStyle != "none" {
                         if menuBarIconStyle == "battery" { Image(systemName: "battery.100.bolt") }
+                        else if menuBarIconStyle == "battery_numeric" { Image(systemName: "battery.100").overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black)) }
                         else if menuBarIconStyle == "ios_native" { Image(systemName: "battery.75") }
                         else if menuBarIconStyle == "macos_color" { Image(systemName: "battery.100").foregroundColor(.green) }
                         else if menuBarIconStyle == "aldente_status" { Image(systemName: "minus.plus.batteryblock.fill") }

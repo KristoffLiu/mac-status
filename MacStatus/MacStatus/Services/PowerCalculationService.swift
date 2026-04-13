@@ -12,10 +12,13 @@ class PowerCalculationService {
         let smcSystemWatts = SMCService.shared.systemTotalPower
         
         let powerSourceType = IOPSGetProvidingPowerSourceType(nil)?.takeRetainedValue() as? String ?? ""
-        let isTrueAC = (powerSourceType == "AC Power")
+        let isTrueAC = (powerSourceType == "AC Power") || (data.adapter != nil) || (data.adapterWatts > 0)
         
         // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
         let adapterWatts = isTrueAC ? (data.adapter?.realTimeWatts ?? Double(data.adapterWatts)) : 0.0
+        
+        // Some adapters don't broadcast real-time watts via BatteryData dict, so if it's 0 but it's connected, fallback to design watts or smc.
+        let actualAdapterWatts = (adapterWatts <= 0.1 && isTrueAC) ? Double(data.adapterWatts) : adapterWatts
         
         var batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
 
@@ -39,29 +42,32 @@ class PowerCalculationService {
             isCharging = true
             isDischarging = false
             // Real-time system power is preferred, otherwise fallback to adapter - battery
-            systemWatts = smcSystemWatts ?? (adapterWatts - batteryWatts)
+            systemWatts = smcSystemWatts ?? (actualAdapterWatts - batteryWatts)
             topology = .topologyA
         } else if actualAmperage < 0 {
             // Discharging...
             // BUT wait! If we are plugged in (isTrueAC), and the adapter is clearly strong enough 
             // to power the system (adapterWatts >= system draw), then the battery is idling!
             // IOKit's battery controller is merely lagging behind the AC controller. We shouldn't show a frozen "discharging ghost".
-            let currentSystemDraw = smcSystemWatts ?? adapterWatts
-            let theoreticalTotalSource = adapterWatts + batteryWatts
+            let currentSystemDraw = smcSystemWatts ?? actualAdapterWatts
+            let theoreticalTotalSource = actualAdapterWatts + batteryWatts
             
-            // If adapter covers 90% of the system draw, or if the sum of adapter+battery is physically impossible 
-            // compared to the true SMC system draw, then the battery discharging reading is a lagging ghost.
+            // If the battery alone claims to be discharging roughly as much (or more) than the whole system is drawing,
+            // while we are physically on AC power, it's definitively a lagging ghost sensor.
+            let isDefinitivelyLagging = (smcSystemWatts != nil && batteryWatts >= currentSystemDraw * 0.7)
+            
             let isGhost = isTrueAC && (
-                adapterWatts >= currentSystemDraw * 0.9 ||
+                isDefinitivelyLagging ||
+                actualAdapterWatts >= currentSystemDraw * 0.6 ||
                 (smcSystemWatts != nil && theoreticalTotalSource > currentSystemDraw + 15.0)
             )
             
-            if isGhost {
+            if isGhost || (isTrueAC && actualAdapterWatts > currentSystemDraw) {
                 // False negative: It's just transient lag. Force bypass/charging state logic.
                 isCharging = false
                 isDischarging = false
-                systemWatts = smcSystemWatts ?? adapterWatts
-                batteryWatts = 0.0 // 🛑 CRITICAL FIX: Kill the ghost battery value so Sankey doesn't render a dead frozen charging line!
+                systemWatts = smcSystemWatts ?? actualAdapterWatts
+                batteryWatts = 0.0 // 🛑 CRITICAL FIX: Kill the ghost battery value
                 topology = .topologyA
             } else {
                 // Genuinely discharging alongside adapter (or unplugged)
@@ -80,9 +86,9 @@ class PowerCalculationService {
             if let smcWatts = smcSystemWatts {
                 systemWatts = smcWatts
                 topology = .topologyA
-            } else if adapterWatts > 0 {
+            } else if actualAdapterWatts > 0 {
                 // Fallback
-                systemWatts = adapterWatts
+                systemWatts = actualAdapterWatts
                 topology = .topologyA
             } else {
                 // Unknown / no load
@@ -92,8 +98,8 @@ class PowerCalculationService {
         }
         
         // For the visual flow logic (adapterPower rendering)
-        // If systemWatts > 0 and we are in bypass, true adapter intake is systemWatts + batteryWatts.
-        var trueAdapterWatts = adapterWatts
+        // If systemWatts > 0 and we are in bypass, trueAdapterWatts is systemWatts + batteryWatts.
+        var trueAdapterWatts = actualAdapterWatts
         if isCharging {
             trueAdapterWatts = systemWatts + batteryWatts
         } else if !isDischarging && topology == .topologyA {
@@ -105,7 +111,7 @@ class PowerCalculationService {
             if data.adapter == nil || !isTrueAC {
                 trueAdapterWatts = 0.0
             } else {
-                trueAdapterWatts = adapterWatts
+                trueAdapterWatts = actualAdapterWatts
             }
         }
         
