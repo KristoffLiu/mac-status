@@ -620,6 +620,9 @@
         }
       }
     },
+    "E" : {
+
+    },
     "Fully Charged" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1007,6 +1010,9 @@
           }
         }
       }
+    },
+    "P" : {
+
     },
     "Power" : {
       "extractionState" : "manual",

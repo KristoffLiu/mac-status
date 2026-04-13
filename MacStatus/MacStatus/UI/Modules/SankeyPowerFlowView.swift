@@ -7,12 +7,14 @@ struct SankeyPowerFlowView: View {
         VStack(spacing: 12) {
             
             // MAIN SYSTEM ROW: Adapter -> System (or Battery -> System if unplugged)
-            HStack(spacing: 8) {
+            HStack(spacing: -12) {
                 // Main Source: Adapter if plugged in, else Battery
                 if powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA {
                     NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8))
+                        .zIndex(1)
                 } else {
                     NodePill(icon: "battery.100", value: nil, iconColor: .blue)
+                        .zIndex(1)
                 }
                 
                 // Base absolute reference mapping for proportional flow
@@ -26,11 +28,16 @@ struct SankeyPowerFlowView: View {
                     watts: sysFlowWatts,
                     fraction: min(sysFraction, 1.0),
                     startColor: (powerFlow.adapterPower > 0 || powerFlow.topology == .topologyA) ? .yellow.opacity(0.8) : .blue,
-                    endColor: .gray.opacity(0.2)
+                    endColor: .gray.opacity(0.2),
+                    isSubFlow: false,
+                    leftConnectHeight: 70,
+                    rightConnectHeight: 70
                 )
+                .zIndex(0)
                 
                 // Main Sink: System
                 NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary)
+                    .zIndex(1)
             }
             .frame(height: 70)
             
@@ -39,7 +46,7 @@ struct SankeyPowerFlowView: View {
                 let totalSource = max(powerFlow.adapterPower, 0.1)
                 let batFraction = powerFlow.batteryPower / totalSource
                 
-                HStack(spacing: 8) {
+                HStack(spacing: -12) {
                     
                     if powerFlow.topology == .topologyA {
                         // Invisible spacer node on left to align with above (Adapter)
@@ -51,22 +58,31 @@ struct SankeyPowerFlowView: View {
                             fraction: min(batFraction, 1.0),
                             startColor: .yellow.opacity(0.8),
                             endColor: .green,
-                            isSubFlow: true
+                            isSubFlow: true,
+                            leftConnectHeight: nil,
+                            rightConnectHeight: 35
                         )
+                        .zIndex(0)
+                        
                         NodePill(icon: "battery.100.bolt", value: "\(Int(powerFlow.batteryPower))W", iconColor: .green, isSubNode: true)
                             .frame(width: 60, alignment: .center)
+                            .zIndex(1)
                     } else {
                         // Battery -> System (Discharging alongside Adapter)
                         NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: true)
                             .frame(width: 60, alignment: .center)
+                            .zIndex(1)
                         
                         ThickFlowBlock(
                             watts: powerFlow.batteryPower,
                             fraction: min(batFraction, 1.0),
                             startColor: .blue,
                             endColor: .gray.opacity(0.2),
-                            isSubFlow: true
+                            isSubFlow: true,
+                            leftConnectHeight: 35,
+                            rightConnectHeight: nil
                         )
+                        .zIndex(0)
                         
                         // Invisible spacer on right to align with System above
                         Color.clear.frame(width: 60)
@@ -115,19 +131,29 @@ struct ThickFlowBlock: View {
     var startColor: Color
     var endColor: Color
     var isSubFlow: Bool = false
+    var leftConnectHeight: CGFloat? = nil
+    var rightConnectHeight: CGFloat? = nil
     
     @State private var phase = 0.0
     
     // True Sankey logic: thickness is proportional to its fraction of total power
     private var thickness: CGFloat {
-        let maxThickness: CGFloat = isSubFlow ? 36.0 : 56.0
+        let maxThickness: CGFloat = isSubFlow ? 24.0 : 40.0
         return max(12.0, CGFloat(fraction) * maxThickness)
     }
     
     var body: some View {
+        let leftH = leftConnectHeight ?? thickness
+        let rightH = rightConnectHeight ?? thickness
+        let baseHeight: CGFloat = isSubFlow ? 35 : 70
+        
         ZStack {
+            // White base behind everything
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
+                .fill(Color.white)
+            
             // The Block
-            RoundedRectangle(cornerRadius: 8)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -138,10 +164,9 @@ struct ThickFlowBlock: View {
                         endPoint: .trailing
                     )
                 )
-                .frame(height: thickness)
                 .overlay(
                     // Flow animation overlay
-                    RoundedRectangle(cornerRadius: 8)
+                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH)
                         .fill(
                             LinearGradient(
                                 stops: [
@@ -154,7 +179,7 @@ struct ThickFlowBlock: View {
                             )
                         )
                         .blendMode(.overlay)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH))
                         .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
                 )
             
@@ -167,9 +192,66 @@ struct ThickFlowBlock: View {
                 .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
                 .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(height: baseHeight)
         .onAppear {
             phase = 1.0
         }
+    }
+}
+
+struct WatchBandShape: Shape {
+    var thickness: CGFloat
+    var leftHeight: CGFloat
+    var rightHeight: CGFloat
+    
+    var animatableData: CGFloat {
+        get { thickness }
+        set { thickness = newValue }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        let centerY = h / 2.0
+        
+        // Ensure values are sane
+        let safeThick = min(thickness, h)
+        let clampedLeft = min(max(safeThick, leftHeight), h)
+        let clampedRight = min(max(safeThick, rightHeight), h)
+        
+        let halfThick = safeThick / 2.0
+        let halfLeft = clampedLeft / 2.0
+        let halfRight = clampedRight / 2.0
+        
+        let curveW: CGFloat = 16.0
+        
+        path.move(to: CGPoint(x: 0, y: centerY - halfLeft))
+        
+        path.addCurve(to: CGPoint(x: curveW, y: centerY - halfThick),
+                      control1: CGPoint(x: curveW * 0.5, y: centerY - halfLeft),
+                      control2: CGPoint(x: curveW * 0.5, y: centerY - halfThick))
+        
+        path.addLine(to: CGPoint(x: max(curveW, w - curveW), y: centerY - halfThick))
+        
+        path.addCurve(to: CGPoint(x: w, y: centerY - halfRight),
+                      control1: CGPoint(x: w - curveW * 0.5, y: centerY - halfThick),
+                      control2: CGPoint(x: w - curveW * 0.5, y: centerY - halfRight))
+        
+        path.addLine(to: CGPoint(x: w, y: centerY + halfRight))
+        
+        path.addCurve(to: CGPoint(x: max(curveW, w - curveW), y: centerY + halfThick),
+                      control1: CGPoint(x: w - curveW * 0.5, y: centerY + halfRight),
+                      control2: CGPoint(x: w - curveW * 0.5, y: centerY + halfThick))
+        
+        path.addLine(to: CGPoint(x: curveW, y: centerY + halfThick))
+        
+        path.addCurve(to: CGPoint(x: 0, y: centerY + halfLeft),
+                      control1: CGPoint(x: curveW * 0.5, y: centerY + halfThick),
+                      control2: CGPoint(x: curveW * 0.5, y: centerY + halfLeft))
+        
+        path.closeSubpath()
+        return path
     }
 }

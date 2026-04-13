@@ -57,7 +57,9 @@ struct SystemMonitorModule: View {
                         }
 
                         // 正方形热力图
-                        CPUHeatmapView(loads: service.coreLoads)
+                        CPUHeatmapView(loads: service.coreLoads, pCoreCount: service.pCoreCount, eCoreCount: service.eCoreCount)
+                        
+                        Spacer(minLength: 0)
                         
                         // CPU历史走势方格矩阵
                         PixelBarChartView(
@@ -69,7 +71,7 @@ struct SystemMonitorModule: View {
                         .frame(height: 40)
                         .clipShape(RoundedRectangle(cornerRadius: 2))
                     }
-                    .frame(maxWidth: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
                     Divider().opacity(0.3)
 
@@ -80,7 +82,7 @@ struct SystemMonitorModule: View {
                         pressure: service.memPressure,
                         history:  service.memHistory
                     )
-                    .frame(maxWidth: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
 
                 Divider().opacity(0.4).padding(.horizontal, 8)
@@ -121,17 +123,65 @@ struct SystemMonitorModule: View {
 // MARK: - CPU Heatmap（正方形格子）
 struct CPUHeatmapView: View {
     let loads: [Double]
+    let pCoreCount: Int
+    let eCoreCount: Int
 
-    private var columns: [GridItem] {
-        // 使用固定的 8pt 尺寸，确保与内存格子大小完全同步
+    private var eCoreLoads: [Double] {
+        if eCoreCount > 0 && eCoreCount + pCoreCount <= loads.count {
+            return Array(loads.prefix(eCoreCount))
+        }
+        return []
+    }
+    
+    private var pCoreLoads: [Double] {
+        if eCoreCount > 0 && eCoreCount + pCoreCount <= loads.count {
+            return Array(loads.dropFirst(eCoreCount).prefix(pCoreCount))
+        }
+        return loads
+    }
+
+    private var eColumns: [GridItem] {
         return [GridItem(.adaptive(minimum: 8, maximum: 8), spacing: 2)]
     }
 
+    private var pColumns: [GridItem] {
+        return [GridItem(.adaptive(minimum: 14, maximum: 14), spacing: 2)]
+    }
+
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 2) {
-            ForEach(0..<loads.count, id: \.self) { i in
-                HeatCell(load: loads[i])
-                    .frame(width: 8, height: 8)
+        VStack(alignment: .leading, spacing: 2) {
+            if !eCoreLoads.isEmpty {
+                HStack(alignment: .top, spacing: 6) {
+                    Text("E")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.blue.opacity(0.7))
+                        .frame(width: 8, alignment: .leading)
+                        .padding(.top, 1)
+
+                    LazyVGrid(columns: eColumns, alignment: .leading, spacing: 2) {
+                        ForEach(0..<eCoreLoads.count, id: \.self) { i in
+                            HeatCell(load: eCoreLoads[i])
+                                .frame(width: 8, height: 8)
+                        }
+                    }
+                }
+            }
+
+            HStack(alignment: .top, spacing: 6) {
+                if !eCoreLoads.isEmpty {
+                    Text("P")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange.opacity(0.7))
+                        .frame(width: 8, alignment: .leading)
+                        .padding(.top, 1)
+                }
+
+                LazyVGrid(columns: pColumns, alignment: .leading, spacing: 2) {
+                    ForEach(0..<pCoreLoads.count, id: \.self) { i in
+                        HeatCell(load: pCoreLoads[i])
+                            .frame(width: 14, height: 14)
+                    }
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: loads)
@@ -270,14 +320,17 @@ struct MemMatrixCard: View {
                     .foregroundColor(.secondary.opacity(0.65))
             }
 
-            // Line 3: 容量格子矩阵 (动态计算格子数量，完美撑满一行且近似正方形)
+            // Line 3: 容量格子矩阵 (代表物理内存占用比，3行完整填充的8x8正方形格子)
             GeometryReader { geo in
-                let spacing: CGFloat = 2.0
-                let targetBlockW: CGFloat = 8.0 // 预期的方块宽度
-                let count = Int((geo.size.width + spacing) / (targetBlockW + spacing))
-                let c = max(count, 1)
-
-                HStack(spacing: spacing) {
+                let spacing: CGFloat = 2
+                let cellSize: CGFloat = 8
+                // 根据实际宽度计算最多能放下多少列
+                let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
+                let actualCols = max(cols, 1)
+                let c = actualCols * 3 // 固定3行
+                let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
+                
+                LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
                     ForEach(0..<c, id: \.self) { i in
                         let threshold = Double(i) / Double(c)
                         let isActive = usedRatio > threshold
@@ -287,11 +340,13 @@ struct MemMatrixCard: View {
                                 RoundedRectangle(cornerRadius: 1.5, style: .continuous)
                                     .stroke(isActive ? pressureColor.opacity(0.3) : Color.clear, lineWidth: 0.5)
                             )
-                            .frame(width: targetBlockW, height: targetBlockW)
+                            .frame(width: cellSize, height: cellSize)
                     }
                 }
             }
-            .frame(height: 8) // 锁定单行高度
+            .frame(height: 28) // 固定高度 (8 * 3) + (2 * 2) = 28
+            
+            Spacer(minLength: 0)
             
             // 内存历史走势
             PixelBarChartView(
@@ -303,7 +358,7 @@ struct MemMatrixCard: View {
             .frame(height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 2))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 
     private var pressureColor: Color {

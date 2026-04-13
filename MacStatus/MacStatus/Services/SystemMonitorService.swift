@@ -7,6 +7,8 @@ class SystemMonitorService: ObservableObject {
 
     // MARK: - CPU
     @Published var coreLoads: [Double] = []       // per-core 0.0~1.0
+    @Published var pCoreCount: Int = 0
+    @Published var eCoreCount: Int = 0
     @Published var cpuTotal: Double = 0.0         // average
     @Published var cpuUser: Double = 0.0
     @Published var cpuSystem: Double = 0.0
@@ -56,6 +58,20 @@ class SystemMonitorService: ObservableObject {
     init() {
         numLogicalCPUs = ProcessInfo.processInfo.processorCount
         coreLoads = Array(repeating: 0.0, count: numLogicalCPUs)
+        
+        var pCount: Int = 0
+        var pCountSize = MemoryLayout<Int>.size
+        sysctlbyname("hw.perflevel0.logicalcpu", &pCount, &pCountSize, nil, 0)
+        
+        var eCount: Int = 0
+        var eCountSize = MemoryLayout<Int>.size
+        sysctlbyname("hw.perflevel1.logicalcpu", &eCount, &eCountSize, nil, 0)
+        
+        if pCount == 0 && eCount == 0 {
+            pCount = numLogicalCPUs
+        }
+        pCoreCount = pCount
+        eCoreCount = eCount
 
         // Bootstrap total memory
         var physMib = [CTL_HW, HW_MEMSIZE]
