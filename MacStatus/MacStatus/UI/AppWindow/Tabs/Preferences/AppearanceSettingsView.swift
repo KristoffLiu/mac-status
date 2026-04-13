@@ -22,13 +22,13 @@ struct AppearanceSettingsView: View {
             
             Section {
                 List {
-                    ForEach(widgetManager.activeWidgets, id: \.self) { widget in
-                        WidgetRowView(widget: widget, isActive: true)
+                    ForEach(widgetManager.activeWidgets, id: \.self) { widgetId in
+                        WidgetRowView(widgetId: widgetId, isActive: true)
                     }
                     .onMove(perform: widgetManager.move)
                     
-                    ForEach(widgetManager.inactiveWidgets, id: \.self) { widget in
-                        WidgetRowView(widget: widget, isActive: false)
+                    ForEach(widgetManager.inactiveWidgets, id: \.self) { widgetId in
+                        WidgetRowView(widgetId: widgetId, isActive: false)
                     }
                 }
                 .frame(minHeight: 300)
@@ -55,81 +55,99 @@ struct AppearanceSettingsView: View {
 }
 
 struct WidgetRowView: View {
-    let widget: PanelWidget
+    let widgetId: String
     var isActive: Bool
     @StateObject private var widgetManager = WidgetManager.shared
     @State private var showingOptions = false
     
     var body: some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { isActive },
-                set: { newValue in
-                    withAnimation {
-                        if newValue {
-                            widgetManager.add(widget)
-                        } else {
-                            widgetManager.remove(widget)
+        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
+            HStack(spacing: 12) {
+                Toggle("", isOn: Binding(
+                    get: { isActive },
+                    set: { newValue in
+                        withAnimation {
+                            if newValue {
+                                widgetManager.add(widgetId)
+                            } else {
+                                widgetManager.remove(widgetId)
+                            }
                         }
                     }
+                ))
+                .toggleStyle(.checkbox)
+                .labelsHidden()
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(plugin.iconColor.opacity(0.2))
+                    Image(systemName: plugin.icon)
+                        .foregroundColor(plugin.iconColor)
                 }
-            ))
-            .toggleStyle(.checkbox)
-            .labelsHidden()
-            
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(widget.iconColor.opacity(0.2))
-                Image(systemName: widget.icon)
-                    .foregroundColor(widget.iconColor)
+                .frame(width: 24, height: 24)
+                
+                Text(LocalizedStringKey(plugin.name))
+                
+                Spacer()
+                
+                if plugin.hasSettings {
+                    Button {
+                        showingOptions = true
+                    } label: {
+                        Text("\(plugin.name) 选项...")
+                    }
+                    .buttonStyle(.bordered)
+                } else {
+                    // Fallback to legacy views before full migrate
+                    if widgetId == "systemMonitor" || widgetId == "powerFlow" {
+                        Button {
+                            showingOptions = true
+                        } label: {
+                            Text("\(plugin.name) 选项...")
+                        }
+                        .buttonStyle(.bordered)
+                    } else {
+                        Text("无额外设置")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.trailing, 8)
+                    }
+                }
             }
-            .frame(width: 24, height: 24)
-            
-            Text(LocalizedStringKey(widget.title))
-            
-            Spacer()
-            
-            Button {
-                showingOptions = true
-            } label: {
-                Text("\(widget.title) 选项...")
+            .padding(.vertical, 4)
+            .sheet(isPresented: $showingOptions) {
+                WidgetOptionsSheet(widgetId: widgetId, plugin: plugin)
             }
-            .buttonStyle(.bordered)
-        }
-        .padding(.vertical, 4)
-        .sheet(isPresented: $showingOptions) {
-            WidgetOptionsSheet(widget: widget)
         }
     }
 }
 
 struct WidgetOptionsSheet: View {
-    let widget: PanelWidget
+    let widgetId: String
+    let plugin: any AppWidgetPlugin
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         Group {
-            if widget == .systemMonitor {
+            if widgetId == "systemMonitor" {
                 SystemMonitorConfigView()
-            } else {
+            } else if widgetId == "powerFlow" {
                 VStack(spacing: 0) {
-                    if widget == .powerFlow {
-                        PowerFlowConfigView()
-                    } else {
-                        Form {
-                            Text("暂无可用的自定义选项。")
-                                .foregroundColor(.secondary)
-                        }
-                        .formStyle(.grouped)
-                        .frame(width: 380)
-                    }
-                    
+                    PowerFlowConfigView()
                     HStack {
                         Spacer()
-                        Button("完成") {
-                            dismiss()
-                        }
-                        .keyboardShortcut(.defaultAction)
+                        Button("完成") { dismiss() }.keyboardShortcut(.defaultAction)
+                    }
+                    .padding()
+                }
+                .background(Color(NSColor.underPageBackgroundColor))
+                .frame(minHeight: 200)
+            } else {
+                VStack(spacing: 0) {
+                    plugin.settingsView
+                    HStack {
+                        Spacer()
+                        Button("完成") { dismiss() }.keyboardShortcut(.defaultAction)
                     }
                     .padding()
                 }

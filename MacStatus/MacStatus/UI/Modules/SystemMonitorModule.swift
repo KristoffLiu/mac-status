@@ -733,4 +733,50 @@ struct GPUHeatmapView: View {
     }
 }
 
+// MARK: - Plugin Definition & Settings
+struct SystemMonitorSettingsView: View {
+    @AppStorage("sysMonShowCompute") private var showCompute = true
+    @AppStorage("sysMonShowMemory") private var showMemory = true
+    @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
+    @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
+
+    var body: some View {
+        Form {
+            Section("组件显示") {
+                Toggle("计算资源 (CPU/GPU)", isOn: $showCompute)
+                Toggle("统一内存", isOn: $showMemory)
+                Toggle("网络与磁盘", isOn: $showNetDisk)
+            }
+            Divider()
+            Section("图表设置") {
+                Toggle("非对称网络/磁盘图表", isOn: $symmetricGraph)
+                VStack(alignment: .leading) {
+                    Text("像素间距: \(pixelGap, specifier: "%.1f")")
+                        .font(.caption)
+                    Slider(value: $pixelGap, in: 0...5, step: 0.5)
+                }
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(width: 260)
+    }
+}
+
+struct SystemMonitorPlugin: AppWidgetPlugin {
+    let id = "systemMonitor"
+    let name = "系统监控"
+    let icon = "chart.xyaxis.line"
+    let hasSettings = true
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(SystemMonitorModule())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(SystemMonitorSettingsView())
+    }
+}
 

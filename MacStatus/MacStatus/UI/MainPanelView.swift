@@ -9,7 +9,7 @@ struct MainPanelView: View {
     
     @StateObject private var widgetManager = WidgetManager.shared
     @AppStorage("isPanelEditing") private var isEditing = false
-    @State private var draggingItem: PanelWidget?
+    @State private var draggingItem: String?
 
     var body: some View {
         PanelContainerView {
@@ -35,7 +35,7 @@ struct MainPanelView: View {
                     }
                 }) {
                     if isEditing {
-                        Text("Done")
+                        Text("完成")
                             .font(.caption)
                             .fontWeight(.bold)
                             .padding(.horizontal, 6)
@@ -55,11 +55,11 @@ struct MainPanelView: View {
             
             // Unified Power & Battery Card
             VStack(spacing: 0) {
-                ForEach(widgetManager.activeWidgets, id: \.self) { widget in
+                ForEach(widgetManager.activeWidgets, id: \.self) { widgetId in
                     HStack(spacing: 0) {
                         if isEditing {
                             Button(action: {
-                                widgetManager.remove(widget)
+                                widgetManager.remove(widgetId)
                             }) {
                                 Image(systemName: "minus.circle.fill")
                                     .foregroundColor(.red)
@@ -71,7 +71,13 @@ struct MainPanelView: View {
                             .transition(.move(edge: .leading).combined(with: .opacity))
                         }
                         
-                        widgetContentView(for: widget)
+                        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
+                            WidgetContainerView(plugin: plugin)
+                                .environmentObject(viewModel)
+                        } else {
+                            Text("Unknown Widget")
+                                .foregroundColor(.red)
+                        }
                         
                         if isEditing {
                             Image(systemName: "line.3.horizontal")
@@ -86,12 +92,12 @@ struct MainPanelView: View {
                     .padding(.horizontal, isEditing ? 4 : 0)
                     .contentShape(Rectangle())
                     .onDrag {
-                        self.draggingItem = widget
-                        return NSItemProvider(object: widget.rawValue as NSString)
+                        self.draggingItem = widgetId
+                        return NSItemProvider(object: widgetId as NSString)
                     }
-                    .onDrop(of: [UTType.text], delegate: WidgetDropDelegate(item: widget, activeWidgets: $widgetManager.activeWidgets, draggingItem: $draggingItem, manager: widgetManager))
+                    .onDrop(of: [UTType.text], delegate: WidgetDropDelegate(item: widgetId, activeWidgets: $widgetManager.activeWidgets, draggingItem: $draggingItem, manager: widgetManager))
                     
-                    if widget != widgetManager.activeWidgets.last {
+                    if widgetId != widgetManager.activeWidgets.last {
                         Divider()
                             .padding(.vertical, isEditing ? 4 : 12)
                             .padding(.horizontal, 12)
@@ -103,7 +109,7 @@ struct MainPanelView: View {
             if isEditing {
                 // Drawer
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Add Widget")
+                    Text("添加组件")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
@@ -111,16 +117,16 @@ struct MainPanelView: View {
                         .padding(.top, 4)
                         
                     if widgetManager.inactiveWidgets.isEmpty {
-                        Text("All widgets added")
+                        Text("已添加所有可用组件")
                             .font(.caption)
                             .foregroundColor(.secondary.opacity(0.7))
                             .padding(.vertical, 12)
                             .frame(maxWidth: .infinity, alignment: .center)
                     } else {
-                        ForEach(widgetManager.inactiveWidgets, id: \.self) { widget in
+                        ForEach(widgetManager.inactiveWidgets, id: \.self) { widgetId in
                             HStack {
                                 Button(action: {
-                                    widgetManager.add(widget)
+                                    widgetManager.add(widgetId)
                                 }) {
                                     Image(systemName: "plus.circle.fill")
                                         .foregroundColor(.green)
@@ -128,9 +134,11 @@ struct MainPanelView: View {
                                 }
                                 .buttonStyle(.plain)
                                 
-                                Text(LocalizedStringKey(widget.title))
-                                    .font(.subheadline)
-                                    .foregroundColor(.primary.opacity(0.8))
+                                if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
+                                    Text(LocalizedStringKey(plugin.name))
+                                        .font(.subheadline)
+                                        .foregroundColor(.primary.opacity(0.8))
+                                }
                                 
                                 Spacer()
                             }
@@ -153,24 +161,6 @@ struct MainPanelView: View {
         }
         .onDisappear {
             EnergyEfficiencyManager.shared.appState = .background
-        }
-    }
-    
-    @ViewBuilder
-    private func widgetContentView(for widget: PanelWidget) -> some View {
-        switch widget {
-        case .powerFlow:
-            PowerFlowModuleView(powerFlow: viewModel.powerFlow)
-        case .powerStatus:
-            PowerStatusModule(batteryData: viewModel.batteryData, powerFlow: viewModel.powerFlow)
-        case .batterySpecs:
-            BatterySpecsModule(batteryData: viewModel.batteryData)
-        case .batteryHealth:
-            BatteryHealthModule(batteryData: viewModel.batteryData)
-        case .highPowerApps:
-            HighPowerAppsModule()
-        case .systemMonitor:
-            SystemMonitorModule()
         }
     }
 }

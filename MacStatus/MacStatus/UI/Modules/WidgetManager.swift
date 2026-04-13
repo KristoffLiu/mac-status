@@ -2,75 +2,34 @@ import SwiftUI
 import Combine
 import UniformTypeIdentifiers
 
-enum PanelWidget: String, CaseIterable, Codable {
-    case powerFlow
-    case powerStatus
-    case batterySpecs
-    case batteryHealth
-    case highPowerApps
-    case systemMonitor
-    
-    var title: String {
-        switch self {
-        case .powerFlow: return "实时能耗流"
-        case .powerStatus: return "电源状态"
-        case .batterySpecs: return "电池规格"
-        case .batteryHealth: return "电池健康"
-        case .highPowerApps: return "高耗能应用"
-        case .systemMonitor: return "系统监控"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .powerFlow: return "bolt.horizontal"
-        case .powerStatus: return "powerplug.fill"
-        case .batterySpecs: return "battery.100.bolt"
-        case .batteryHealth: return "heart.fill"
-        case .highPowerApps: return "cpu"
-        case .systemMonitor: return "chart.xyaxis.line"
-        }
-    }
-    
-    var iconColor: Color {
-        switch self {
-        case .powerFlow: return .green
-        case .powerStatus: return .yellow
-        case .batterySpecs: return .blue
-        case .batteryHealth: return .red
-        case .highPowerApps: return .orange
-        case .systemMonitor: return .purple
-        }
-    }
-}
-
 class WidgetManager: ObservableObject {
     static let shared = WidgetManager()
     
-    @Published var activeWidgets: [PanelWidget] = [.powerFlow, .powerStatus, .batterySpecs, .batteryHealth, .systemMonitor] {
+    @Published var activeWidgets: [String] = ["powerFlow", "powerStatus", "batterySpecs", "batteryHealth", "systemMonitor"] {
         didSet {
             save()
         }
     }
     
-    var inactiveWidgets: [PanelWidget] {
-        PanelWidget.allCases.filter { !activeWidgets.contains($0) }
+    var inactiveWidgets: [String] {
+        let allKeys = WidgetRegistry.shared.allPlugins.map { $0.id }
+        return allKeys.filter { !activeWidgets.contains($0) }
     }
     
     init() {
         load()
     }
     
-    func remove(_ widget: PanelWidget) {
+    func remove(_ widgetId: String) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            activeWidgets.removeAll { $0 == widget }
+            activeWidgets.removeAll { $0 == widgetId }
         }
     }
     
-    func add(_ widget: PanelWidget) {
+    func add(_ widgetId: String) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            if !activeWidgets.contains(widget) {
-                activeWidgets.append(widget)
+            if !activeWidgets.contains(widgetId) {
+                activeWidgets.append(widgetId)
             }
         }
     }
@@ -82,8 +41,7 @@ class WidgetManager: ObservableObject {
     }
     
     private func save() {
-        let strings = activeWidgets.map { $0.rawValue }
-        UserDefaults.standard.set(strings, forKey: "panelWidgetOrder")
+        UserDefaults.standard.set(activeWidgets, forKey: "panelWidgetOrder")
     }
     
     private func load() {
@@ -108,10 +66,9 @@ class WidgetManager: ObservableObject {
                 UserDefaults.standard.set(true, forKey: "hasMigratedToV2")
             }
             
-            let widgets = strings.compactMap { PanelWidget(rawValue: $0) }
             // Deduplicate preserving order
-            var uniqueWidgets = [PanelWidget]()
-            for w in widgets {
+            var uniqueWidgets = [String]()
+            for w in strings {
                 if !uniqueWidgets.contains(w) {
                     uniqueWidgets.append(w)
                 }
@@ -125,9 +82,9 @@ class WidgetManager: ObservableObject {
 }
 
 struct WidgetDropDelegate: DropDelegate {
-    let item: PanelWidget
-    @Binding var activeWidgets: [PanelWidget]
-    @Binding var draggingItem: PanelWidget?
+    let item: String
+    @Binding var activeWidgets: [String]
+    @Binding var draggingItem: String?
     @ObservedObject var manager: WidgetManager
 
     func performDrop(info: DropInfo) -> Bool {

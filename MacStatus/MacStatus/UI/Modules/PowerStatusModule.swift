@@ -301,3 +301,29 @@ private struct PowerCard: View {
         )
     }
 }
+
+// MARK: - Plugin Definition
+struct PowerStatusPlugin: AppWidgetPlugin {
+    let id = "powerStatus"
+    let name = "电源状态"
+    let icon = "powerplug.fill"
+    let hasSettings = false
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(PowerStatusPluginContentView())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(EmptyView())
+    }
+}
+
+private struct PowerStatusPluginContentView: View {
+    @EnvironmentObject var viewModel: StatusViewModel
+    
+    var body: some View {
+        PowerStatusModule(batteryData: viewModel.batteryData, powerFlow: viewModel.powerFlow)
+    }
+}

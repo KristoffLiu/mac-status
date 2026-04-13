@@ -53,3 +53,30 @@ struct BatteryHealthModule: View {
         return Int(min(100.0, max(0.0, health)))
     }
 }
+
+// MARK: - Plugin Definition
+struct BatteryHealthPlugin: AppWidgetPlugin {
+    let id = "batteryHealth"
+    let name = "电池健康"
+    let icon = "heart.fill"
+    let hasSettings = false
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(BatteryHealthPluginContentView())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(EmptyView())
+    }
+}
+
+private struct BatteryHealthPluginContentView: View {
+    @EnvironmentObject var viewModel: StatusViewModel
+    
+    var body: some View {
+        BatteryHealthModule(batteryData: viewModel.batteryData)
+    }
+}
+

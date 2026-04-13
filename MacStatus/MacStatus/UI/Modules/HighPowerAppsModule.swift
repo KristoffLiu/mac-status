@@ -66,5 +66,24 @@ struct HighPowerAppsModule_Previews: PreviewProvider {
             .frame(width: 300)
             .padding()
             .background(Color.black.opacity(0.8))
+}
+}
+
+// MARK: - Plugin Definition
+struct HighPowerAppsPlugin: AppWidgetPlugin {
+    let id = "highPowerApps"
+    let name = "高耗能应用"
+    let icon = "cpu"
+    let hasSettings = false
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(HighPowerAppsModule())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(EmptyView())
     }
 }
+

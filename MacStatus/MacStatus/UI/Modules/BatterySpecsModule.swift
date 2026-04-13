@@ -45,3 +45,30 @@ struct BatterySpecsModule: View {
         .frame(width: width, alignment: .leading)
     }
 }
+
+// MARK: - Plugin Definition
+struct BatterySpecsPlugin: AppWidgetPlugin {
+    let id = "batterySpecs"
+    let name = "电池规格"
+    let icon = "battery.100.bolt"
+    let hasSettings = false
+    
+    @MainActor
+    var contentView: AnyView {
+        AnyView(BatterySpecsPluginContentView())
+    }
+    
+    @MainActor
+    var settingsView: AnyView {
+        AnyView(EmptyView())
+    }
+}
+
+private struct BatterySpecsPluginContentView: View {
+    @EnvironmentObject var viewModel: StatusViewModel
+    
+    var body: some View {
+        BatterySpecsModule(batteryData: viewModel.batteryData)
+    }
+}
+
