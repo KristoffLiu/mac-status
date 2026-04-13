@@ -108,6 +108,8 @@ struct NumericBatteryGraphicView: View {
             .fill(Color.primary.opacity(0.3))
             .frame(width: 2.5, height: height)
         }
+        .padding(.trailing, 1.5)
+        .offset(y: 0.8) // Optically align with text baseline
     }
 }
 
