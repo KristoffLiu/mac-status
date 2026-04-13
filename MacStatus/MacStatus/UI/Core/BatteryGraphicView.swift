@@ -24,12 +24,11 @@ struct BatteryGraphicView: View {
         
         let fillColor: Color = isCharging 
             ? (isColored ? .green : .primary) 
-            : (showLowPowerColor ? .red : (isColored ? .blue : .primary))
+            : (showLowPowerColor ? .red : .primary)
             
         // Border color must be absolutely identical in colored and monochrome modes!
-        // Using a solid opacity that matches macOS native (around 0.45) 
-        // without any conditional switching that causes "grey-black" popping.
-        let strokeColor: Color = Color.primary.opacity(0.45)
+        // We use a solid primary color to eliminate any "transparency" feeling the user pointed out.
+        let strokeColor: Color = Color.primary
         let strokeWidth: CGFloat = 1.0
         let insets: CGFloat = isIOSStyle ? 0 : 1.5 // macOS has 1.5pt gap, iOS has none
         

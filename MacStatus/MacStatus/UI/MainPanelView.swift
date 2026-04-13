@@ -161,8 +161,12 @@ struct MainPanelView: View {
         switch widget {
         case .powerFlow:
             SankeyPowerFlowView(powerFlow: viewModel.powerFlow)
-        case .batteryDetail:
-            DetailGridModule(batteryData: viewModel.batteryData)
+        case .powerStatus:
+            PowerStatusModule(batteryData: viewModel.batteryData)
+        case .batterySpecs:
+            BatterySpecsModule(batteryData: viewModel.batteryData)
+        case .batteryHealth:
+            BatteryHealthModule(batteryData: viewModel.batteryData)
         case .highPowerApps:
             HighPowerAppsModule()
         }

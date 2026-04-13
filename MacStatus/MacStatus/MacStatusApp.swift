@@ -33,11 +33,18 @@ struct MacStatusApp: App {
 
 struct DynamicMenuBarLabel: View {
     @ObservedObject var appDelegate: AppDelegate
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         MenuBarLabelRendererView(
             viewModel: appDelegate.viewModel,
             generatedMenuImage: appDelegate.generatedMenuImage
         )
+        .onChange(of: colorScheme) { newScheme in
+            appDelegate.menuBarIsDark = (newScheme == .dark)
+        }
+        .onAppear {
+            appDelegate.menuBarIsDark = (colorScheme == .dark)
+        }
     }
 }

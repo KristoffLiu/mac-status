@@ -8,8 +8,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var viewModel: StatusViewModel = StatusViewModel()
     var timer: Timer?
     
+    // We store the actual menu bar color scheme passed from DynamicMenuBarLabel 
+    // to accurately render colors in ImageRenderer. Default is true (dark menu bar).
+    var menuBarIsDark: Bool = true {
+        didSet {
+            if oldValue != menuBarIsDark { updateStatusItemImage() }
+        }
+    }
+    
     override init() {
         super.init()
+    }
+    
+    // Prevent the entire app from terminating when the MenuBar popover or Settings window is closed!
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -31,7 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private func updateStatusItemImage() {
         // Determine the system dark mode appearance and apply to the renderer 
         // to prevent Color.primary from collapsing to black in colored menu bar icons
-        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let isDark = menuBarIsDark
         
         let view = IsolatedBatteryGraphicRenderer(viewModel: viewModel)
             .environment(\.colorScheme, isDark ? .dark : .light)

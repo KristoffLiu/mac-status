@@ -4,13 +4,17 @@ import UniformTypeIdentifiers
 
 enum PanelWidget: String, CaseIterable, Codable {
     case powerFlow
-    case batteryDetail
+    case powerStatus
+    case batterySpecs
+    case batteryHealth
     case highPowerApps
     
     var title: String {
         switch self {
         case .powerFlow: return "Real-time Energy Flow"
-        case .batteryDetail: return "Battery Core Data"
+        case .powerStatus: return "电源状态"
+        case .batterySpecs: return "电池规格"
+        case .batteryHealth: return "电池健康"
         case .highPowerApps: return "High Power Apps"
         }
     }
@@ -19,7 +23,7 @@ enum PanelWidget: String, CaseIterable, Codable {
 class WidgetManager: ObservableObject {
     static let shared = WidgetManager()
     
-    @Published var activeWidgets: [PanelWidget] = [.powerFlow, .batteryDetail, .highPowerApps] {
+    @Published var activeWidgets: [PanelWidget] = [.powerFlow, .powerStatus, .batterySpecs, .batteryHealth] {
         didSet {
             save()
         }
@@ -53,10 +57,33 @@ class WidgetManager: ObservableObject {
     }
     
     private func load() {
+        // Automatically migrate users to the new arrangement
         if let stored = UserDefaults.standard.stringArray(forKey: "panelWidgetOrder") {
-            let widgets = stored.compactMap { PanelWidget(rawValue: $0) }
-            if !widgets.isEmpty {
-                self.activeWidgets = widgets
+            var strings = stored
+            
+            // Clean out old widgets
+            strings.removeAll { $0 == "powerData" || $0 == "batteryData" || $0 == "batteryDetail" }
+            
+            // Re-insert new group structure
+            var insertions: [String] = ["powerStatus", "batterySpecs", "batteryHealth"]
+            // Place them after powerFlow if it exists
+            if let index = strings.firstIndex(of: "powerFlow") {
+                strings.insert(contentsOf: insertions, at: index + 1)
+            } else {
+                strings.insert(contentsOf: insertions, at: 0)
+            }
+            
+            let widgets = strings.compactMap { PanelWidget(rawValue: $0) }
+            // Deduplicate preserving order
+            var uniqueWidgets = [PanelWidget]()
+            for w in widgets {
+                if !uniqueWidgets.contains(w) {
+                    uniqueWidgets.append(w)
+                }
+            }
+            
+            if !uniqueWidgets.isEmpty {
+                self.activeWidgets = uniqueWidgets
             }
         }
     }
