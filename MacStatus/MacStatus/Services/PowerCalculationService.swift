@@ -17,7 +17,7 @@ class PowerCalculationService {
         // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
         let adapterWatts = isTrueAC ? (data.adapter?.realTimeWatts ?? Double(data.adapterWatts)) : 0.0
         
-        let batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
+        var batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
 
         
         var systemWatts: Double = 0.0
@@ -54,6 +54,7 @@ class PowerCalculationService {
                 isCharging = false
                 isDischarging = false
                 systemWatts = currentSystemDraw
+                batteryWatts = 0.0 // 🛑 CRITICAL FIX: Kill the ghost battery value so Sankey doesn't render a dead frozen charging line!
                 topology = .topologyA
             } else {
                 // Genuinely discharging alongside adapter (or unplugged)

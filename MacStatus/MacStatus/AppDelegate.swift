@@ -8,10 +8,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var viewModel: StatusViewModel = StatusViewModel()
     var timer: Timer?
     
+    override init() {
+        super.init()
+        Task { @MainActor in
+            self.updateStatusItemImage()
+        }
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Start a timer to redraw the image periodically based on the view model
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateStatusItemImage()
+        }
+        if let timer = timer {
+            RunLoop.main.add(timer, forMode: .common)
         }
         updateStatusItemImage()
     }

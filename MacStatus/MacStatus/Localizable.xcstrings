@@ -32,6 +32,9 @@
     "%lld%%" : {
 
     },
+    "%lldm" : {
+
+    },
     "© 2024 Kristoff. All rights reserved." : {
       "extractionState" : "manual",
       "localizations" : {

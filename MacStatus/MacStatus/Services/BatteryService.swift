@@ -22,6 +22,10 @@ struct AdapterInfo {
     var activeProfileIndex: Int
     var profiles: [PDProfile]
     
+    var current: Double?
+    var voltage: Double?
+    var watts: Double?
+    
     var activeProfile: PDProfile? {
         profiles.first { $0.index == activeProfileIndex }
     }
@@ -39,7 +43,15 @@ struct BatteryData {
     var adapterWatts: Int // Legacy
     var adapter: AdapterInfo? // Advanced Adapter Info
     
-    static let empty = BatteryData(voltage: 0, amperage: 0, isCharging: false, currentCapacity: 0, maxCapacity: 0, designCapacity: 0, cycleCount: 0, temperature: 0.0, adapterWatts: 0, adapter: nil)
+    var appleRawMaxCapacity: Int?
+    var appleMaxCapacity: Int?
+    var timeRemaining: Int?
+    
+    static let empty = BatteryData(
+        voltage: 0, amperage: 0, isCharging: false, currentCapacity: 0, maxCapacity: 0, 
+        designCapacity: 0, cycleCount: 0, temperature: 0.0, adapterWatts: 0, adapter: nil,
+        appleRawMaxCapacity: nil, appleMaxCapacity: nil, timeRemaining: nil
+    )
 }
 
 class BatteryService {
@@ -68,6 +80,11 @@ class BatteryService {
                     let rawMax = dict["AppleRawMaxCapacity"] as? Int ?? 0
                     let standardMax = dict["MaxCapacity"] as? Int ?? 0
                     data.maxCapacity = rawMax > 100 ? rawMax : standardMax
+                    
+                    data.appleRawMaxCapacity = rawMax > 0 ? rawMax : nil
+                    data.appleMaxCapacity = standardMax > 0 ? standardMax : nil
+                    
+                    data.timeRemaining = dict["TimeRemaining"] as? Int
                     
                     data.designCapacity = dict["DesignCapacity"] as? Int ?? 0
                     data.cycleCount = dict["CycleCount"] as? Int ?? 0
@@ -98,6 +115,9 @@ class BatteryService {
                             }
                         }
                         
+                        let currentAdapterVoltage = Double(adapterDetails["Voltage"] as? Int ?? 0) / 1000.0
+                        let currentAdapterCurrent = Double(adapterDetails["Current"] as? Int ?? 0) / 1000.0
+                        
                         data.adapter = AdapterInfo(
                             id: adapterDetails["AdapterID"] as? Int ?? 0,
                             familyCode: adapterDetails["FamilyCode"] as? Int ?? 0,
@@ -105,7 +125,10 @@ class BatteryService {
                             designWatts: data.adapterWatts,
                             realTimeWatts: realTimeIntake,
                             activeProfileIndex: adapterDetails["UsbHvcHvcIndex"] as? Int ?? 0,
-                            profiles: profiles
+                            profiles: profiles,
+                            current: currentAdapterCurrent,
+                            voltage: currentAdapterVoltage,
+                            watts: Double(data.adapterWatts)
                         )
                     } else {
                         data.adapterWatts = 0
