@@ -46,21 +46,28 @@ class PowerCalculationService {
             // BUT wait! If we are plugged in (isTrueAC), and the adapter is clearly strong enough 
             // to power the system (adapterWatts >= system draw), then the battery is idling!
             // IOKit's battery controller is merely lagging behind the AC controller. We shouldn't show a frozen "discharging ghost".
-            let currentSystemDraw = smcSystemWatts ?? batteryWatts
-            let safeAdapterMargin = currentSystemDraw + 5.0
+            let currentSystemDraw = smcSystemWatts ?? adapterWatts
+            let theoreticalTotalSource = adapterWatts + batteryWatts
             
-            if isTrueAC, adapterWatts >= safeAdapterMargin {
+            // If adapter covers 90% of the system draw, or if the sum of adapter+battery is physically impossible 
+            // compared to the true SMC system draw, then the battery discharging reading is a lagging ghost.
+            let isGhost = isTrueAC && (
+                adapterWatts >= currentSystemDraw * 0.9 ||
+                (smcSystemWatts != nil && theoreticalTotalSource > currentSystemDraw + 15.0)
+            )
+            
+            if isGhost {
                 // False negative: It's just transient lag. Force bypass/charging state logic.
                 isCharging = false
                 isDischarging = false
-                systemWatts = currentSystemDraw
+                systemWatts = smcSystemWatts ?? adapterWatts
                 batteryWatts = 0.0 // 🛑 CRITICAL FIX: Kill the ghost battery value so Sankey doesn't render a dead frozen charging line!
                 topology = .topologyA
             } else {
                 // Genuinely discharging alongside adapter (or unplugged)
                 isCharging = false
                 isDischarging = true
-                systemWatts = currentSystemDraw
+                systemWatts = smcSystemWatts ?? batteryWatts
                 topology = .topologyB
             }
         } else {

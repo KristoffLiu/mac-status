@@ -3,55 +3,52 @@ import SwiftUI
 struct BatteryGraphicView: View {
     @ObservedObject var viewModel: StatusViewModel
     
-    // Config
-    var width: CGFloat = 40
-    var height: CGFloat = 18
+    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    
+    var width: CGFloat = 23
+    var height: CGFloat = 11
     
     var body: some View {
         let percentage = Double(viewModel.currentCapacity) / 100.0
-        let fillWidth = max(0, (width - 4) * percentage)
-        let isCritical = viewModel.currentCapacity <= 20
-        let fillColor: Color = viewModel.isCharging ? .green : (isCritical ? .red : .primary)
+        // Padding inside the shell
+        let insets: CGFloat = 1.5
+        let fillWidth = max(0, (width - insets * 2) * percentage)
         
-        HStack(spacing: 1) {
+        let isCritical = viewModel.currentCapacity <= 20
+        let showLowPowerColor = isCritical && iconLowPowerColor
+        let fillColor: Color = viewModel.isCharging ? .primary : (showLowPowerColor ? .red : .primary)
+        
+        HStack(spacing: 1.5) {
             ZStack(alignment: .leading) {
                 // Outer Shell
-                RoundedRectangle(cornerRadius: 3.5)
-                    .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 3.0)
+                    .stroke(Color.primary.opacity(0.4), lineWidth: 1)
                     .frame(width: width, height: height)
                 
                 // Fill
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(fillColor)
-                    .frame(width: fillWidth, height: height - 4)
-                    .padding(.leading, 2)
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(fillColor.opacity(showLowPowerColor ? 1.0 : 0.85))
+                    .frame(width: fillWidth, height: height - insets * 2)
+                    .padding(.leading, insets)
+                    .animation(.easeInOut, value: percentage)
                 
-                // Text and Icon inside
-                HStack(spacing: 2) {
-                    Text("\(viewModel.currentCapacity)")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundColor(percentage > 0.5 || viewModel.isCharging ? .white : .primary)
-                    
-                    if viewModel.isCharging {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 8, weight: .black))
-                            .foregroundColor(percentage > 0.5 || viewModel.isCharging ? .white : .primary)
-                    }
+                // Charging Bolt (overlay over the center of the battery)
+                if viewModel.isCharging {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 8, weight: .bold))
+                        // Invert the bolt color to stand out against the fill if the battery is full enough
+                        .foregroundColor(Color(NSColor.textBackgroundColor))
+                        .shadow(color: .white.opacity(0.3), radius: 0.5)
+                        .frame(width: width, alignment: .center)
                 }
-                .frame(width: width, alignment: .center)
             }
             
-            // Battery Tip
-            Path { path in
-                path.move(to: CGPoint(x: 0, y: height * 0.25))
-                path.addLine(to: CGPoint(x: 1.5, y: height * 0.25))
-                path.addQuadCurve(to: CGPoint(x: 1.5, y: height * 0.75), control: CGPoint(x: 2.5, y: height * 0.5))
-                path.addLine(to: CGPoint(x: 0, y: height * 0.75))
-                path.closeSubpath()
-            }
-            .fill(Color.primary.opacity(0.3))
-            .frame(width: 2.5, height: height)
+            // Battery Tip (terminal)
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.primary.opacity(0.4))
+                .frame(width: 2, height: 4)
         }
+        .offset(y: 0.5) // Slight optical alignment inside the menu bar
     }
 }
 
