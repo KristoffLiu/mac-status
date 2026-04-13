@@ -1,7 +1,12 @@
 import SwiftUI
 
 struct MenuBarSettingsView: View {
-    @AppStorage("menuBarIconStyle") private var menuBarIconStyle = "battery"
+    // 主图标原子选项 (Atomic Options)
+    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
+    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    @AppStorage("batteryLayout") private var batteryLayout = "left"
+    
     @AppStorage("showPercentage") private var showPercentage = true
     @AppStorage("showChargingStatus") private var showChargingStatus = false
     
@@ -38,24 +43,51 @@ struct MenuBarSettingsView: View {
     @AppStorage("menuUpdateInterval") private var menuUpdateInterval: Double = 2
     @AppStorage("menuRightClickAction") private var menuRightClickAction = "同左击"
 
+    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
+
     var body: some View {
         Form {
-            Section("主图标样式") {
-                Picker("样式", selection: $menuBarIconStyle) {
-                    Text("不要显示").tag("none")
-                    Text("数字内置").tag("battery_numeric")
-                    Text("AlDente 图标").tag("aldente_icon")
-                    Text("AlDente 状态").tag("aldente_status")
-                    Text("macOS 原生").tag("battery")
-                    Text("iOS 原生").tag("ios_native")
-                    Text("macOS 彩色").tag("macos_color")
+            Section("电池图形定制") {
+                Picker("外壳形状", selection: $batteryShellStyle) {
+                    Text("经典原生").tag("native")
+                    Text("隐藏不显示").tag("hidden")
                 }
+                .pickerStyle(.segmented)
+                
+                Picker("色彩基调", selection: $batteryFillStyle) {
+                    Text("系统单色").tag("monochrome")
+                    Text("彩色生命条").tag("status_color")
+                }
+                .pickerStyle(.segmented)
+
+                Picker("内部显示物", selection: $batteryInnerContent) {
+                    Text("空").tag("none")
+                    Text("充电闪电").tag("bolt")
+                    Text("电量数字").tag("number")
+                }
+                .pickerStyle(.segmented)
+            }
+            
+            Section("图形与附加文字布局") {
+                Picker("图形所在位置", selection: $batteryLayout) {
+                    Text("组件最左").tag("left")
+                    Text("组件最右").tag("right")
+                }
+                .pickerStyle(.segmented)
             }
 
-            Section("主图标选项") {
-                Toggle("显示百分比", isOn: $showPercentage)
-                Toggle("低电量模式颜色", isOn: $iconLowPowerColor)
-                Toggle("充电状态", isOn: $showChargingStatus)
+            Section("附加显示 (图标组外部)") {
+                Toggle("外置显式百分比", isOn: $showPercentage)
+                Toggle("极低电量变色提醒", isOn: $iconLowPowerColor)
+                Toggle("外置显式充电状态", isOn: $showChargingStatus)
+                
+                HStack {
+                    Text("图标组内间距")
+                    Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
+                    Text("\(Int(mainIconGroupSpacing))")
+                        .monospacedDigit()
+                        .frame(width: 24, alignment: .trailing)
+                }
             }
             
             Section("电池健康") {
@@ -115,12 +147,16 @@ struct MenuBarSettingsView: View {
                     Spacer()
                     Button("重置") {
                         menuItemSpacing = 4
+                        mainIconGroupSpacing = 4
                         menuUpdateInterval = 2
                     }
                     .buttonStyle(.borderless)
                     
                     Button("全部清除") {
-                        menuBarIconStyle = "none"
+                        batteryShellStyle = "hidden"
+                        batteryFillStyle = "monochrome"
+                        batteryInnerContent = "none"
+                        batteryLayout = "left"
                         showPercentage = false
                         showChargingStatus = false
                         iconLowPowerColor = false
@@ -163,18 +199,37 @@ struct MenuBarSettingsView: View {
                 }
                 
                 HStack(spacing: menuItemSpacing) {
-                    if menuBarIconStyle != "none" {
-                        if menuBarIconStyle == "battery" { Image(systemName: "battery.100.bolt") }
-                        else if menuBarIconStyle == "battery_numeric" { Image(systemName: "battery.100").overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black)) }
-                        else if menuBarIconStyle == "ios_native" { Image(systemName: "battery.75") }
-                        else if menuBarIconStyle == "macos_color" { Image(systemName: "battery.100").foregroundColor(.green) }
-                        else if menuBarIconStyle == "aldente_status" { Image(systemName: "minus.plus.batteryblock.fill") }
-                        else if menuBarIconStyle == "aldente_icon" { Image(systemName: "leaf") }
-                        else { Image(systemName: "battery.100") }
+                    HStack(spacing: mainIconGroupSpacing) {
+                        let innerPreview = Group {
+                            if batteryShellStyle != "hidden" {
+                                if batteryFillStyle == "status_color" {
+                                    if batteryInnerContent == "number" {
+                                        Image(systemName: "battery.100").foregroundColor(.blue).overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black))
+                                    } else if batteryInnerContent == "bolt" {
+                                        Image(systemName: "battery.100.bolt").foregroundColor(.blue)
+                                    } else {
+                                        Image(systemName: "battery.100").foregroundColor(.blue)
+                                    }
+                                } else {
+                                    if batteryInnerContent == "number" {
+                                        Image(systemName: "battery.100").overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black))
+                                    } else if batteryInnerContent == "bolt" {
+                                        Image(systemName: "battery.100.bolt")
+                                    } else {
+                                        Image(systemName: "battery.100")
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if batteryLayout == "left" { innerPreview }
+                        
+                        if showPercentage { Text("75%") }
+                        if showChargingStatus { Image(systemName: "bolt.fill") }
+                        if iconLowPowerColor { Circle().fill(Color.orange).frame(width: 8, height: 8) }
+                        
+                        if batteryLayout == "right" { innerPreview }
                     }
-                    if showPercentage { Text("75%").font(.system(.body, design: .rounded).monospacedDigit()) }
-                    if showChargingStatus { Image(systemName: "bolt.fill") }
-                    if iconLowPowerColor { Circle().fill(Color.orange).frame(width: 8, height: 8) }
                     
                     if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("100%") } }
                     if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text("100%") } }

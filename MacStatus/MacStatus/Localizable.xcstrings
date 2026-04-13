@@ -309,9 +309,6 @@
         }
       }
     },
-    "AlDente 图标" : {
-
-    },
     "AlDente 状态" : {
 
     },
@@ -700,9 +697,6 @@
         }
       }
     },
-    "iOS 原生" : {
-
-    },
     "Links & Support" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -769,9 +763,6 @@
         }
       }
     },
-    "macOS 原生" : {
-
-    },
     "macOS 容量" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -782,9 +773,6 @@
           }
         }
       }
-    },
-    "macOS 彩色" : {
-
     },
     "macOS 条件" : {
       "extractionState" : "manual",
@@ -1303,15 +1291,6 @@
         }
       }
     },
-    "不要显示" : {
-
-    },
-    "主图标样式" : {
-
-    },
-    "主图标选项" : {
-
-    },
     "仪表盘" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1367,7 +1346,7 @@
         }
       }
     },
-    "充电状态" : {
+    "充电闪电" : {
 
     },
     "全部清除" : {
@@ -1391,6 +1370,9 @@
           }
         }
       }
+    },
+    "内部显示物" : {
+
     },
     "最大容量" : {
       "extractionState" : "manual",
@@ -1435,6 +1417,24 @@
           }
         }
       }
+    },
+    "图形与附加文字布局" : {
+
+    },
+    "图形所在位置" : {
+
+    },
+    "图标组内间距" : {
+
+    },
+    "外壳形状" : {
+
+    },
+    "外置显式充电状态" : {
+
+    },
+    "外置显式百分比" : {
+
     },
     "外观设置" : {
       "extractionState" : "manual",
@@ -1505,6 +1505,9 @@
         }
       }
     },
+    "彩色生命条" : {
+
+    },
     "循环" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1538,9 +1541,6 @@
         }
       }
     },
-    "数字内置" : {
-
-    },
     "显示百分比" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1563,6 +1563,9 @@
         }
       }
     },
+    "极低电量变色提醒" : {
+
+    },
     "校准模式" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1573,9 +1576,6 @@
           }
         }
       }
-    },
-    "样式" : {
-
     },
     "桑基图能量流 (已启用)" : {
       "extractionState" : "manual",
@@ -1690,6 +1690,9 @@
         }
       }
     },
+    "电池图形定制" : {
+
+    },
     "电池图标状态：" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1743,6 +1746,15 @@
         }
       }
     },
+    "电量数字" : {
+
+    },
+    "空" : {
+
+    },
+    "系统单色" : {
+
+    },
     "系统负载" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1754,6 +1766,15 @@
         }
       }
     },
+    "组件最右" : {
+
+    },
+    "组件最左" : {
+
+    },
+    "经典原生" : {
+
+    },
     "航海模式" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1764,6 +1785,9 @@
           }
         }
       }
+    },
+    "色彩基调" : {
+
     },
     "菜单更新间隔" : {
       "extractionState" : "manual",
@@ -1899,6 +1923,12 @@
           }
         }
       }
+    },
+    "附加显示 (图标组外部)" : {
+
+    },
+    "隐藏不显示" : {
+
     },
     "面板关闭后会在后台自动降速为 10 秒刷新" : {
       "extractionState" : "manual",

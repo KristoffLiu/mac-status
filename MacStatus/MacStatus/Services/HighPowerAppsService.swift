@@ -1,10 +1,13 @@
 import Foundation
 import Combine
+import AppKit
 
 struct AppEnergyImpact: Identifiable {
     let id = UUID()
+    let pid: Int32?
     let name: String
     let power: Double
+    let icon: NSImage?
 }
 
 class HighPowerAppsService: ObservableObject {
@@ -35,7 +38,7 @@ class HighPowerAppsService: ObservableObject {
             // -stats command,power: only need command name and energy impact
             // -o power: sort by power descending
             // -n 10: top 10 (we'll filter internally)
-            task.arguments = ["-l", "2", "-stats", "command,power", "-o", "power", "-n", "10"]
+            task.arguments = ["-l", "2", "-stats", "pid,command,power", "-o", "power", "-n", "10"]
             
             let pipe = Pipe()
             task.standardOutput = pipe
@@ -75,15 +78,18 @@ class HighPowerAppsService: ObservableObject {
             
             if foundHeader {
                 let columns = trimmed.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-                if columns.count >= 2 {
+                if columns.count >= 3 {
                     // Command often has spaces or is truncated, but power is usually the last column
+                    let pidStr = columns.first ?? "0"
                     let powerStr = columns.last ?? "0"
-                    let name = columns.dropLast().joined(separator: " ")
+                    let name = columns.dropFirst().dropLast().joined(separator: " ")
                     
-                    if let powerValue = Double(powerStr), powerValue > 1.0 {
+                    if let powerValue = Double(powerStr), powerValue > 1.0, let pidValue = Int32(pidStr) {
                         // Filter out system processes that are often high but expected
                         if !isSystemProcess(name) {
-                            results.append(AppEnergyImpact(name: name, power: powerValue))
+                            let app = NSRunningApplication(processIdentifier: pidValue)
+                            let icon = app?.icon
+                            results.append(AppEnergyImpact(pid: pidValue, name: name, power: powerValue, icon: icon))
                         }
                     }
                 }

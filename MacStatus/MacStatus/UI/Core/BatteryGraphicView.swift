@@ -5,6 +5,9 @@ struct BatteryGraphicView: View {
     
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
     
+    var isColored: Bool = false
+    var showBolt: Bool = true
+    
     // Matched approximately to Image(systemName: "battery.100") font size
     var width: CGFloat = 17.5
     var height: CGFloat = 8.5
@@ -17,27 +20,32 @@ struct BatteryGraphicView: View {
         
         let isCritical = viewModel.currentCapacity <= 20
         let showLowPowerColor = isCritical && iconLowPowerColor
-        let fillColor: Color = viewModel.isCharging ? .primary : (showLowPowerColor ? .red : .primary)
+        
+        let fillColor: Color = viewModel.isCharging 
+            ? (isColored ? .green : .primary) 
+            : (showLowPowerColor ? .red : (isColored ? .blue : .primary))
+            
+        let strokeColor: Color = isColored ? Color.primary.opacity(0.25) : Color.primary.opacity(0.4)
         
         HStack(spacing: 1.0) {
             ZStack(alignment: .leading) {
                 // Outer Shell
                 RoundedRectangle(cornerRadius: 2.0)
-                    .stroke(Color.primary.opacity(0.4), lineWidth: 1)
+                    .stroke(strokeColor, lineWidth: 1)
                     .frame(width: width, height: height)
                 
                 // Fill
                 RoundedRectangle(cornerRadius: 1.0)
-                    .fill(fillColor.opacity(showLowPowerColor ? 1.0 : 0.85))
+                    .fill(fillColor.opacity(showLowPowerColor ? 1.0 : (isColored ? 1.0 : 0.85)))
                     .frame(width: fillWidth, height: height - insets * 2)
                     .padding(.leading, insets)
                     .animation(.easeInOut, value: percentage)
                 
                 // Charging Bolt (overlay over the center of the battery)
-                if viewModel.isCharging {
+                if viewModel.isCharging && showBolt {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 6, weight: .bold))
-                        .foregroundColor(Color(NSColor.textBackgroundColor))
+                        .foregroundColor(isColored ? .black.opacity(0.8) : Color(NSColor.textBackgroundColor))
                         .shadow(color: .white.opacity(0.3), radius: 0.5)
                         .frame(width: width, alignment: .center)
                 }
@@ -45,7 +53,7 @@ struct BatteryGraphicView: View {
             
             // Battery Tip (terminal)
             RoundedRectangle(cornerRadius: 0.5)
-                .fill(Color.primary.opacity(0.4))
+                .fill(strokeColor)
                 .frame(width: 1.5, height: 3.5)
         }
         .padding(.trailing, 1.5)
@@ -58,6 +66,9 @@ struct NumericBatteryGraphicView: View {
     
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
     
+    var isColored: Bool = false
+    var showBolt: Bool = true
+    
     // Made slightly compact from the original extremely large version so it scales nicely
     var width: CGFloat = 34
     var height: CGFloat = 16
@@ -67,13 +78,18 @@ struct NumericBatteryGraphicView: View {
         let fillWidth = max(0, (width - 3) * percentage)
         let isCritical = viewModel.currentCapacity <= 20
         let showLowPowerColor = isCritical && iconLowPowerColor
-        let fillColor: Color = viewModel.isCharging ? .green : (showLowPowerColor ? .red : .primary)
+        
+        let fillColor: Color = viewModel.isCharging 
+            ? (isColored ? .green : .primary) 
+            : (showLowPowerColor ? .red : (isColored ? .blue : .primary))
+            
+        let strokeColor: Color = isColored ? Color.primary.opacity(0.25) : Color.primary.opacity(0.3)
         
         HStack(spacing: 1) {
             ZStack(alignment: .leading) {
                 // Outer Shell
                 RoundedRectangle(cornerRadius: 3.5)
-                    .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                    .stroke(strokeColor, lineWidth: 1)
                     .frame(width: width, height: height)
                 
                 // Fill
@@ -88,7 +104,7 @@ struct NumericBatteryGraphicView: View {
                         .font(.system(size: 9, weight: .bold, design: .rounded))
                         .foregroundColor(percentage > 0.4 || viewModel.isCharging ? .white : .primary)
                     
-                    if viewModel.isCharging {
+                    if viewModel.isCharging && showBolt {
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 7, weight: .black))
                             .foregroundColor(percentage > 0.4 || viewModel.isCharging ? .white : .primary)
@@ -105,7 +121,7 @@ struct NumericBatteryGraphicView: View {
                 path.addLine(to: CGPoint(x: 0, y: height * 0.75))
                 path.closeSubpath()
             }
-            .fill(Color.primary.opacity(0.3))
+            .fill(strokeColor)
             .frame(width: 2.5, height: height)
         }
         .padding(.trailing, 1.5)
@@ -117,7 +133,11 @@ struct NumericBatteryGraphicView: View {
 struct MenuBarLabelRendererView: View {
     @ObservedObject var viewModel: StatusViewModel
     
-    @AppStorage("menuBarIconStyle") private var menuBarIconStyle = "battery"
+    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
+    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    @AppStorage("batteryLayout") private var batteryLayout = "left"
+    
     @AppStorage("showPercentage") private var showPercentage = true
     @AppStorage("showChargingStatus") private var showChargingStatus = false
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -144,27 +164,38 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("showAlDenteFull") private var showAlDenteFull = false
     
     @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
+    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
 
     var body: some View {
         HStack(spacing: menuItemSpacing) {
-            // Main Icon
-            if menuBarIconStyle != "none" {
-                if menuBarIconStyle == "battery" { 
-                    BatteryGraphicView(viewModel: viewModel) // Custom battery drawing
+            // Main Icon Group
+            HStack(spacing: mainIconGroupSpacing) {
+                let batteryIcon = Group {
+                    if batteryShellStyle != "hidden" {
+                        if batteryInnerContent == "number" {
+                            NumericBatteryGraphicView(
+                                viewModel: viewModel,
+                                isColored: batteryFillStyle == "status_color",
+                                showBolt: batteryInnerContent == "bolt"
+                            )
+                        } else {
+                            BatteryGraphicView(
+                                viewModel: viewModel,
+                                isColored: batteryFillStyle == "status_color",
+                                showBolt: batteryInnerContent == "bolt"
+                            )
+                        }
+                    }
                 }
-                else if menuBarIconStyle == "battery_numeric" {
-                    NumericBatteryGraphicView(viewModel: viewModel) // Builtin numeric battery
-                }
-                else if menuBarIconStyle == "ios_native" { Image(systemName: "battery.75") }
-                else if menuBarIconStyle == "macos_color" { Image(systemName: "battery.100").foregroundColor(.green) }
-                else if menuBarIconStyle == "aldente_status" { Image(systemName: "minus.plus.batteryblock.fill") }
-                else if menuBarIconStyle == "aldente_icon" { Image(systemName: "leaf") }
-                else { Image(systemName: "battery.100") }
+                
+                if batteryLayout == "left" { batteryIcon }
+                
+                if showPercentage { Text("\(viewModel.currentCapacity)%") }
+                if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
+                if iconLowPowerColor && viewModel.currentCapacity <= 20 { Circle().fill(Color.orange).frame(width: 8, height: 8) }
+                
+                if batteryLayout == "right" { batteryIcon }
             }
-            
-            if showPercentage { Text("\(viewModel.currentCapacity)%") }
-            if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
-            if iconLowPowerColor && viewModel.currentCapacity <= 20 { Circle().fill(Color.orange).frame(width: 8, height: 8) }
             
             // Health
             if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("\(viewModel.batteryData.appleRawMaxCapacity ?? 0)%") } }

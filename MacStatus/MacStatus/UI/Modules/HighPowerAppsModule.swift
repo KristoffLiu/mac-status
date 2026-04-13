@@ -11,18 +11,29 @@ struct HighPowerAppsModule: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
                 }
                 .padding(.vertical, 4)
             } else {
-                Text("High Power:")
+                Text("High Power Apps")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.bottom, 2)
                 
                 ForEach(service.highPowerApps) { app in
                     HStack {
+                        if let icon = app.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            Image(systemName: "app.dashed")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                                .foregroundColor(.secondary)
+                        }
+                        
                         // Truncate long names to keep UI clean
                         Text(app.name)
                             .font(.system(.subheadline, design: .rounded))

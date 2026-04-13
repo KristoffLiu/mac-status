@@ -15,7 +15,7 @@ struct MacStatusApp: App {
         MenuBarExtra(isInserted: .constant(true)) {
             MainPanelView(viewModel: appDelegate.viewModel)
         } label: {
-            DynamicMenuBarLabel(appDelegate: appDelegate)
+            MenuBarLabelRendererView(viewModel: appDelegate.viewModel)
         }
         .menuBarExtraStyle(.window)
 
@@ -28,17 +28,5 @@ struct MacStatusApp: App {
         }
         .windowToolbarStyle(.unified)
         .windowResizability(.contentSize)
-    }
-}
-
-struct DynamicMenuBarLabel: View {
-    @ObservedObject var appDelegate: AppDelegate
-
-    var body: some View {
-        if let image = appDelegate.generatedMenuImage {
-            Image(nsImage: image)
-        } else {
-            Text("\(appDelegate.viewModel.currentCapacity)%")
-        }
     }
 }
