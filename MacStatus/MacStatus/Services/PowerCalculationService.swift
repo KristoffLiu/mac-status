@@ -15,7 +15,7 @@ class PowerCalculationService {
         let smcAdapterAmps = SMCService.shared.adapterCurrent
         
         var smcAdapterWatts: Double? = nil
-        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 0, a > 0 {
+        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 4.0, a > 0.0 {
             smcAdapterWatts = v * a
         }
         
@@ -45,6 +45,7 @@ class PowerCalculationService {
             isDischarging = true
             // If SMC system watts is there, use it as battery watts; else estimate
             systemWatts = smcSystemWatts ?? batteryWatts
+            batteryWatts = systemWatts
             topology = .topologyB
         } else if actualAmperage > 0 || (smcSystemWatts != nil && smcAdapterWatts != nil && (smcAdapterWatts! - smcSystemWatts!) > 2.0) {
             // Charging (either confirmed by battery controller OR deduced instantly by SMC high-frequency surplus)
@@ -92,6 +93,7 @@ class PowerCalculationService {
                 isCharging = false
                 isDischarging = true
                 systemWatts = smcSystemWatts ?? batteryWatts
+                batteryWatts = max(0.0, systemWatts - (smcAdapterWatts ?? actualAdapterWatts))
                 topology = .topologyB
             }
         } else {

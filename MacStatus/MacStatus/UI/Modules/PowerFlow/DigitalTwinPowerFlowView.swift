@@ -145,11 +145,6 @@ struct MacAdapter3DView: View {
                         .foregroundColor(Color(white: 0.4))
                 }
                 .offset(x: 4) // adjust rightward to clear plug line
-            } else {
-                Image(systemName: "powerplug")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color(white: 0.8))
-                    .rotationEffect(.degrees(180))
             }
             
             if hasAdapter {
@@ -226,6 +221,39 @@ struct MacBook3DView: View {
             // creating an authentic MacBook Drop-Hinge effect.
             MacBookKeyboardBase()
             .zIndex(2) // Lip is always conceptually closer to the viewer
+            
+            // Hovering Info Pill when Closed
+            if !isOpen {
+                HStack(spacing: 8) {
+                    // Battery
+                    HStack(spacing: 2) {
+                        Image(systemName: isCharging ? "bolt.fill" : "battery.100")
+                            .font(.system(size: 7))
+                            .foregroundColor(isCharging ? .green : .primary)
+                        Text("\(batteryLevel)%")
+                    }
+                    
+                    // CPU Power
+                    HStack(spacing: 2) {
+                        Image(systemName: "cpu")
+                            .font(.system(size: 7))
+                        Text("\(Int(systemPower))W")
+                    }
+                    .foregroundColor(.cyan)
+                }
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(Color(NSColor.controlBackgroundColor).opacity(0.8))
+                        .overlay(Capsule().stroke(Color(NSColor.separatorColor), lineWidth: 0.5))
+                        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+                )
+                .offset(y: -16) // visually hover above the closed flat chassis
+                .zIndex(3)
+                .transition(.scale(scale: 0.8, anchor: .bottom).combined(with: .opacity))
+            }
         }
         .onTapGesture {
             // Unibody metals don't wobble or stretch!
