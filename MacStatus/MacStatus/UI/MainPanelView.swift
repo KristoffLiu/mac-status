@@ -50,7 +50,7 @@ struct MainPanelView: View {
                 .buttonStyle(.plain)
                 .foregroundColor(isEditing ? .accentColor : .secondary)
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 16)
             .padding(.bottom, 4)
             
             // Unified Power & Battery Card

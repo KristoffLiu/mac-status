@@ -11,9 +11,14 @@ protocol AppWidgetPlugin {
     // Extracted content
     @MainActor var contentView: AnyView { get }
     @MainActor var settingsView: AnyView { get }
+    
+    // Whether this plugin should natively bleed edge-to-edge horizontally
+    var wantsEdgeToEdge: Bool { get }
 }
 
 extension AppWidgetPlugin {
+    var wantsEdgeToEdge: Bool { return false }
+    
     var iconColor: Color {
         switch self.id {
         case "powerFlow": return .green

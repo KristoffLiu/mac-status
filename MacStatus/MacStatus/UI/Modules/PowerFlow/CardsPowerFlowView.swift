@@ -30,12 +30,12 @@ struct CardsPowerFlowView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 12)
             
             // 3 Cards Layout
             ScrollView(.horizontal, showsIndicators: false) {
                 ScrollViewReader { proxy in
-                    HStack(spacing: isExpanded ? 8 : -60) {
+                    HStack(spacing: isExpanded ? 6 : -50) {
                 // Adapter Card
                 let hasAdapter = powerFlow.adapterPower > 2
                 let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
@@ -103,11 +103,10 @@ struct CardsPowerFlowView: View {
                     .id(3)
                     .onTapGesture { handleTap(3, proxy: proxy) }
             }
-            .padding(.horizontal, 20)
+            .frame(minWidth: 400, alignment: .center)
             .padding(.vertical, 8)
         }
         }
-        .padding(.horizontal, -20)
     }
     .padding(.vertical, 8)
 }

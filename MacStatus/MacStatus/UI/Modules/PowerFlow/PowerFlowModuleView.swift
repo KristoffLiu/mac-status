@@ -33,6 +33,11 @@ struct PowerFlowPlugin: AppWidgetPlugin {
     let icon = "bolt.horizontal"
     let hasSettings = true
     
+    var wantsEdgeToEdge: Bool {
+        @AppStorage("powerFlowStyle") var style = PowerFlowStyle.sankey
+        return style == .cards
+    }
+    
     @MainActor
     var contentView: AnyView {
         AnyView(PowerFlowPluginContentView())
@@ -103,7 +108,7 @@ struct PowerFlowConfigView: View {
                 Section {
                     VStack(spacing: 0) {
                         PowerFlowModuleView(powerFlow: currentPreviewData, batteryData: currentPreviewBatteryData)
-                            .padding(.horizontal, 4)
+                            .padding(.horizontal, style == .cards ? -12 : 4)
                             .padding(.vertical, 8)
                     }
                     .frame(width: 400)

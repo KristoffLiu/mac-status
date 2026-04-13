@@ -11,7 +11,7 @@ struct PanelContainerView<Content: View>: View {
         VStack(spacing: 8) {
             content
         }
-        .padding(12)
+        .padding(.vertical, 12)
         // Set width in points (400pt = 800 physical pixels on 2x Retina).
         .frame(width: 400)
         // Apply Continuous Squircles to the container itself seamlessly

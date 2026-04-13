@@ -175,109 +175,116 @@ struct MacBook3DView: View {
     @Binding var isOpen: Bool
     
     var body: some View {
-        ZStack {
+        VStack(spacing: 0) { // Sharing the exact centerline
+            // 1. The Screen Lid (Now contains all data for Hero Shot)
+            MacBookScreenLid(
+                systemPower: systemPower,
+                batteryPower: batteryPower,
+                batteryLevel: batteryLevel,
+                isCharging: isCharging,
+                isOpen: isOpen
+            )
+            // HERO HINGE: 0 = Perfect face-on. -88 = Folded shut.
+            .rotation3DEffect(
+                .degrees(isOpen ? 0 : -88), 
+                axis: (x: 1, y: 0, z: 0),
+                anchor: .bottom,
+                perspective: 0.3
+            )
+            .zIndex(2) // ensure screen renders over keyboard when folded
+            
+            // 2. The Bottom Chassis (Has internal 3D extrusion and rotation)
+            MacBookKeyboardBase()
+            .zIndex(1)
+        }
+        // DYNAMIC GLOBAL TILT
+        // Open: 0 tilt, perfect straight-on hero shot.
+        // Closed: -20 tilt, gentle angle to see the top shell resting on the desk.
+        .rotation3DEffect(
+            .degrees(isOpen ? 0 : -20), 
+            axis: (x: 1, y: 0, z: 0),
+            anchor: .center,
+            perspective: 0.5
+        )
+        .onTapGesture {
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.75)) {
+                isOpen.toggle()
+            }
+        }
+        .background(
             // Environment Shadow
             Ellipse()
                 .fill(Color.black.opacity(0.15))
                 .frame(width: 160, height: 30)
-                .offset(y: 45)
+                .offset(y: 40)
                 .blur(radius: 8)
-            
-            // The Bottom Chassis (Keyboard part)
-            MacBookKeyboardBase(
-                batteryLevel: batteryLevel,
-                isCharging: isCharging,
-                batteryPower: batteryPower
-            )
-            // Laying flat on table
-            .rotation3DEffect(.degrees(70), axis: (x: 1, y: 0, z: 0))
-            .offset(y: 20)
-            
-            // The Screen Lid
-            MacBookScreenLid(
-                systemPower: systemPower,
-                isOpen: isOpen
-            )
-            // The Hinge Anchor!
-            .rotation3DEffect(
-                .degrees(isOpen ? 0 : 75), // 0 is open viewing angle, 75 is folded down flat
-                axis: (x: 1, y: 0, z: 0),
-                anchor: .bottom
-            )
-            .offset(y: -25)
-        }
-        .onTapGesture {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-                isOpen.toggle()
-            }
-        }
+        )
+        .offset(y: -10) // center whole system visually
     }
 }
 
-// 底座实体
+// 底座实体 (具备通过多层堆叠生成的物理厚度！彻底隐藏表面)
 struct MacBookKeyboardBase: View {
-    var batteryLevel: Int
-    var isCharging: Bool
-    var batteryPower: Double
-    
     var body: some View {
-        ZStack {
-            // Metal unibody
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(white: 0.8), Color(white: 0.6)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                .frame(width: 140, height: 100)
-                .shadow(color: .white.opacity(0.5), radius: 1, x: 0, y: -1) // highlight top edge
-            
-            // Keyboard Well
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color(white: 0.2)) // black keyboard
-                .frame(width: 120, height: 45)
-                .offset(y: -15)
-            
-            // Trackpad
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(Color(white: 0.65))
-                .frame(width: 50, height: 35)
-                .offset(y: 28)
-            
-            // Digital Battery Indicator mapped physically inside
-            VStack(spacing: 2) {
-                // Battery Bar inside base
-                let liquidColor: Color = isCharging ? .green : .blue
-                GeometryReader { geo in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(liquidColor.opacity(0.8))
-                        .frame(width: max(0, min(geo.size.width * CGFloat(batteryLevel) / 100.0, geo.size.width)))
-                }
-                .frame(width: 110, height: 4)
-                
-                HStack {
-                    Text("\(batteryLevel)%")
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    if isCharging || batteryPower > 0 {
-                        Text("\(String(format: "%.1f", batteryPower))W")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(liquidColor)
+        ZStack(alignment: .top) {
+            // 利用多层残影构成绝对真实的 3D 厚度 (Extrusion)
+            // i=0 是顶部的键盘面，i>0 是它下方的金属机身底座
+            ForEach((0...6).reversed(), id: \.self) { i in
+                ZStack {
+                    // Unibody base
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                // 底层变得更暗，模拟边缘反光和阴影
+                                colors: i == 0 ? [Color(white: 0.8), Color(white: 0.6)] : [Color(white: 0.6 - Double(i)*0.05), Color(white: 0.4 - Double(i)*0.05)],
+                                startPoint: .top, endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 140, height: 100)
+                    
+                    // Keyboard elements 仅存在于最表面
+                    if i == 0 {
+                        // Keyboard Well (black indent)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color(white: 0.2))
+                            .frame(width: 120, height: 45)
+                            .offset(y: -15)
+                        
+                        // Trackpad
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(Color(white: 0.65))
+                            .frame(width: 50, height: 35)
+                            .offset(y: 28)
+                    }
+                    
+                    // Front Lip Notch (横切在厚度层上，制造真正的凹槽体积感)
+                    if i > 1 {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color(white: 0.3)) // Notch internal shadow
+                            .frame(width: 32, height: 2)
+                            .offset(y: 49) // bottom edge
                     }
                 }
+                // 倾斜 88 度：让键盘面几乎缩减到 0，仅为了保持底边正确的透视拉伸
+                .rotation3DEffect(
+                    .degrees(88),
+                    axis: (x: 1, y: 0, z: 0),
+                    anchor: .top,
+                    perspective: 0.3
+                )
+                // 神隐级操作：在倾斜过后向 2D Y轴暴力平移，制造不可反驳的侧面物理厚度！
+                .offset(y: CGFloat(Double(i) * 1.5))
             }
-            .offset(y: 4)
-            .opacity(0.8)
-            // Reverse rotation because the parent rotates 70 degree back
-            // So this stands up to face the user slightly!
-            .rotation3DEffect(.degrees(-40), axis: (x: 1, y: 0, z: 0))
         }
     }
 }
 
-// 屏幕实体
+// 屏幕实体 (Hero重点：数据全息呈现于大屏)
 struct MacBookScreenLid: View {
     var systemPower: Double
+    var batteryPower: Double
+    var batteryLevel: Int
+    var isCharging: Bool
     var isOpen: Bool
     
     var body: some View {
@@ -294,8 +301,10 @@ struct MacBookScreenLid: View {
             
             // Apple Logo (Outside)
             Image(systemName: "applelogo")
-                .font(.system(size: 20))
-                .foregroundColor(Color.white.opacity(0.8))
+                .font(.system(size: 26))
+                .foregroundColor(Color.white.opacity(0.6))
+                // Because lid folds -180 degrees backwards, it's upside down!
+                .rotationEffect(.degrees(180))
                 .opacity(isOpen ? 0 : 1) // only visible when closed
             
             // Display Plane (Inside)
@@ -306,28 +315,52 @@ struct MacBookScreenLid: View {
                         .fill(Color.black)
                         .frame(width: 136, height: 86)
                     
-                    // The glowing screen content
+                    let bgGrad = LinearGradient(
+                        colors: [Color(white: 0.1), Color(white: 0.2)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                    
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.1)],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(bgGrad)
                         .frame(width: 130, height: 80)
                     
-                    // Holographic UI on Screen
-                    VStack(spacing: 8) {
-                        Image(systemName: "cpu")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .shadow(color: .blue, radius: 4)
+                    // Inspired by user's M3 wallapper: Dynamic floating vertical capsules
+                    HStack(spacing: 12) {
+                        // System Capsule
+                        Capsule()
+                            .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                            .frame(width: 24, height: CGFloat(max(30, min(70, 30 + systemPower * 0.8))))
                         
-                        Text("\(String(format: "%.1f", systemPower)) W")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .shadow(color: .blue.opacity(0.8), radius: 2)
+                        // Battery Capsule
+                        let batCol: [Color] = isCharging ? [.green.opacity(0.8), .mint.opacity(0.6)] : [.blue.opacity(0.5), .purple.opacity(0.4)]
+                        Capsule()
+                            .fill(LinearGradient(colors: batCol, startPoint: .top, endPoint: .bottom))
+                            .frame(width: 24, height: CGFloat(max(20, min(70, 70 * Double(batteryLevel) / 100.0))))
                     }
+                    
+                    // Holographic UI Overlay on vertical capsules
+                    HStack(spacing: 12) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "cpu")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white)
+                            Text("\(String(format: "%.0f", systemPower))W")
+                                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 30)
+                        
+                        VStack(spacing: 4) {
+                            Image(systemName: "battery.100")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white)
+                            Text("\(batteryLevel)%")
+                                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 30)
+                    }
+                    .shadow(color: .black.opacity(0.5), radius: 2)
                 }
                 .transition(.opacity) // prevent flickering
             }
