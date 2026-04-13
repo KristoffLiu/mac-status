@@ -16,17 +16,26 @@ class SystemMonitorService: ObservableObject {
     @Published var memTotalGB: Double = 0.0
     @Published var memPressure: Double = 0.0      // 0.0~1.0
     @Published var memCachedGB: Double = 0.0
+    @Published var memHistory: [Double] = Array(repeating: 0, count: 60)   // 0.0~1.0
 
     // MARK: - Network
     @Published var netUpKBps: Double = 0.0
     @Published var netDownKBps: Double = 0.0
+    @Published var netDownHistory: [Double] = Array(repeating: 0, count: 60) // normalised 0~1
+    @Published var netUpHistory:   [Double] = Array(repeating: 0, count: 60)
 
     // MARK: - Disk I/O
     @Published var diskReadMBps: Double = 0.0
     @Published var diskWriteMBps: Double = 0.0
+    @Published var diskReadHistory:  [Double] = Array(repeating: 0, count: 60)
+    @Published var diskWriteHistory: [Double] = Array(repeating: 0, count: 60)
 
     // MARK: - CPU Temperature (from SMCService)
     @Published var cpuTemperature: Double = 0.0
+
+    // MARK: - History Peaks (rolling max for normalisation)
+    private var netPeak:  Double = 1.0
+    private var diskPeak: Double = 0.1
 
     // MARK: - Private State
     private var prevCpuInfo: processor_info_array_t?
@@ -91,6 +100,28 @@ class SystemMonitorService: ObservableObject {
                 self.diskReadMBps  = disk.read
                 self.diskWriteMBps = disk.write
                 self.cpuTemperature = temp
+
+                // --- History updates ---
+                // Memory pressure history
+                self.memHistory.removeFirst()
+                self.memHistory.append(min(1, max(0, mem.pressure)))
+
+                // Network — rolling peak normalisation
+                let maxNet = max(net.up, net.down, 1.0)
+                self.netPeak = max(self.netPeak * 0.97, maxNet)   // slow decay
+                self.netDownHistory.removeFirst()
+                self.netDownHistory.append(min(1, net.down / self.netPeak))
+                self.netUpHistory.removeFirst()
+                self.netUpHistory.append(min(1, net.up / self.netPeak))
+
+                // Disk — rolling peak normalisation
+                let maxDisk = max(disk.read, disk.write, 0.01)
+                self.diskPeak = max(self.diskPeak * 0.97, maxDisk)
+                self.diskReadHistory.removeFirst()
+                self.diskReadHistory.append(min(1, disk.read / self.diskPeak))
+                self.diskWriteHistory.removeFirst()
+                self.diskWriteHistory.append(min(1, disk.write / self.diskPeak))
+
                 self.isRefreshing = false
             }
         }

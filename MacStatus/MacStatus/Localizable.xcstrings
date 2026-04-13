@@ -12,6 +12,9 @@
         }
       }
     },
+    " / %lldGB" : {
+
+    },
     "(Select One)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1485,9 +1488,6 @@
     "实时体验预览" : {
 
     },
-    "实时吞吐" : {
-
-    },
     "实时监控 Mac 电源与电池状态的极简工具，为您提供精确的系统功耗与电池健康分析。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1905,9 +1905,6 @@
           }
         }
       }
-    },
-    "读 / 写速度" : {
-
     },
     "跟随系统" : {
       "extractionState" : "manual",

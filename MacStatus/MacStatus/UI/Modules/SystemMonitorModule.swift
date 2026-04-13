@@ -6,8 +6,8 @@ struct SystemMonitorModule: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            
-            // ── Section Title ──────────────────────────────────────────────
+
+            // ── Section Title ───────────────────────────────────────────────
             HStack {
                 Label("系统监控", systemImage: "cpu")
                     .font(.subheadline.weight(.semibold))
@@ -19,7 +19,7 @@ struct SystemMonitorModule: View {
             }
             .padding(.horizontal, 4)
 
-            // ── CPU Section ────────────────────────────────────────────────
+            // ── CPU Section ─────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 4) {
                     Text("CPU")
@@ -30,7 +30,7 @@ struct SystemMonitorModule: View {
                         .font(.system(.caption, design: .rounded).monospacedDigit())
                         .foregroundColor(cpuTotalColor(service.cpuTotal))
                         .fontWeight(.semibold)
-                    
+
                     HStack(spacing: 2) {
                         Circle().fill(Color.blue.opacity(0.8)).frame(width: 5, height: 5)
                         Text(String(format: "%.1f%%", service.cpuUser * 100))
@@ -52,26 +52,38 @@ struct SystemMonitorModule: View {
                 }
                 .padding(.horizontal, 4)
 
-                // Heatmap Grid
+                // ✅ 正方形热力图
                 CPUHeatmapView(loads: service.coreLoads)
             }
 
             Divider().opacity(0.4).padding(.horizontal, 8)
 
-            // ── Memory + Network + Disk Row ────────────────────────────────
+            // ── Memory + Network + Disk Row（像素矩阵）──────────────────────
             HStack(alignment: .top, spacing: 0) {
-                MemoryMiniCard(usedGB: service.memUsedGB,
-                               totalGB: service.memTotalGB,
-                               cachedGB: service.memCachedGB,
-                               pressure: service.memPressure)
-                
-                Divider().frame(height: 52).opacity(0.3)
-                
-                NetMiniCard(downKBps: service.netDownKBps, upKBps: service.netUpKBps)
-                
-                Divider().frame(height: 52).opacity(0.3)
-                
-                DiskMiniCard(readMBps: service.diskReadMBps, writeMBps: service.diskWriteMBps)
+                MemMatrixCard(
+                    usedGB:   service.memUsedGB,
+                    totalGB:  service.memTotalGB,
+                    pressure: service.memPressure,
+                    history:  service.memHistory
+                )
+
+                Divider().frame(height: 68).opacity(0.3)
+
+                NetMatrixCard(
+                    downKBps:    service.netDownKBps,
+                    upKBps:      service.netUpKBps,
+                    downHistory: service.netDownHistory,
+                    upHistory:   service.netUpHistory
+                )
+
+                Divider().frame(height: 68).opacity(0.3)
+
+                DiskMatrixCard(
+                    readMBps:     service.diskReadMBps,
+                    writeMBps:    service.diskWriteMBps,
+                    readHistory:  service.diskReadHistory,
+                    writeHistory: service.diskWriteHistory
+                )
             }
             .padding(.horizontal, 4)
         }
@@ -86,12 +98,11 @@ struct SystemMonitorModule: View {
     }
 }
 
-// MARK: - CPU Heatmap
+// MARK: - CPU Heatmap（正方形格子）
 struct CPUHeatmapView: View {
     let loads: [Double]
 
     private var columns: [GridItem] {
-        // Aim for ~8 columns max; wrap if more cores
         let cols = min(loads.count, loads.count > 8 ? 10 : 8)
         return Array(repeating: GridItem(.flexible(), spacing: 3), count: cols)
     }
@@ -100,7 +111,7 @@ struct CPUHeatmapView: View {
         LazyVGrid(columns: columns, spacing: 3) {
             ForEach(0..<loads.count, id: \.self) { i in
                 HeatCell(load: loads[i])
-                    .frame(height: 14)
+                    .aspectRatio(1, contentMode: .fit)
             }
         }
         .padding(.horizontal, 4)
@@ -118,29 +129,75 @@ struct HeatCell: View {
                 RoundedRectangle(cornerRadius: 2.5, style: .continuous)
                     .stroke(cellColor.opacity(0.3), lineWidth: 0.5)
             )
-            .shadow(color: load > 0.75 ? cellColor.opacity(0.5) : .clear, radius: 2)
+            .shadow(color: load > 0.75 ? cellColor.opacity(0.55) : .clear, radius: 2.5)
     }
 
     private var cellColor: Color {
         switch load {
         case ..<0.08: return Color.primary.opacity(0.09)
-        case 0.08..<0.3: return Color(hue: 0.35, saturation: 0.8, brightness: 0.7).opacity(0.55 + load * 0.8)
-        case 0.3..<0.65: return Color(hue: 0.12, saturation: 0.9, brightness: 0.9).opacity(0.75)
-        case 0.65..<0.85: return Color(hue: 0.05, saturation: 1.0, brightness: 1.0).opacity(0.85)
-        default:           return Color.red.opacity(0.9)
+        case 0.08..<0.3:  return Color(hue: 0.35, saturation: 0.8, brightness: 0.7).opacity(0.5 + load * 0.9)
+        case 0.3..<0.65:  return Color(hue: 0.12, saturation: 0.9, brightness: 0.9).opacity(0.78)
+        case 0.65..<0.85: return Color(hue: 0.05, saturation: 1.0, brightness: 1.0).opacity(0.88)
+        default:          return Color.red.opacity(0.92)
         }
     }
 }
 
-// MARK: - Memory Mini Card
-struct MemoryMiniCard: View {
+// MARK: - 通用像素矩阵视图（时序热力图）
+/// rows × cols 的小色块网格，data 是按时间先后排列的归一化数组（0.0~1.0）
+/// 最新数据在右侧，旧的在左侧
+struct PixelMatrixView: View {
+    let data: [Double]         // 长度 = rows * cols，按列优先（时间从左到右）
+    let rows: Int
+    let baseColor: Color
+    let gap: CGFloat
+
+    private var cols: Int { data.count / max(rows, 1) }
+
+    var body: some View {
+        GeometryReader { geo in
+            let c = cols
+            let cellW = (geo.size.width  - gap * CGFloat(c - 1)) / CGFloat(c)
+            let cellH = (geo.size.height - gap * CGFloat(rows - 1)) / CGFloat(rows)
+
+            Canvas { ctx, size in
+                for col in 0..<c {
+                    for row in 0..<rows {
+                        let idx = col * rows + row
+                        guard idx < data.count else { continue }
+                        let v = data[idx]
+                        let x = (cellW + gap) * CGFloat(col)
+                        let y = (cellH + gap) * CGFloat(row)
+                        let rect = CGRect(x: x, y: y, width: cellW, height: cellH)
+                        let path = Path(roundedRect: rect, cornerRadius: 1.5)
+
+                        // 颜色：越高越亮
+                        let opacity = 0.07 + v * 0.88
+                        ctx.fill(path, with: .color(baseColor.opacity(opacity)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Memory Matrix Card
+struct MemMatrixCard: View {
     let usedGB: Double
     let totalGB: Double
-    let cachedGB: Double
     let pressure: Double
+    let history: [Double]   // 60 帧
+
+    // 显示为 4 行 × 15 列的像素矩阵
+    private let rows = 4
+    private var matrixData: [Double] {
+        // 把 60 个连续帧拆成列优先（4行×15列）
+        history
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
+            // 标题行
             HStack(spacing: 3) {
                 Image(systemName: "memorychip")
                     .font(.system(size: 9))
@@ -148,29 +205,32 @@ struct MemoryMiniCard: View {
                 Text("内存")
                     .font(.system(size: 10).weight(.semibold))
                     .foregroundColor(.secondary)
+                Spacer()
+                Text(String(format: "%.1f GB", usedGB))
+                    .font(.system(size: 10, design: .rounded).monospacedDigit())
+                    .fontWeight(.semibold)
+                    .foregroundColor(pressureColor)
             }
 
-            Text(String(format: "%.1f / %.0f GB", usedGB, totalGB))
-                .font(.system(size: 12, design: .rounded).monospacedDigit())
-                .fontWeight(.semibold)
-                .foregroundColor(pressureColor)
+            // 像素矩阵
+            PixelMatrixView(
+                data: columnMajor(history, rows: rows),
+                rows: rows,
+                baseColor: .purple,
+                gap: 1.5
+            )
+            .frame(height: 24)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
 
-            // Tiny bar
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.secondary.opacity(0.15))
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(pressureColor.opacity(0.8))
-                        .frame(width: geo.size.width * min(1, pressure))
-                        .animation(.easeInOut(duration: 0.4), value: pressure)
-                }
+            // 底部数值
+            HStack(spacing: 0) {
+                Text(String(format: "%.0f%%", pressure * 100))
+                    .font(.system(size: 9, design: .rounded).monospacedDigit())
+                    .foregroundColor(pressureColor)
+                Text(" / \(Int(totalGB))GB")
+                    .font(.system(size: 9, design: .rounded))
+                    .foregroundColor(.secondary.opacity(0.65))
             }
-            .frame(height: 4)
-
-            Text(String(format: "缓存 %.1fGB", cachedGB))
-                .font(.system(size: 9, design: .rounded))
-                .foregroundColor(.secondary.opacity(0.7))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 6)
@@ -183,10 +243,14 @@ struct MemoryMiniCard: View {
     }
 }
 
-// MARK: - Network Mini Card
-struct NetMiniCard: View {
+// MARK: - Network Matrix Card
+struct NetMatrixCard: View {
     let downKBps: Double
     let upKBps: Double
+    let downHistory: [Double]
+    let upHistory: [Double]
+
+    private let rows = 2   // 上下各 2 行 → 总共显示 ↓ 和 ↑
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -197,46 +261,63 @@ struct NetMiniCard: View {
                 Text("网络")
                     .font(.system(size: 10).weight(.semibold))
                     .foregroundColor(.secondary)
+                Spacer()
             }
 
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 8))
-                    .foregroundColor(.cyan)
-                Text(formatKBps(downKBps))
-                    .font(.system(size: 12, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-            }
+            // ↓ 下行矩阵
+            PixelMatrixView(
+                data: columnMajor(downHistory, rows: rows),
+                rows: rows,
+                baseColor: .cyan,
+                gap: 1.5
+            )
+            .frame(height: 11)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
 
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 8))
-                    .foregroundColor(.green.opacity(0.8))
-                Text(formatKBps(upKBps))
-                    .font(.system(size: 12, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-            }
+            // ↑ 上行矩阵
+            PixelMatrixView(
+                data: columnMajor(upHistory, rows: rows),
+                rows: rows,
+                baseColor: .green,
+                gap: 1.5
+            )
+            .frame(height: 11)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
 
-            Text("实时吞吐")
-                .font(.system(size: 9, design: .rounded))
-                .foregroundColor(.secondary.opacity(0.7))
+            // 数值行
+            HStack(spacing: 4) {
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.down").font(.system(size: 7)).foregroundColor(.cyan)
+                    Text(formatKBps(downKBps))
+                        .font(.system(size: 9, design: .rounded).monospacedDigit())
+                        .foregroundColor(.secondary)
+                }
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.up").font(.system(size: 7)).foregroundColor(.green)
+                    Text(formatKBps(upKBps))
+                        .font(.system(size: 9, design: .rounded).monospacedDigit())
+                        .foregroundColor(.secondary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 6)
     }
 
     private func formatKBps(_ kbps: Double) -> String {
-        if kbps >= 1024 { return String(format: "%.1f MB/s", kbps / 1024) }
-        return String(format: "%.0f KB/s", kbps)
+        if kbps >= 1024 { return String(format: "%.1fM", kbps / 1024) }
+        return String(format: "%.0fK", kbps)
     }
 }
 
-// MARK: - Disk Mini Card
-struct DiskMiniCard: View {
+// MARK: - Disk Matrix Card
+struct DiskMatrixCard: View {
     let readMBps: Double
     let writeMBps: Double
+    let readHistory: [Double]
+    let writeHistory: [Double]
+
+    private let rows = 2
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -247,40 +328,68 @@ struct DiskMiniCard: View {
                 Text("磁盘")
                     .font(.system(size: 10).weight(.semibold))
                     .foregroundColor(.secondary)
+                Spacer()
             }
 
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 8))
-                    .foregroundColor(.cyan)
-                Text(formatMBps(readMBps))
-                    .font(.system(size: 12, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-            }
+            // 读矩阵
+            PixelMatrixView(
+                data: columnMajor(readHistory, rows: rows),
+                rows: rows,
+                baseColor: .yellow,
+                gap: 1.5
+            )
+            .frame(height: 11)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
 
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 8))
-                    .foregroundColor(.yellow.opacity(0.9))
-                Text(formatMBps(writeMBps))
-                    .font(.system(size: 12, design: .rounded).monospacedDigit())
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-            }
+            // 写矩阵
+            PixelMatrixView(
+                data: columnMajor(writeHistory, rows: rows),
+                rows: rows,
+                baseColor: .orange,
+                gap: 1.5
+            )
+            .frame(height: 11)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
 
-            Text("读 / 写速度")
-                .font(.system(size: 9, design: .rounded))
-                .foregroundColor(.secondary.opacity(0.7))
+            // 数值行
+            HStack(spacing: 4) {
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.down").font(.system(size: 7)).foregroundColor(.yellow)
+                    Text(formatMBps(readMBps))
+                        .font(.system(size: 9, design: .rounded).monospacedDigit())
+                        .foregroundColor(.secondary)
+                }
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.up").font(.system(size: 7)).foregroundColor(.orange)
+                    Text(formatMBps(writeMBps))
+                        .font(.system(size: 9, design: .rounded).monospacedDigit())
+                        .foregroundColor(.secondary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 6)
     }
 
     private func formatMBps(_ mbps: Double) -> String {
-        if mbps < 0.1 { return "— MB/s" }
-        return String(format: "%.1f MB/s", mbps)
+        if mbps < 0.05 { return "—" }
+        return String(format: "%.1fM", mbps)
     }
+}
+
+// MARK: - Helpers
+/// 把行优先的一维历史数组（时间从旧到新）转成列优先（左列=旧，右列=新）供像素矩阵用
+private func columnMajor(_ data: [Double], rows: Int) -> [Double] {
+    guard rows > 0, !data.isEmpty else { return data }
+    let cols = Int(ceil(Double(data.count) / Double(rows)))
+    var out = [Double](repeating: 0, count: cols * rows)
+    for t in 0..<data.count {
+        let col = t / rows
+        let row = t % rows
+        let idx = col * rows + row
+        if idx < out.count { out[idx] = data[t] }
+    }
+    return out
 }
 
 // MARK: - Temperature Badge
