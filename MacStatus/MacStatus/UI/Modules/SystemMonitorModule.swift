@@ -8,6 +8,7 @@ struct SystemMonitorModule: View {
     @AppStorage("sysMonShowMemory") private var showMemory = true
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -72,7 +73,7 @@ struct SystemMonitorModule: View {
                             data: service.cpuHistory,
                             maxRows: 8,
                             baseColor: cpuTotalColor(service.cpuTotal),
-                            gap: 1.5
+                            gap: CGFloat(pixelGap)
                         )
                         .frame(height: 40)
                         .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -311,6 +312,7 @@ struct UnifiedMemCard: View {
     let sysHistory: [Double]
     let gpuHistory: [Double]
     let pressure: Double
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
     private var sysRatio: Double { totalGB > 0 ? sysUsedGB / totalGB : 0 }
     private var gpuRatio: Double { totalGB > 0 ? gpuUsedGB / totalGB : 0 }
@@ -362,7 +364,7 @@ struct UnifiedMemCard: View {
                     maxRows: 11,
                     bottomColor: pressureColor,
                     topColor: .teal,
-                    gap: 1.5
+                    gap: CGFloat(pixelGap)
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -467,6 +469,7 @@ struct NetMatrixCard: View {
     let downHistory: [Double]
     let upHistory: [Double]
     let symmetricGraph: Bool
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
     // 上下各 4 行 → 对应更密的矩阵，但我们的历史记录是60。
     // 如果上下各4行，则共8行。如果共用60历史，每部分60/4=15列。
@@ -491,7 +494,7 @@ struct NetMatrixCard: View {
                 data: downHistory,
                 maxRows: 5,
                 baseColor: .cyan,
-                gap: 1.5
+                gap: CGFloat(pixelGap)
             )
             .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -501,7 +504,7 @@ struct NetMatrixCard: View {
                 data: upHistory,
                 maxRows: 5,
                 baseColor: .green,
-                gap: 1.5,
+                gap: CGFloat(pixelGap),
                 invertY: symmetricGraph
             )
             .frame(height: 25)
@@ -539,6 +542,7 @@ struct DiskMatrixCard: View {
     let readHistory: [Double]
     let writeHistory: [Double]
     let symmetricGraph: Bool
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
     // 跟网络同理，各占4行（4×15列=60记录）
     private let rows = 4
@@ -560,7 +564,7 @@ struct DiskMatrixCard: View {
                 data: readHistory,
                 maxRows: 5,
                 baseColor: .yellow,
-                gap: 1.5
+                gap: CGFloat(pixelGap)
             )
             .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -570,7 +574,7 @@ struct DiskMatrixCard: View {
                 data: writeHistory,
                 maxRows: 5,
                 baseColor: .orange,
-                gap: 1.5,
+                gap: CGFloat(pixelGap),
                 invertY: symmetricGraph
             )
             .frame(height: 25)
@@ -647,6 +651,7 @@ struct TempBadgeView: View {
 struct GPUMatrixCard: View {
     let utilization: Double
     let history: [Double]
+    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -680,7 +685,7 @@ struct GPUMatrixCard: View {
                 data: history,
                 maxRows: 8,
                 baseColor: gpuColor,
-                gap: 1.5
+                gap: CGFloat(pixelGap)
             )
             .frame(height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 2))

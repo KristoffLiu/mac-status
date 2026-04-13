@@ -55,13 +55,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         
         // Monitor for outside clicks to close the popover automatically
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            if let panel = self?.panel, panel.isVisible {
-                panel.orderOut(nil)
+            // Default is true if not set
+            let autoHide = UserDefaults.standard.object(forKey: "autoHidePanel") == nil ? true : UserDefaults.standard.bool(forKey: "autoHidePanel")
+            if autoHide {
+                if let panel = self?.panel, panel.isVisible {
+                    self?.hidePanel()
+                }
             }
         }
         
         // Listen for open panel notifications
         NotificationCenter.default.addObserver(self, selector: #selector(showPopoverForEditing), name: NSNotification.Name("OpenMenuBarPopover"), object: nil)
+        
+        // Listen for UserDefaults changes for panel theme
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .sink { [weak self] _ in
+                let theme = UserDefaults.standard.string(forKey: "panelTheme") ?? "system"
+                self?.applyPanelTheme(theme)
+            }.store(in: &cancellables)
+        
+        // Initial Theme
+        applyPanelTheme(UserDefaults.standard.string(forKey: "panelTheme") ?? "system")
         
         // Listen for appearance changes
         NSApp.publisher(for: \.effectiveAppearance).sink { [weak self] _ in
@@ -84,9 +98,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
+    private func applyPanelTheme(_ theme: String) {
+        if theme == "dark" {
+            panel.appearance = NSAppearance(named: .darkAqua)
+        } else if theme == "light" {
+            panel.appearance = NSAppearance(named: .aqua)
+        } else {
+            panel.appearance = nil
+        }
+    }
+    
     @objc func togglePopover(_ sender: AnyObject?) {
         if panel.isVisible {
-            panel.orderOut(sender)
+            hidePanel()
         } else {
             showPanel()
         }
@@ -95,6 +119,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @objc func showPopoverForEditing() {
         if !panel.isVisible {
             showPanel()
+        }
+    }
+    
+    private func hidePanel() {
+        let enableAnim = UserDefaults.standard.object(forKey: "enablePanelAnimations") == nil ? true : UserDefaults.standard.bool(forKey: "enablePanelAnimations")
+        
+        if enableAnim {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.15
+                panel.animator().alphaValue = 0.0
+            }, completionHandler: {
+                self.panel.orderOut(nil)
+            })
+        } else {
+            panel.orderOut(nil)
         }
     }
     
@@ -113,7 +152,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let y = screenRect.minY - panel.frame.height - 8
         
         panel.setFrameOrigin(NSPoint(x: x, y: y))
-        panel.makeKeyAndOrderFront(nil)
+        
+        let enableAnim = UserDefaults.standard.object(forKey: "enablePanelAnimations") == nil ? true : UserDefaults.standard.bool(forKey: "enablePanelAnimations")
+        if enableAnim {
+            panel.alphaValue = 0.0
+            panel.makeKeyAndOrderFront(nil)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.15
+                panel.animator().alphaValue = 1.0
+            }
+        } else {
+            panel.alphaValue = 1.0
+            panel.makeKeyAndOrderFront(nil)
+        }
+        
         NSApp.activate(ignoringOtherApps: true)
     }
 

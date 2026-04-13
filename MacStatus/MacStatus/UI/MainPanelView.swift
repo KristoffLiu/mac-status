@@ -160,7 +160,7 @@ struct MainPanelView: View {
     private func widgetContentView(for widget: PanelWidget) -> some View {
         switch widget {
         case .powerFlow:
-            SankeyPowerFlowView(powerFlow: viewModel.powerFlow)
+            PowerFlowModuleView(powerFlow: viewModel.powerFlow)
         case .powerStatus:
             PowerStatusModule(batteryData: viewModel.batteryData, powerFlow: viewModel.powerFlow)
         case .batterySpecs:

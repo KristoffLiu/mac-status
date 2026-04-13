@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SankeyPowerFlowView: View {
     var powerFlow: PowerFlowData
+    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
     
     var body: some View {
         VStack(spacing: 12) {
@@ -41,7 +43,7 @@ struct SankeyPowerFlowView: View {
                             )
                             .zIndex(0)
                             
-                            NodePill(icon: "laptopcomputer", value: "\(Int(sysFlowWatts))W", iconColor: .primary, stretchHeight: true)
+                            NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(sysFlowWatts))W" : nil, iconColor: .primary, stretchHeight: true)
                                 .zIndex(1)
                         }
                         .frame(height: topHeight)
@@ -65,7 +67,7 @@ struct SankeyPowerFlowView: View {
                                 )
                                 .zIndex(0)
                                 
-                                NodePill(icon: "battery.100.bolt", value: "\(Int(batChargeWatts))W", iconColor: .green, isSubNode: false, stretchHeight: true)
+                                NodePill(icon: "battery.100.bolt", value: showValues ? "\(Int(batChargeWatts))W" : nil, iconColor: .green, isSubNode: false, stretchHeight: true)
                                     .zIndex(1)
                             }
                             .frame(height: botHeight)
@@ -131,7 +133,7 @@ struct SankeyPowerFlowView: View {
                     }
                     .zIndex(0)
                     
-                    NodePill(icon: "laptopcomputer", value: "\(Int(powerFlow.systemPower))W", iconColor: .primary, stretchHeight: true)
+                    NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(powerFlow.systemPower))W" : nil, iconColor: .primary, stretchHeight: true)
                         .zIndex(1)
                 }
             }
@@ -191,6 +193,9 @@ struct ThickFlowBlock: View {
     var mergeMode: FlowMergeMode = .none
     var localConvergenceY: CGFloat? = nil
     
+    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    
     @State private var phase = 0.0
     
     // True Sankey logic: thickness is proportional to its fraction of total power globally
@@ -239,17 +244,20 @@ struct ThickFlowBlock: View {
                         )
                         .blendMode(.overlay)
                         .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY))
-                        .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
+                        .animation(isAnimated ? .linear(duration: 1.5).repeatForever(autoreverses: false) : .default, value: phase)
+                        .opacity(isAnimated ? 1.0 : 0.0)
                 )
             
             // Text inside the block
-            let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
-            Text(textValue)
-                .font(.system(size: isSubFlow ? 10 : 14, weight: .bold, design: .rounded))
-                .foregroundColor(isSubFlow ? .secondary : .primary)
-                // White shadow to ensure readability on variable colors
-                .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
-                .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+            if showValues {
+                let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
+                Text(textValue)
+                    .font(.system(size: isSubFlow ? 10 : 14, weight: .bold, design: .rounded))
+                    .foregroundColor(isSubFlow ? .secondary : .primary)
+                    // White shadow to ensure readability on variable colors
+                    .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+                    .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .onAppear {

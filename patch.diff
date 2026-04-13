@@ -1,0 +1,36 @@
+--- MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift
++++ MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift
+@@ -4,8 +4,22 @@
+     @StateObject private var widgetManager = WidgetManager.shared
+     @AppStorage("isPanelEditing") private var isPanelEditing = false
+     
+-    var body: some View {
+-        Form {
++    @AppStorage("autoHidePanel") private var autoHidePanel = true
++    @AppStorage("enablePanelAnimations") private var enablePanelAnimations = true
++    @AppStorage("panelTheme") private var panelTheme = "system"
++    
++    var body: some View {
++        Form {
++            Section("全局面板行为") {
++                Toggle("失去焦点时自动隐藏", isOn: $autoHidePanel)
++                Toggle("平滑弹出动画", isOn: $enablePanelAnimations)
++                Picker("面板主题", selection: $panelTheme) {
++                    Text("跟随系统").tag("system")
++                    Text("始终浅色").tag("light")
++                    Text("始终深色").tag("dark")
++                }
++            }
++            
+             Section {
+                 List {
+                     ForEach(widgetManager.activeWidgets, id: \.self) { widget in
+@@ -115,6 +129,8 @@
+             .padding(.bottom, 8)
+             if widget == .systemMonitor {
+                 SystemMonitorConfigView()
++            } else if widget == .powerFlow {
++                PowerFlowConfigView()
+             } else {
+                 Form {
+                     Text("暂无可用的自定义选项。")

@@ -4,22 +4,8 @@ struct AppearanceSettingsView: View {
     @StateObject private var widgetManager = WidgetManager.shared
     @AppStorage("isPanelEditing") private var isPanelEditing = false
     
-    @AppStorage("autoHidePanel") private var autoHidePanel = true
-    @AppStorage("enablePanelAnimations") private var enablePanelAnimations = true
-    @AppStorage("panelTheme") private var panelTheme = "system"
-    
     var body: some View {
         Form {
-            Section("全局面板行为") {
-                Toggle("失去焦点时自动隐藏", isOn: $autoHidePanel)
-                Toggle("平滑弹出动画", isOn: $enablePanelAnimations)
-                Picker("面板主题", selection: $panelTheme) {
-                    Text("跟随系统").tag("system")
-                    Text("始终浅色").tag("light")
-                    Text("始终深色").tag("dark")
-                }
-            }
-            
             Section {
                 List {
                     ForEach(widgetManager.activeWidgets, id: \.self) { widget in
@@ -117,8 +103,6 @@ struct WidgetOptionsSheet: View {
             .padding(.bottom, 8)
             if widget == .systemMonitor {
                 SystemMonitorConfigView()
-            } else if widget == .powerFlow {
-                PowerFlowConfigView()
             } else {
                 Form {
                     Text("暂无可用的自定义选项。")
@@ -147,7 +131,6 @@ struct SystemMonitorConfigView: View {
     @AppStorage("sysMonShowMemory") private var showMemory = true
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
-    @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
     
     var body: some View {
         Form {
@@ -173,70 +156,12 @@ struct SystemMonitorConfigView: View {
             }
             
             // 3. 图表样式
-            Section("监控历史图表") {
+            Section("网络与磁盘图表样式") {
                 Picker("走势图方向", selection: $symmetricGraph) {
                     Text("正向堆叠").tag(false)
                     Text("双向发散").tag(true)
                 }
                 .pickerStyle(.menu)
-                
-                Picker("像素阵列间距", selection: $pixelGap) {
-                    Text("紧密集约 (1.0)").tag(1.0)
-                    Text("标准 (1.5)").tag(1.5)
-                    Text("呼吸松散 (2.5)").tag(2.5)
-                }
-                .pickerStyle(.menu)
-            }
-        }
-        .formStyle(.grouped)
-    }
-}
-
-struct PowerFlowConfigView: View {
-    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
-    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
-    
-    var body: some View {
-        Form {
-            // 1. 预览区域
-            Section {
-                VStack {
-                    PowerFlowModuleView(powerFlow: PowerFlowData(
-                        adapterPower: 35.0,
-                        batteryPower: 5.0,
-                        systemPower: 40.0,
-                        isCharging: false,
-                        isDischarging: true,
-                        topology: .topologyB,
-                        adapterVoltage: 20.0,
-                        adapterCurrent: 1.75
-                    ))
-                }
-                .frame(width: 320)
-                .background(.regularMaterial)
-                .cornerRadius(12)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, alignment: .center)
-            } header: {
-                Text("预览")
-            }
-            
-            // 2. 视图选择
-            Section("显示样式") {
-                Picker("样式", selection: $style) {
-                    Text("桑基图 (Sankey)").tag(PowerFlowStyle.sankey)
-                    Text("数据块 (Blocks)").tag(PowerFlowStyle.blocks)
-                }
-                .pickerStyle(.segmented)
-            }
-            
-            // 3. 桑基图设置
-            if style == .sankey {
-                Section("桑基图微调") {
-                    Toggle("播放流动动画", isOn: $isAnimated)
-                    Toggle("在管道上显示具体瓦数", isOn: $showValues)
-                }
             }
         }
         .formStyle(.grouped)
