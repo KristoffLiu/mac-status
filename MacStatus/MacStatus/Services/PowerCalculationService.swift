@@ -42,11 +42,26 @@ class PowerCalculationService {
             systemWatts = smcSystemWatts ?? (adapterWatts - batteryWatts)
             topology = .topologyA
         } else if actualAmperage < 0 {
-            // Discharging alongside adapter
-            isCharging = false
-            isDischarging = true
-            systemWatts = smcSystemWatts ?? batteryWatts
-            topology = .topologyB
+            // Discharging...
+            // BUT wait! If we are plugged in (isTrueAC), and the adapter is clearly strong enough 
+            // to power the system (adapterWatts >= system draw), then the battery is idling!
+            // IOKit's battery controller is merely lagging behind the AC controller. We shouldn't show a frozen "discharging ghost".
+            let currentSystemDraw = smcSystemWatts ?? batteryWatts
+            let safeAdapterMargin = currentSystemDraw + 5.0
+            
+            if isTrueAC, adapterWatts >= safeAdapterMargin {
+                // False negative: It's just transient lag. Force bypass/charging state logic.
+                isCharging = false
+                isDischarging = false
+                systemWatts = currentSystemDraw
+                topology = .topologyA
+            } else {
+                // Genuinely discharging alongside adapter (or unplugged)
+                isCharging = false
+                isDischarging = true
+                systemWatts = currentSystemDraw
+                topology = .topologyB
+            }
         } else {
             // Idle / Bypass (Fully charged and connected to AC)
             isCharging = false

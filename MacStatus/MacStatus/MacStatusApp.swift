@@ -12,27 +12,20 @@ struct MacStatusApp: App {
 
     
     @State private var settingsUpdateTrigger = UUID()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        // Dummy hidden MenuBarExtra scene to intercept SwiftUI's default start-up window behavior.
-        // SwiftUI won't automatically open the secondary 'Window' scene on app launch,
-        // and since `isInserted` is false, this MenuBarExtra won't show an icon either.
-        MenuBarExtra("Hidden", systemImage: "star", isInserted: .constant(false)) {
-            EmptyView()
-        }
-        
-        MenuBarExtra {
-            MainPanelView(viewModel: viewModel)
-        } label: {
-            MenuBarLabelView(viewModel: viewModel)
-        }
-        .menuBarExtraStyle(.window) // This gives the native popover with the 'tip' pointing to the menu bar!
-        
         Window("MacStatus", id: "settings") {
             AppWindowView()
                 .onChange(of: viewModel.isCharging) { _ in settingsUpdateTrigger = UUID() }
                 .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
                     settingsUpdateTrigger = UUID()
+                }
+                .onAppear {
+                    // Start AppDelegate when app launches
+                    if appDelegate.viewModel == nil {
+                        appDelegate.setupMenuBar(viewModel: viewModel)
+                    }
                 }
         }
         .windowToolbarStyle(.unified)
