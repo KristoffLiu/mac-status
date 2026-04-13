@@ -176,7 +176,7 @@ struct MacBook3DView: View {
     
     var body: some View {
         VStack(spacing: 0) { // Sharing the exact centerline
-            // 1. The Screen Lid (Now contains all data for Hero Shot)
+            // 1. The Screen Lid
             MacBookScreenLid(
                 systemPower: systemPower,
                 batteryPower: batteryPower,
@@ -184,24 +184,27 @@ struct MacBook3DView: View {
                 isCharging: isCharging,
                 isOpen: isOpen
             )
-            // HERO HINGE: 0 = Perfect face-on. -88 = Folded shut.
+            // HERO HINGE: 0 = Face-on. -180 = Folded correctly downwards.
             .rotation3DEffect(
-                .degrees(isOpen ? 0 : -88), 
+                .degrees(isOpen ? 0 : -180), 
                 axis: (x: 1, y: 0, z: 0),
                 anchor: .bottom,
                 perspective: 0.3
             )
             .zIndex(2) // ensure screen renders over keyboard when folded
             
-            // 2. The Bottom Chassis (Has internal 3D extrusion and rotation)
+            // 2. The Bottom Chassis (Hero profile - Flat elegant vector)
             MacBookKeyboardBase()
+            // THE FIX: The base lip used to stay glued to the hinge when closed, making the entire laptop look upside down or backwards!
+            // Now, when the 90pt screen folds down into the empty space, we physically slide the front lip down 90 points to catch it perfectly!
+            .offset(y: isOpen ? 0 : 90)
             .zIndex(1)
         }
         // DYNAMIC GLOBAL TILT
         // Open: 0 tilt, perfect straight-on hero shot.
-        // Closed: -20 tilt, gentle angle to see the top shell resting on the desk.
+        // Closed: Tilt global to properly display the top shell and the perfectly caught lip.
         .rotation3DEffect(
-            .degrees(isOpen ? 0 : -20), 
+            .degrees(isOpen ? 0 : -30), 
             axis: (x: 1, y: 0, z: 0),
             anchor: .center,
             perspective: 0.5
@@ -223,58 +226,32 @@ struct MacBook3DView: View {
     }
 }
 
-// 底座实体 (具备通过多层堆叠生成的物理厚度！彻底隐藏表面)
+// 底座实体 (完美恢复：纯正优雅的 2D 矢量边框！绝佳的前侧质感，无厚度拉伸)
 struct MacBookKeyboardBase: View {
     var body: some View {
         ZStack(alignment: .top) {
-            // 利用多层残影构成绝对真实的 3D 厚度 (Extrusion)
-            // i=0 是顶部的键盘面，i>0 是它下方的金属机身底座
-            ForEach((0...6).reversed(), id: \.self) { i in
-                ZStack {
-                    // Unibody base
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                // 底层变得更暗，模拟边缘反光和阴影
-                                colors: i == 0 ? [Color(white: 0.8), Color(white: 0.6)] : [Color(white: 0.6 - Double(i)*0.05), Color(white: 0.4 - Double(i)*0.05)],
-                                startPoint: .top, endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 140, height: 100)
-                    
-                    // Keyboard elements 仅存在于最表面
-                    if i == 0 {
-                        // Keyboard Well (black indent)
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(Color(white: 0.2))
-                            .frame(width: 120, height: 45)
-                            .offset(y: -15)
-                        
-                        // Trackpad
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .fill(Color(white: 0.65))
-                            .frame(width: 50, height: 35)
-                            .offset(y: 28)
-                    }
-                    
-                    // Front Lip Notch (横切在厚度层上，制造真正的凹槽体积感)
-                    if i > 1 {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color(white: 0.3)) // Notch internal shadow
-                            .frame(width: 32, height: 2)
-                            .offset(y: 49) // bottom edge
-                    }
-                }
-                // 倾斜 88 度：让键盘面几乎缩减到 0，仅为了保持底边正确的透视拉伸
-                .rotation3DEffect(
-                    .degrees(88),
-                    axis: (x: 1, y: 0, z: 0),
-                    anchor: .top,
-                    perspective: 0.3
+            // Main Front Lip (Smooth metal finish)
+            RoundedRectangle(cornerRadius: 3.0, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.88), Color(white: 0.55)],
+                        startPoint: .top, endPoint: .bottom
+                    )
                 )
-                // 神隐级操作：在倾斜过后向 2D Y轴暴力平移，制造不可反驳的侧面物理厚度！
-                .offset(y: CGFloat(Double(i) * 1.5))
-            }
+                .frame(width: 140, height: 7)
+                // Subtle grounding shadow
+                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+            
+            // Thumb Notch for opening
+            RoundedRectangle(cornerRadius: 1, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.5), Color(white: 0.3)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .frame(width: 26, height: 2)
+                .offset(y: 1)
         }
     }
 }

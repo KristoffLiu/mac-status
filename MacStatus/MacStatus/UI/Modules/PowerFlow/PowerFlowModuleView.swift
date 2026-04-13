@@ -108,7 +108,7 @@ struct PowerFlowConfigView: View {
                 Section {
                     VStack(spacing: 0) {
                         PowerFlowModuleView(powerFlow: currentPreviewData, batteryData: currentPreviewBatteryData)
-                            .padding(.horizontal, style == .cards ? -12 : 4)
+                            .padding(.horizontal, style == .cards ? 0 : 4)
                             .padding(.vertical, 8)
                     }
                     .frame(width: 400)

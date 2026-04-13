@@ -5,6 +5,8 @@ struct CardsPowerFlowView: View {
     var batteryData: BatteryData?
     @State private var isExpanded: Bool = false
     @State private var focusedCard: Int? = nil
+    @State private var dragOffset: CGFloat = 0
+    @State private var savedOffset: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 12) {
@@ -32,10 +34,8 @@ struct CardsPowerFlowView: View {
             }
             .padding(.horizontal, 12)
             
-            // 3 Cards Layout
-            ScrollView(.horizontal, showsIndicators: false) {
-                ScrollViewReader { proxy in
-                    HStack(spacing: isExpanded ? 6 : -50) {
+            // 3 Cards Layout, Custom Carousel
+            ZStack {
                 // Adapter Card
                 let hasAdapter = powerFlow.adapterPower > 2
                 let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
@@ -61,14 +61,16 @@ struct CardsPowerFlowView: View {
                      power: hasAdapter ? powerFlow.adapterPower : -1, 
                      color: (hasAdapter && !powerFlow.isDischarging) ? .blue : .secondary.opacity(0.5), 
                      details: adapterDetails)
+                    .offset(x: isExpanded ? -180 : -110)
                     .zIndex(3)
                     .id(1)
-                    .onTapGesture { handleTap(1, proxy: proxy) }
+                    .onTapGesture { handleTap(1) }
                 
                 if isExpanded {
                     Image(systemName: "arrow.right")
                         .foregroundColor(hasAdapter && !powerFlow.isDischarging ? .gray.opacity(0.5) : .gray.opacity(0.2))
                         .font(.system(size: 14, weight: .bold))
+                        .offset(x: -90)
                 }
                 
                 // System Card
@@ -77,9 +79,10 @@ struct CardsPowerFlowView: View {
                      power: powerFlow.systemPower, 
                      color: .primary, 
                      details: [])
+                    .offset(x: 0)
                     .zIndex(2)
                     .id(2)
-                    .onTapGesture { handleTap(2, proxy: proxy) }
+                    .onTapGesture { handleTap(2) }
                 
                 let arrowColor: Color = powerFlow.isCharging ? .green.opacity(0.7) : (powerFlow.isDischarging ? .blue.opacity(0.7) : .gray.opacity(0.2))
                 let arrowIcon = powerFlow.isDischarging ? "arrow.left" : "arrow.right"
@@ -88,6 +91,7 @@ struct CardsPowerFlowView: View {
                     Image(systemName: arrowIcon)
                         .foregroundColor(arrowColor)
                         .font(.system(size: 14, weight: .bold))
+                        .offset(x: 90)
                 }
                 
                 // Battery Card
@@ -99,31 +103,58 @@ struct CardsPowerFlowView: View {
                      power: batPowerValue,
                      color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary),
                       details: ["\(batteryData?.currentCapacity ?? 0)%", "\(String(format: "%.1fV", batV)) \(String(format: "%.2fA", abs(batA)))"])
+                    .offset(x: isExpanded ? 180 : 110)
                     .zIndex(1)
                     .id(3)
-                    .onTapGesture { handleTap(3, proxy: proxy) }
+                    .onTapGesture { handleTap(3) }
             }
-            .frame(minWidth: 400, alignment: .center)
+            .offset(x: dragOffset)
+            .frame(width: 400, alignment: .center)
+            .clipped()
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        guard isExpanded else { return }
+                        let proposedOffset = savedOffset + value.translation.width
+                        dragOffset = min(max(proposedOffset, -70), 70)
+                    }
+                    .onEnded { value in
+                        guard isExpanded else { return }
+                        let finalOffset = dragOffset
+                        let targetOffset: CGFloat
+                        if finalOffset > 35 { targetOffset = 70; focusedCard = 1 }
+                        else if finalOffset < -35 { targetOffset = -70; focusedCard = 3 }
+                        else { targetOffset = 0; focusedCard = 2 }
+                        
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            dragOffset = targetOffset
+                        }
+                        savedOffset = targetOffset
+                    }
+            )
             .padding(.vertical, 8)
         }
-        }
+        .padding(.vertical, 8)
     }
-    .padding(.vertical, 8)
-}
 
-    private func handleTap(_ id: Int, proxy: ScrollViewProxy) {
+    private func handleTap(_ id: Int) {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
             if isExpanded && focusedCard == id {
                 isExpanded = false
                 focusedCard = nil
+                dragOffset = 0
+                savedOffset = 0
             } else {
                 isExpanded = true
                 focusedCard = id
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        proxy.scrollTo(id, anchor: .center)
-                    }
-                }
+                
+                let targetOffset: CGFloat
+                if id == 1 { targetOffset = 70 }
+                else if id == 2 { targetOffset = 0 }
+                else { targetOffset = -70 }
+                
+                dragOffset = targetOffset
+                savedOffset = targetOffset
             }
         }
     }
