@@ -4,16 +4,18 @@ import AppKit
 import Combine
 
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
-    @Published var generatedMenuImage: NSImage? = nil
+    var statusItem: NSStatusItem!
+    var panel: NSPanel!
+    private var eventMonitor: Any?
+    
     var viewModel: StatusViewModel = StatusViewModel()
     var timer: Timer?
     
-    // We store the actual menu bar color scheme passed from DynamicMenuBarLabel 
-    // to accurately render colors in ImageRenderer. Default is true (dark menu bar).
-    var menuBarIsDark: Bool = true {
-        didSet {
-            if oldValue != menuBarIsDark { updateStatusItemImage() }
+    var menuBarIsDark: Bool {
+        if let button = statusItem?.button {
+            return button.effectiveAppearance.name == .darkAqua || button.effectiveAppearance.name == .vibrantDark
         }
+        return NSApp.effectiveAppearance.name == .darkAqua || NSApp.effectiveAppearance.name == .vibrantDark
     }
     
     override init() {
@@ -26,6 +28,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize Status Item
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = statusItem.button {
+            button.action = #selector(togglePopover(_:))
+            button.target = self
+        }
+        
+        // Initialize Panel
+        panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 400, height: 600),
+                        styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
+                        backing: .buffered, defer: false)
+        let hostingController = NSHostingController(rootView: MainPanelView(viewModel: viewModel))
+        panel.contentViewController = hostingController
+        // Resize panel to fit content automatically
+        panel.setContentSize(hostingController.view.fittingSize)
+        panel.isFloatingPanel = true
+        panel.level = .popUpMenu
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.titleVisibility = .hidden
+        panel.titlebarAppearsTransparent = true
+        panel.isMovableByWindowBackground = false
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        
+        // Monitor for outside clicks to close the popover automatically
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            if let panel = self?.panel, panel.isVisible {
+                panel.orderOut(nil)
+            }
+        }
+        
+        // Listen for open panel notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(showPopoverForEditing), name: NSNotification.Name("OpenMenuBarPopover"), object: nil)
+        
+        // Listen for appearance changes
+        NSApp.publisher(for: \.effectiveAppearance).sink { [weak self] _ in
+            self?.updateStatusItemImage()
+        }.store(in: &cancellables)
+        
         // Start a timer to redraw the image periodically based on the view model
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateStatusItemImage()
@@ -39,32 +81,78 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             self.updateStatusItemImage()
         }
     }
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+    @objc func togglePopover(_ sender: AnyObject?) {
+        if panel.isVisible {
+            panel.orderOut(sender)
+        } else {
+            showPanel()
+        }
+    }
+    
+    @objc func showPopoverForEditing() {
+        if !panel.isVisible {
+            showPanel()
+        }
+    }
+    
+    private func showPanel() {
+        guard let button = statusItem.button, let window = button.window else { return }
+        
+        // Refresh fitting size in case of layout changes
+        if let hostingController = panel.contentViewController as? NSHostingController<MainPanelView> {
+            panel.setContentSize(hostingController.view.fittingSize)
+        }
+        
+        let buttonFrame = button.convert(button.bounds, to: nil)
+        let screenRect = window.convertToScreen(buttonFrame)
+        
+        let x = screenRect.midX - (panel.frame.width / 2)
+        let y = screenRect.minY - panel.frame.height - 8
+        
+        panel.setFrameOrigin(NSPoint(x: x, y: y))
+        panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
 
     @MainActor
     private func updateStatusItemImage() {
-        // Determine the system dark mode appearance and apply to the renderer 
-        // to prevent Color.primary from collapsing to black in colored menu bar icons
         let isDark = menuBarIsDark
         
-        let view = IsolatedBatteryGraphicRenderer(viewModel: viewModel)
+        // Create the isolated battery graphic
+        let batteryView = IsolatedBatteryGraphicRenderer(viewModel: viewModel)
             .environment(\.colorScheme, isDark ? .dark : .light)
+            
+        let batteryRenderer = ImageRenderer(content: batteryView)
+        batteryRenderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
+        batteryRenderer.isOpaque = false // Transparent background
         
-        // Render to Image
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
-        renderer.isOpaque = false // Transparent background
-        
-        if let nsImage = renderer.nsImage {
-            // If the user wants a colored battery, it must be drawn fully transparent with colors.
-            // If the user wants a monochrome battery, we can make it a template which automatically adapts to the system menu bar colors!
+        var batteryImage: NSImage? = nil
+        if let nsImage = batteryRenderer.nsImage {
             let fillStyle = UserDefaults.standard.string(forKey: "batteryFillStyle") ?? "monochrome"
             if fillStyle == "status_color" {
                 nsImage.isTemplate = false
             } else {
                 nsImage.isTemplate = true
             }
-            
-            self.generatedMenuImage = nsImage
+            batteryImage = nsImage
+        }
+        
+        // Now wrap the entire label renderer (battery + text) and output it as a single status bar image
+        let labelView = MenuBarLabelRendererView(viewModel: viewModel, generatedMenuImage: batteryImage)
+            .environment(\.colorScheme, isDark ? .dark : .light)
+            .foregroundColor(isDark ? .white : .black)
+        let labelRenderer = ImageRenderer(content: labelView)
+        labelRenderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
+        labelRenderer.isOpaque = false
+        
+        if let finalImage = labelRenderer.nsImage {
+            // Because we pass the colors correctly with the environment modifier,
+            // we must disable template mode so the customized standard colored text renders correctly.
+            finalImage.isTemplate = false 
+            self.statusItem.button?.image = finalImage
         }
     }
 }

@@ -12,12 +12,34 @@ enum PanelWidget: String, CaseIterable, Codable {
     
     var title: String {
         switch self {
-        case .powerFlow: return "Real-time Energy Flow"
+        case .powerFlow: return "实时能耗流"
         case .powerStatus: return "电源状态"
         case .batterySpecs: return "电池规格"
         case .batteryHealth: return "电池健康"
-        case .highPowerApps: return "High Power Apps"
+        case .highPowerApps: return "高耗能应用"
         case .systemMonitor: return "系统监控"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .powerFlow: return "bolt.horizontal"
+        case .powerStatus: return "powerplug.fill"
+        case .batterySpecs: return "battery.100.bolt"
+        case .batteryHealth: return "heart.fill"
+        case .highPowerApps: return "cpu"
+        case .systemMonitor: return "chart.xyaxis.line"
+        }
+    }
+    
+    var iconColor: Color {
+        switch self {
+        case .powerFlow: return .green
+        case .powerStatus: return .yellow
+        case .batterySpecs: return .blue
+        case .batteryHealth: return .red
+        case .highPowerApps: return .orange
+        case .systemMonitor: return .purple
         }
     }
 }
@@ -53,6 +75,12 @@ class WidgetManager: ObservableObject {
         }
     }
     
+    func move(from source: IndexSet, to destination: Int) {
+        withAnimation {
+            activeWidgets.move(fromOffsets: source, toOffset: destination)
+        }
+    }
+    
     private func save() {
         let strings = activeWidgets.map { $0.rawValue }
         UserDefaults.standard.set(strings, forKey: "panelWidgetOrder")
@@ -63,16 +91,21 @@ class WidgetManager: ObservableObject {
         if let stored = UserDefaults.standard.stringArray(forKey: "panelWidgetOrder") {
             var strings = stored
             
-            // Clean out old widgets
-            strings.removeAll { $0 == "powerData" || $0 == "batteryData" || $0 == "batteryDetail" }
-            
-            // Re-insert new group structure
-            var insertions: [String] = ["powerStatus", "batterySpecs", "batteryHealth"]
-            // Place them after powerFlow if it exists
-            if let index = strings.firstIndex(of: "powerFlow") {
-                strings.insert(contentsOf: insertions, at: index + 1)
-            } else {
-                strings.insert(contentsOf: insertions, at: 0)
+            let hasMigrated = UserDefaults.standard.bool(forKey: "hasMigratedToV2")
+            if !hasMigrated {
+                // Clean out old widgets
+                strings.removeAll { $0 == "powerData" || $0 == "batteryData" || $0 == "batteryDetail" }
+                
+                // Re-insert new group structure
+                var insertions: [String] = ["powerStatus", "batterySpecs", "batteryHealth"]
+                // Place them after powerFlow if it exists
+                if let index = strings.firstIndex(of: "powerFlow") {
+                    strings.insert(contentsOf: insertions, at: index + 1)
+                } else {
+                    strings.insert(contentsOf: insertions, at: 0)
+                }
+                
+                UserDefaults.standard.set(true, forKey: "hasMigratedToV2")
             }
             
             let widgets = strings.compactMap { PanelWidget(rawValue: $0) }

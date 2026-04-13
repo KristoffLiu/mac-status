@@ -12,10 +12,11 @@ struct PanelContainerView<Content: View>: View {
             content
         }
         .padding(12)
-        // Set width in points (400pt = 800 physical pixels on 2x Retina). Center-aligns popover.
+        // Set width in points (400pt = 800 physical pixels on 2x Retina).
         .frame(width: 400)
-        // Native MenuBarExtra popover already uses liquid glass when we don't force a background
-        // Apply Continuous Squircles to the container itself if needed, but native popover already clips.
+        // Apply Continuous Squircles to the container itself seamlessly
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

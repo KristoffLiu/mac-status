@@ -8,7 +8,7 @@ struct MainPanelView: View {
     @Environment(\.openWindow) private var openWindow
     
     @StateObject private var widgetManager = WidgetManager.shared
-    @State private var isEditing = false
+    @AppStorage("isPanelEditing") private var isEditing = false
     @State private var draggingItem: PanelWidget?
 
     var body: some View {

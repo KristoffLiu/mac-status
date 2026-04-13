@@ -3,6 +3,11 @@ import SwiftUI
 // MARK: - Main Module
 struct SystemMonitorModule: View {
     @ObservedObject var service = SystemMonitorService.shared
+    
+    @AppStorage("sysMonShowCompute") private var showCompute = true
+    @AppStorage("sysMonShowMemory") private var showMemory = true
+    @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
+    @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -20,9 +25,10 @@ struct SystemMonitorModule: View {
 
             // ── 3x2 Grid Layout ──────────────────────────────────────────────
             VStack(spacing: 12) {
-                // Row 1: Compute (CPU & GPU)
-                HStack(alignment: .top, spacing: 8) {
-                    // CPU Card
+                if showCompute {
+                    // Row 1: Compute (CPU & GPU)
+                    HStack(alignment: .top, spacing: 8) {
+                        // CPU Card
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 4) {
                             Text("CPU")
@@ -82,9 +88,13 @@ struct SystemMonitorModule: View {
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
+                } // end showCompute
 
-                Divider().opacity(0.4).padding(.horizontal, 8)
+                if showCompute && (showMemory || showNetDisk) {
+                    Divider().opacity(0.4).padding(.horizontal, 8)
+                }
 
+                if showMemory {
                 // Row 2: Unified Memory
                 UnifiedMemCard(
                     sysUsedGB: service.memUsedGB,
@@ -95,16 +105,21 @@ struct SystemMonitorModule: View {
                     pressure: service.memPressure
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                } // end showMemory
 
-                Divider().opacity(0.4).padding(.horizontal, 8)
+                if showMemory && showNetDisk {
+                    Divider().opacity(0.4).padding(.horizontal, 8)
+                }
 
+                if showNetDisk {
                 // Row 3: Network & Disk
                 HStack(alignment: .top, spacing: 8) {
                     NetMatrixCard(
                         downKBps:    service.netDownKBps,
                         upKBps:      service.netUpKBps,
                         downHistory: service.netDownHistory,
-                        upHistory:   service.netUpHistory
+                        upHistory:   service.netUpHistory,
+                        symmetricGraph: symmetricGraph
                     )
                     .frame(maxWidth: .infinity, alignment: .top)
 
@@ -114,10 +129,12 @@ struct SystemMonitorModule: View {
                         readMBps:     service.diskReadMBps,
                         writeMBps:    service.diskWriteMBps,
                         readHistory:  service.diskReadHistory,
-                        writeHistory: service.diskWriteHistory
+                        writeHistory: service.diskWriteHistory,
+                        symmetricGraph: symmetricGraph
                     )
                     .frame(maxWidth: .infinity, alignment: .top)
                 }
+                } // end showNetDisk
             }
         }
         .padding(.horizontal, 4)
@@ -229,6 +246,7 @@ struct PixelBarChartView: View {
     let maxRows: Int
     let baseColor: Color
     let gap: CGFloat
+    var invertY: Bool = false
 
     var body: some View {
         GeometryReader { geo in
@@ -261,8 +279,12 @@ struct PixelBarChartView: View {
                     let fillRows = Int(ceil(ratio * Double(maxRows))) // ceil 确保有一点数据就会亮一格
                     
                     for row in 0..<maxRows {
-                        // Y轴倒置，底部是最大的 row 索引
-                        let isFilled = (maxRows - 1 - row) < fillRows
+                        let isFilled: Bool
+                        if invertY {
+                            isFilled = row < fillRows // 从上往下
+                        } else {
+                            isFilled = (maxRows - 1 - row) < fillRows // 从下往上
+                        }
                         
                         let x = offsetX + (size + gap) * CGFloat(col)
                         let y = offsetY + (size + gap) * CGFloat(row)
@@ -444,6 +466,7 @@ struct NetMatrixCard: View {
     let upKBps: Double
     let downHistory: [Double]
     let upHistory: [Double]
+    let symmetricGraph: Bool
 
     // 上下各 4 行 → 对应更密的矩阵，但我们的历史记录是60。
     // 如果上下各4行，则共8行。如果共用60历史，每部分60/4=15列。
@@ -478,7 +501,8 @@ struct NetMatrixCard: View {
                 data: upHistory,
                 maxRows: 5,
                 baseColor: .green,
-                gap: 1.5
+                gap: 1.5,
+                invertY: symmetricGraph
             )
             .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -514,6 +538,7 @@ struct DiskMatrixCard: View {
     let writeMBps: Double
     let readHistory: [Double]
     let writeHistory: [Double]
+    let symmetricGraph: Bool
 
     // 跟网络同理，各占4行（4×15列=60记录）
     private let rows = 4
@@ -545,7 +570,8 @@ struct DiskMatrixCard: View {
                 data: writeHistory,
                 maxRows: 5,
                 baseColor: .orange,
-                gap: 1.5
+                gap: 1.5,
+                invertY: symmetricGraph
             )
             .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
