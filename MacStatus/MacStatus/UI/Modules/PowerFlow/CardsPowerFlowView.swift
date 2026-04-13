@@ -103,13 +103,13 @@ struct CardsPowerFlowView: View {
                     .id(3)
                     .onTapGesture { handleTap(3, proxy: proxy) }
             }
-            .padding(.horizontal, isExpanded ? 20 : 4)
+            .padding(.horizontal, 20)
             .padding(.vertical, 8)
         }
         }
+        .padding(.horizontal, -20)
     }
     .padding(.vertical, 8)
-    .padding(.horizontal, 4)
 }
 
     private func handleTap(_ id: Int, proxy: ScrollViewProxy) {
