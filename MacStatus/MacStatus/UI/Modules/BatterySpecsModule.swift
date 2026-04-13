@@ -9,7 +9,6 @@ struct BatterySpecsModule: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
             
             HStack {
                 let volts = Double(batteryData.voltage) / 1000.0
@@ -18,7 +17,6 @@ struct BatterySpecsModule: View {
                 let amps = Double(batteryData.amperage) / 1000.0
                 detailItem(title: "电芯输出电流", value: String(format: "%.2f A", abs(amps)))
             }
-            .padding(.horizontal, 4)
             
             HStack {
                 let volts = Double(batteryData.voltage) / 1000.0
@@ -28,7 +26,6 @@ struct BatterySpecsModule: View {
                 Spacer()
                 detailItem(title: "内部温度", value: String(format: "%.1f°C", batteryData.temperature))
             }
-            .padding(.horizontal, 4)
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 8)

@@ -140,7 +140,6 @@ struct PowerStatusModule: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, 4)
     }
 
     private var powerCardsRow: some View {
@@ -185,7 +184,6 @@ struct PowerStatusModule: View {
                 isActive: powerFlow.batteryPower > 0.1
             )
         }
-        .padding(.horizontal, 4)
     }
 
     private var detailRow: some View {
@@ -241,9 +239,7 @@ struct PowerStatusModule: View {
                     .lineLimit(1)
                     .fixedSize()
             }
-            .padding(.horizontal, 4)
         }
-        .padding(.horizontal, 4)
     }
 
     private func miniDetailItem(label: String, value: String, valueColor: Color = .primary) -> some View {

@@ -12,9 +12,6 @@
         }
       }
     },
-    " / %lldGB" : {
-
-    },
     "(Select One)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1375,6 +1372,9 @@
         }
       }
     },
+    "共 %lldGB" : {
+
+    },
     "关于" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1427,6 +1427,9 @@
           }
         }
       }
+    },
+    "压" : {
+
     },
     "可用组件" : {
 

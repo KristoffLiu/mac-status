@@ -9,7 +9,6 @@ struct BatteryHealthModule: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
             
             HStack {
                 let healthPercent = calculateHealth()
@@ -18,20 +17,17 @@ struct BatteryHealthModule: View {
                 let condition = healthPercent > 80 ? "状态良好" : (healthPercent > 50 ? "建议维修" : "需要更换")
                 detailItem(title: "系统状态评估", value: condition)
             }
-            .padding(.horizontal, 4)
             
             HStack {
                 detailItem(title: "当前最大容量", value: "\(batteryData.maxCapacity) mAh")
                 Spacer()
                 detailItem(title: "出厂设计容量", value: "\(batteryData.designCapacity) mAh")
             }
-            .padding(.horizontal, 4)
             
             HStack {
                 detailItem(title: "循环次数 (Cycles)", value: "\(batteryData.cycleCount) 次")
                 Spacer()
             }
-            .padding(.horizontal, 4)
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 8)
