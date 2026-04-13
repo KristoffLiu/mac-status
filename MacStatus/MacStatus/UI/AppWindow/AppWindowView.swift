@@ -7,17 +7,17 @@ struct AppWindowView: View {
     
     enum AppWindowTab: String, CaseIterable, Hashable {
         case dashboard = "仪表盘"
+        case panels = "面板"
         case general = "通用"
         case menuBar = "菜单栏"
-        case appearance = "外观"
         case about = "关于"
         
         var icon: String {
             switch self {
             case .dashboard: return "square.grid.2x2.fill"
+            case .panels: return "macwindow.badge.plus"
             case .general: return "gearshape"
             case .menuBar: return "menubar.rectangle"
-            case .appearance: return "paintbrush"
             case .about: return "info.circle"
             }
         }
@@ -75,7 +75,7 @@ struct AppWindowView: View {
                         GeneralSettingsView()
                     case .menuBar:
                         MenuBarSettingsView()
-                    case .appearance:
+                    case .panels:
                         AppearanceSettingsView()
                     case .about:
                         AboutSettingsView()

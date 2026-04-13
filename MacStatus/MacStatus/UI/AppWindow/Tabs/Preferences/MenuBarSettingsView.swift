@@ -50,6 +50,7 @@ struct MenuBarSettingsView: View {
             Section("电池图形定制") {
                 Picker("外壳形状", selection: $batteryShellStyle) {
                     Text("经典原生").tag("native")
+                    Text("紧凑填充").tag("ios")
                     Text("隐藏不显示").tag("hidden")
                 }
                 .pickerStyle(.segmented)
@@ -201,25 +202,14 @@ struct MenuBarSettingsView: View {
                 HStack(spacing: menuItemSpacing) {
                     HStack(spacing: mainIconGroupSpacing) {
                         let innerPreview = Group {
-                            if batteryShellStyle != "hidden" {
-                                if batteryFillStyle == "status_color" {
-                                    if batteryInnerContent == "number" {
-                                        Image(systemName: "battery.100").foregroundColor(.blue).overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black))
-                                    } else if batteryInnerContent == "bolt" {
-                                        Image(systemName: "battery.100.bolt").foregroundColor(.blue)
-                                    } else {
-                                        Image(systemName: "battery.100").foregroundColor(.blue)
-                                    }
-                                } else {
-                                    if batteryInnerContent == "number" {
-                                        Image(systemName: "battery.100").overlay(Text("75").font(.system(size: 8, weight: .bold)).foregroundColor(.black))
-                                    } else if batteryInnerContent == "bolt" {
-                                        Image(systemName: "battery.100.bolt")
-                                    } else {
-                                        Image(systemName: "battery.100")
-                                    }
-                                }
-                            }
+                            BatteryGraphicView(
+                                capacity: 75,
+                                isCharging: true,
+                                isColored: batteryFillStyle == "status_color",
+                                showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
+                                showNumber: batteryInnerContent == "number",
+                                isIOSStyle: batteryShellStyle == "ios"
+                            )
                         }
                         
                         if batteryLayout == "left" { innerPreview }
