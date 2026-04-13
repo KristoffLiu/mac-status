@@ -14,4 +14,6 @@ struct PowerFlowData {
     var isDischarging: Bool // True if battery is discharging (amperage < 0)
     
     var topology: TopologyState
+    var adapterVoltage: Double?
+    var adapterCurrent: Double?
 }

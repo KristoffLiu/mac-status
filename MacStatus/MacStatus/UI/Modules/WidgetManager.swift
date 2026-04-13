@@ -8,6 +8,7 @@ enum PanelWidget: String, CaseIterable, Codable {
     case batterySpecs
     case batteryHealth
     case highPowerApps
+    case systemMonitor
     
     var title: String {
         switch self {
@@ -16,6 +17,7 @@ enum PanelWidget: String, CaseIterable, Codable {
         case .batterySpecs: return "电池规格"
         case .batteryHealth: return "电池健康"
         case .highPowerApps: return "High Power Apps"
+        case .systemMonitor: return "系统监控"
         }
     }
 }
@@ -23,7 +25,7 @@ enum PanelWidget: String, CaseIterable, Codable {
 class WidgetManager: ObservableObject {
     static let shared = WidgetManager()
     
-    @Published var activeWidgets: [PanelWidget] = [.powerFlow, .powerStatus, .batterySpecs, .batteryHealth] {
+    @Published var activeWidgets: [PanelWidget] = [.powerFlow, .powerStatus, .batterySpecs, .batteryHealth, .systemMonitor] {
         didSet {
             save()
         }

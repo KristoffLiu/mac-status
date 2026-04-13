@@ -115,13 +115,19 @@ class PowerCalculationService {
             }
         }
         
+        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
+        let smcAdapterVolts = SMCService.shared.adapterVoltage
+        let smcAdapterAmps = SMCService.shared.adapterCurrent
+        
         return PowerFlowData(
             adapterPower: trueAdapterWatts,
             batteryPower: batteryWatts,
             systemPower: systemWatts,
             isCharging: isCharging,
             isDischarging: isDischarging,
-            topology: topology
+            topology: topology,
+            adapterVoltage: smcAdapterVolts,
+            adapterCurrent: smcAdapterAmps
         )
     }
 }

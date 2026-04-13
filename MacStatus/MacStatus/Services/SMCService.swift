@@ -122,4 +122,12 @@ public class SMCService {
     public var batteryPower: Double? {
         return readFloat(key: "BATP")
     }
+    
+    public var adapterVoltage: Double? {
+        return readFloat(key: "VD0R")
+    }
+    
+    public var adapterCurrent: Double? {
+        return readFloat(key: "ID0R")
+    }
 }

@@ -162,13 +162,15 @@ struct MainPanelView: View {
         case .powerFlow:
             SankeyPowerFlowView(powerFlow: viewModel.powerFlow)
         case .powerStatus:
-            PowerStatusModule(batteryData: viewModel.batteryData)
+            PowerStatusModule(batteryData: viewModel.batteryData, powerFlow: viewModel.powerFlow)
         case .batterySpecs:
             BatterySpecsModule(batteryData: viewModel.batteryData)
         case .batteryHealth:
             BatteryHealthModule(batteryData: viewModel.batteryData)
         case .highPowerApps:
             HighPowerAppsModule()
+        case .systemMonitor:
+            SystemMonitorModule()
         }
     }
 }

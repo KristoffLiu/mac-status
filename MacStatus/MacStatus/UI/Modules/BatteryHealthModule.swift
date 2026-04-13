@@ -12,9 +12,11 @@ struct BatteryHealthModule: View {
                 .padding(.horizontal, 4)
             
             HStack {
-                detailItem(title: "硬件健康度", value: "\(calculateHealth())%")
+                let healthPercent = calculateHealth()
+                detailItem(title: "硬件健康度", value: "\(healthPercent)%")
                 Spacer()
-                detailItem(title: "循环次数 (Cycles)", value: "\(batteryData.cycleCount) 次")
+                let condition = healthPercent > 80 ? "状态良好" : (healthPercent > 50 ? "建议维修" : "需要更换")
+                detailItem(title: "系统状态评估", value: condition)
             }
             .padding(.horizontal, 4)
             
@@ -26,9 +28,7 @@ struct BatteryHealthModule: View {
             .padding(.horizontal, 4)
             
             HStack {
-                let healthPercent = calculateHealth()
-                let condition = healthPercent > 80 ? "正常运作" : "建议更换/维修"
-                detailItem(title: "系统状态评估", value: condition)
+                detailItem(title: "循环次数 (Cycles)", value: "\(batteryData.cycleCount) 次")
                 Spacer()
             }
             .padding(.horizontal, 4)

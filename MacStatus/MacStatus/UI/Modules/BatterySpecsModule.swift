@@ -12,35 +12,23 @@ struct BatterySpecsModule: View {
                 .padding(.horizontal, 4)
             
             HStack {
-                // System load purely from battery PMU
                 let volts = Double(batteryData.voltage) / 1000.0
-                let amps = Double(batteryData.amperage) / 1000.0
-                let batteryWatts = abs(volts * amps)
-                detailItem(title: "电池供流负载 (Load)", value: String(format: "%.2f W", batteryWatts))
+                detailItem(title: "电芯输出电压", value: String(format: "%.2f V", volts))
                 Spacer()
-                detailItem(title: "内部温度", value: String(format: "%.1f°C", batteryData.temperature))
+                let amps = Double(batteryData.amperage) / 1000.0
+                detailItem(title: "电芯输出电流", value: String(format: "%.2f A", abs(amps)))
             }
             .padding(.horizontal, 4)
             
             HStack {
-                detailItem(title: "输出电压", value: String(format: "%.2f V", Double(batteryData.voltage) / 1000.0))
+                let volts = Double(batteryData.voltage) / 1000.0
+                let amps = Double(batteryData.amperage) / 1000.0
+                let batteryWatts = abs(volts * amps)
+                detailItem(title: "电芯供流负载", value: String(format: "%.2f W", batteryWatts))
                 Spacer()
-                detailItem(title: "输出电流", value: String(format: "%.2f A", abs(Double(batteryData.amperage) / 1000.0)))
+                detailItem(title: "内部温度", value: String(format: "%.1f°C", batteryData.temperature))
             }
             .padding(.horizontal, 4)
-            
-            if let adapter = batteryData.adapter, let profile = adapter.activeProfile {
-                Divider()
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 12)
-                
-                HStack {
-                    detailItem(title: "硬件适配器协议", value: String(format: "%.1fV / %.1fA", profile.maxVoltage, profile.maxCurrent), width: 140)
-                    Spacer()
-                    detailItem(title: "最高握手功率", value: String(format: "%.1f W", profile.maxWatts))
-                }
-                .padding(.horizontal, 4)
-            }
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 8)
