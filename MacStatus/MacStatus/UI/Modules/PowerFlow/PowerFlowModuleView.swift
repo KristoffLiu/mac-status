@@ -131,14 +131,28 @@ struct PowerFlowConfigView: View {
                 }
                 
                 // 3. 视图选择
-                Section("显示样式") {
-                    HStack(spacing: 12) {
-                        StyleSelectButton(title: "数字孪生", icon: "macbook.and.ipad", colors: [.purple, .indigo], style: .twin, currentSelection: $style)
-                        StyleSelectButton(title: "桑基图", icon: "water.waves", colors: [.cyan, .blue], style: .sankey, currentSelection: $style)
-                        StyleSelectButton(title: "数据块", icon: "square.grid.2x2.fill", colors: [.orange, .red], style: .blocks, currentSelection: $style)
-                        StyleSelectButton(title: "卡片", icon: "rectangle.stack.fill", colors: [.green, .mint], style: .cards, currentSelection: $style)
+                Section {
+                    HStack {
+                        Text("显示样式")
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 12) {
+                            StyleSelectButton(title: "数字孪生", style: .twin, currentSelection: $style) {
+                                TwinSkeleton()
+                            }
+                            StyleSelectButton(title: "桑基图", style: .sankey, currentSelection: $style) {
+                                SankeySkeleton()
+                            }
+                            StyleSelectButton(title: "数据块", style: .blocks, currentSelection: $style) {
+                                BlocksSkeleton()
+                            }
+                            StyleSelectButton(title: "卡片", style: .cards, currentSelection: $style) {
+                                CardsSkeleton()
+                            }
+                        }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 2)
                 }
                 
                 // 4. 桑基图设置
@@ -211,12 +225,11 @@ struct PowerFlowConfigView: View {
     }
 }
 
-struct StyleSelectButton: View {
+struct StyleSelectButton<Content: View>: View {
     let title: String
-    let icon: String
-    let colors: [Color]
     let style: PowerFlowStyle
     @Binding var currentSelection: PowerFlowStyle
+    @ViewBuilder let content: Content
     
     var body: some View {
         Button(action: {
@@ -224,35 +237,107 @@ struct StyleSelectButton: View {
                 currentSelection = style
             }
         }) {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 38, height: 38)
-                        .shadow(color: colors.last!.opacity(0.3), radius: 3, x: 0, y: 2)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
                     
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                    content
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
+                .frame(width: 72, height: 48)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+                )
+                .padding(3) // 留白：给选中框和图标之间的间距
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .stroke(currentSelection == style ? Color.accentColor : Color.clear, lineWidth: 3)
+                )
                 
                 Text(title)
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(1)
+                    .font(.system(size: 11, weight: currentSelection == style ? .semibold : .medium))
                     .foregroundColor(currentSelection == style ? .primary : .secondary)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 85) // Enforce strictly uniform height
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(currentSelection == style ? Color.accentColor.opacity(0.1) : Color(NSColor.controlBackgroundColor).opacity(0.4))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(currentSelection == style ? Color.accentColor.opacity(0.6) : Color.gray.opacity(0.15), lineWidth: 1)
-            )
-            .scaleEffect(currentSelection == style ? 1.02 : 1.0)
+            .frame(width: 72)
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Skeleton Drawings
+struct TwinSkeleton: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 2).fill(Color.white).frame(width: 12, height: 12)
+                Rectangle().fill(LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)).frame(width: 16, height: 2)
+                VStack(spacing: 1.5) {
+                    RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.8)).frame(width: 18, height: 12)
+                    RoundedRectangle(cornerRadius: 0.5).fill(Color(white: 0.5)).frame(width: 20, height: 2)
+                }
+            }
+        }
+    }
+}
+
+struct SankeySkeleton: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Path { path in
+                path.move(to: CGPoint(x: -5, y: 12))
+                path.addCurve(to: CGPoint(x: 77, y: 34), control1: CGPoint(x: 35, y: 12), control2: CGPoint(x: 35, y: 34))
+            }
+            .stroke(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+            Path { path in
+                path.move(to: CGPoint(x: -5, y: 36))
+                path.addCurve(to: CGPoint(x: 77, y: 16), control1: CGPoint(x: 35, y: 36), control2: CGPoint(x: 35, y: 16))
+            }
+            .stroke(LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+        }
+    }
+}
+
+struct BlocksSkeleton: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            HStack(spacing: 4) {
+                VStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 22)
+                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 12)
+                }
+                VStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 12)
+                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 22)
+                }
+            }
+        }
+    }
+}
+
+struct CardsSkeleton: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            VStack(spacing: 5) {
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3).fill(Color.blue).frame(width: 14, height: 10)
+                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
+                }
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3).fill(Color.green).frame(width: 14, height: 10)
+                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
+                }
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3).fill(Color.orange).frame(width: 14, height: 10)
+                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
+                }
+            }
+        }
     }
 }

@@ -66,11 +66,6 @@ struct DigitalTwinPowerFlowView: View {
         .frame(minHeight: 180)
         .padding(.vertical, 16)
         .onAppear {
-            if isAnimated {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    flowPhase -= 20.0
-                }
-            }
             // 自动开启屏幕
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 // Critically damped spring (dampingFraction: 1.0) ensures NO overshoot!
@@ -78,6 +73,17 @@ struct DigitalTwinPowerFlowView: View {
                 // would cause "rubbery" distortion.
                 withAnimation(.spring(response: 0.7, dampingFraction: 1.0)) {
                     isLidOpen = true
+                }
+            }
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 16_000_000) // ~60 FPS
+                if isAnimated && powerFlow.adapterPower > 2 {
+                    // 功率越高脉冲越快 (最小0.5倍，最大4倍速度)
+                    let speedMultiplier = max(0.5, min(4.0, 0.4 + (powerFlow.adapterPower / 60.0)))
+                    flowPhase += (2.5 * CGFloat(speedMultiplier))
+                    if flowPhase > 10000 { flowPhase -= 10000 }
                 }
             }
         }
@@ -143,6 +149,7 @@ struct MacAdapter3DView: View {
                 Image(systemName: "powerplug")
                     .font(.system(size: 18))
                     .foregroundColor(Color(white: 0.8))
+                    .rotationEffect(.degrees(180))
             }
             
             if hasAdapter {
@@ -308,43 +315,50 @@ struct MacBookScreenLid: View {
                     .frame(width: 168, height: 104)
                     .offset(y: -1)
                 
-                // Inspired by user's M3 wallapper: Dynamic floating vertical capsules
-                HStack(spacing: 16) {
-                    // System Capsule
-                    Capsule()
-                        .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.6)], startPoint: .top, endPoint: .bottom))
-                        .frame(width: 28, height: CGFloat(max(30, min(80, 30 + systemPower * 0.8))))
-                    
-                    // Battery Capsule
-                    let batCol: [Color] = isCharging ? [.green.opacity(0.8), .mint.opacity(0.6)] : [.blue.opacity(0.5), .purple.opacity(0.4)]
-                    Capsule()
-                        .fill(LinearGradient(colors: batCol, startPoint: .top, endPoint: .bottom))
-                        .frame(width: 28, height: CGFloat(max(20, min(80, 80 * Double(batteryLevel) / 100.0))))
-                }
-                
-                // Holographic UI Overlay on vertical capsules
-                HStack(spacing: 16) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "cpu")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white)
-                        Text("\(String(format: "%.0f", systemPower))W")
-                            .font(.system(size: 11, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white)
+                // MacBook Style Lock Screen / Widget Dashboard
+                ZStack {
+                    // Circular Battery Gauge
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.15), lineWidth: 5)
+                            .frame(width: 48, height: 48)
+                        
+                        Circle()
+                            .trim(from: 0, to: CGFloat(batteryLevel) / 100.0)
+                            .stroke(
+                                isCharging ? Color.green : Color.white,
+                                style: StrokeStyle(lineWidth: 5, lineCap: .round)
+                            )
+                            .frame(width: 48, height: 48)
+                            .rotationEffect(.degrees(-90))
+                        
+                        VStack(spacing: -1) {
+                            Text("\(batteryLevel)")
+                                .font(.system(size: 16, weight: .heavy, design: .rounded))
+                            Text("%")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .foregroundColor(.white)
                     }
-                    .frame(width: 34)
+                    .offset(y: -10)
                     
-                    VStack(spacing: 4) {
-                        Image(systemName: "battery.100")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white)
-                        Text("\(batteryLevel)%")
+                    // CPU Power Pill
+                    HStack(spacing: 4) {
+                        Image(systemName: "cpu.fill")
+                            .font(.system(size: 8))
+                        Text("\(Int(systemPower)) W")
                             .font(.system(size: 11, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white)
                     }
-                    .frame(width: 34)
+                    .foregroundColor(.cyan)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(Capsule())
+                    // Floating elegantly below the gauge
+                    .offset(y: 30)
                 }
-                .shadow(color: .black.opacity(0.5), radius: 2)
+                .shadow(color: .black.opacity(0.4), radius: 3)
             }
             // Screen contents fade out realistically as the physical lid closes
             .opacity(isOpen ? 1.0 : 0.0)
@@ -369,40 +383,64 @@ struct EnergyWire3D: View {
             // Push X precisely inside the Mac's UI boundary (geometry.size.width + 1)
             // Since Mac is zIndex(2), the port structurally "vanishes" into the side wall.
             // Y is tweaked perfectly to center inside the under-taper.
-            let end = CGPoint(x: geometry.size.width + 1, y: geometry.size.height / 2 + 40) // Moved up slightly
+            let end = CGPoint(x: geometry.size.width + 1, y: geometry.size.height / 2 + 43) // Adjusted down slightly from 40
             
-            // To ensure the connection enters perfectly straight at the end:
-            // MUST set `control2.y == end.y` so the approach tangent is purely horizontal!
-            let control1 = CGPoint(x: geometry.size.width * 0.4, y: start.y + 10)
-            let control2 = CGPoint(x: geometry.size.width * 0.75, y: end.y)
+            // To ensure the connection enters perfectly straight at the ends AND coils in the middle:
+            let coilPath: Path = {
+                var path = Path()
+                path.move(to: start)
+                let topNode = CGPoint(x: geometry.size.width * 0.45, y: start.y - 25)
+                let bottomNode = CGPoint(x: geometry.size.width * 0.55, y: end.y + 15)
+                
+                // Curve 1: Depart horizontally, sweep right and up, arrive at top going LEFT
+                path.addCurve(
+                    to: topNode,
+                    control1: CGPoint(x: start.x + 35, y: start.y),
+                    control2: CGPoint(x: topNode.x + 35, y: topNode.y)
+                )
+                // Curve 2: Depart left, sweep down and arrive at bottom going RIGHT
+                path.addCurve(
+                    to: bottomNode,
+                    control1: CGPoint(x: topNode.x - 35, y: topNode.y),
+                    control2: CGPoint(x: bottomNode.x - 35, y: bottomNode.y)
+                )
+                // Curve 3: Depart right, sweep right and up, arrive horizontally into Mac
+                path.addCurve(
+                    to: end,
+                    control1: CGPoint(x: bottomNode.x + 35, y: bottomNode.y),
+                    control2: CGPoint(x: end.x - 35, y: end.y)
+                )
+                return path
+            }()
             
             ZStack {
-                // Suspended Wire Path
-                Path { path in
-                    path.move(to: start)
-                    path.addCurve(to: end, control1: control1, control2: control2)
-                }
-                .stroke(
-                    isActive ? Color(white: 0.15) : Color(white: 0.85),
-                    style: StrokeStyle(lineWidth: 3.5, lineCap: .round)
-                )
+                // Braided Wire Simulation
+                let baseColor = isActive ? Color(white: 0.15) : Color(white: 0.8)
+                let weaveColor1 = isActive ? Color(white: 0.25) : Color(white: 0.9)
+                let weaveColor2 = isActive ? Color(white: 0.1) : Color(white: 0.7)
+                
+                // 1. Base Cord
+                coilPath.stroke(baseColor, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                
+                // 2. Weave Layer 1 (Diagonal outer stitching)
+                coilPath.stroke(weaveColor1, style: StrokeStyle(lineWidth: 4.5, lineCap: .butt, dash: [2, 3]))
+                
+                // 3. Weave Layer 2 (Inner core texture to create 3D cross-hatch depth)
+                coilPath.stroke(weaveColor2, style: StrokeStyle(lineWidth: 2.0, lineCap: .butt, dash: [3, 2], dashPhase: 2))
                 
                 // Simple Flow Animation
                 if isActive {
-                    // Clean flowing data dashes
-                    Path { path in
-                        path.move(to: start)
-                        path.addCurve(to: end, control1: control1, control2: control2)
-                    }
-                    .stroke(
-                        Color(white: 0.8),
+                    // One-at-a-time white pulse with aura
+                    coilPath.stroke(
+                        Color.white,
                         style: StrokeStyle(
-                            lineWidth: 2,
+                            lineWidth: 2.5,
                             lineCap: .round,
-                            dash: [10, 16], // Clean, functional power bursts
-                            dashPhase: phase
+                            dash: [25, 400], // 25pt pulse, 400pt gap ensures only ONE pulse is visible
+                            dashPhase: -phase // flows towards the Mac
                         )
                     )
+                    .shadow(color: .white.opacity(0.8), radius: 3) // Aura
                     
                     // Type-C Head (Start)
                     ZStack {
