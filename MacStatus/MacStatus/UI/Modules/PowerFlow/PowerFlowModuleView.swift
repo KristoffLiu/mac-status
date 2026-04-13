@@ -132,8 +132,9 @@ struct PowerFlowConfigView: View {
                 
                 // 3. 视图选择
                 Section {
-                    HStack {
+                    HStack(alignment: .top) {
                         Text("显示样式")
+                            .padding(.top, 6)
                         
                         Spacer()
                         

@@ -305,8 +305,9 @@ struct MacBookScreenLid: View {
                     .frame(width: 174, height: 110)
                     .offset(y: -1) // nudge up slightly to clear the drop hinge Overlap
                 
+                // macOS Native Default Wallpaper Vibes (Sonoma/Monterey abstract)
                 let bgGrad = LinearGradient(
-                    colors: [Color(white: 0.1), Color(white: 0.2)],
+                    colors: [Color(red: 0.2, green: 0.1, blue: 0.4), Color(red: 0.0, green: 0.3, blue: 0.5)],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
                 
@@ -317,46 +318,122 @@ struct MacBookScreenLid: View {
                 
                 // MacBook Style Lock Screen / Widget Dashboard
                 ZStack {
-                    // Circular Battery Gauge
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.15), lineWidth: 5)
-                            .frame(width: 48, height: 48)
-                        
-                        Circle()
-                            .trim(from: 0, to: CGFloat(batteryLevel) / 100.0)
-                            .stroke(
-                                isCharging ? Color.green : Color.white,
-                                style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                            )
-                            .frame(width: 48, height: 48)
-                            .rotationEffect(.degrees(-90))
-                        
-                        VStack(spacing: -1) {
-                            Text("\(batteryLevel)")
-                                .font(.system(size: 16, weight: .heavy, design: .rounded))
-                            Text("%")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundColor(.white.opacity(0.7))
+                    // Top Menu Bar
+                    VStack {
+                        HStack(spacing: 3) {
+                            Spacer()
+                            Text("10:09")
+                                .font(.system(size: 4.5, weight: .medium))
+                            
+                            // Miniature macOS Status Bar Battery
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 1)
+                                    .stroke(Color.white.opacity(0.8), lineWidth: 0.5)
+                                    .frame(width: 12, height: 6)
+                                    
+                                RoundedRectangle(cornerRadius: 0.5)
+                                    .fill(isCharging ? Color.green : Color.white)
+                                    // 10 points max width inside the 12 point container
+                                    .frame(width: max(0, CGFloat(batteryLevel) / 100.0 * 10), height: 4)
+                                    .padding(.leading, 1)
+                                
+                                // Battery terminal nip
+                                Path { path in
+                                    path.move(to: CGPoint(x: 12, y: 2))
+                                    path.addLine(to: CGPoint(x: 13, y: 2))
+                                    path.addLine(to: CGPoint(x: 13, y: 4))
+                                    path.addLine(to: CGPoint(x: 12, y: 4))
+                                }
+                                .fill(Color.white.opacity(0.8))
+                                
+                                if isCharging {
+                                    Image(systemName: "bolt.fill")
+                                        .font(.system(size: 4))
+                                        .foregroundColor(batteryLevel >= 100 ? .black : .white)
+                                        .offset(x: 4)
+                                }
+                            }
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 6)
+                        .padding(.top, 2)
+                        
+                        Spacer()
                     }
-                    .offset(y: -10)
                     
-                    // CPU Power Pill
-                    HStack(spacing: 4) {
-                        Image(systemName: "cpu.fill")
-                            .font(.system(size: 8))
-                        Text("\(Int(systemPower)) W")
-                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                    // Desktop Widgets
+                    HStack(spacing: 8) {
+                        // Widget 1: Battery Widget
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.white.opacity(0.1))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.black.opacity(0.2)) // subtle blur/back plane
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                                )
+                                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
+                            
+                            VStack(spacing: 3) {
+                                ZStack {
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 3)
+                                        .frame(width: 22, height: 22)
+                                    
+                                    Circle()
+                                        .trim(from: 0, to: CGFloat(batteryLevel) / 100.0)
+                                        .stroke(
+                                            isCharging ? Color.green : Color.white,
+                                            style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                                        )
+                                        .frame(width: 22, height: 22)
+                                        .rotationEffect(.degrees(-90))
+                                    
+                                    Text("\(batteryLevel)%")
+                                        .font(.system(size: 6, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                }
+                                Text("Battery")
+                                    .font(.system(size: 5, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        .frame(width: 44, height: 44)
+                        
+                        // Widget 2: CPU Power Widget
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.white.opacity(0.1))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.black.opacity(0.2))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                                )
+                                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
+                            
+                            VStack(spacing: 3) {
+                                Image(systemName: "cpu")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.cyan)
+                                
+                                Text("\(Int(systemPower)) W")
+                                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                
+                                Text("System")
+                                    .font(.system(size: 5, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        .frame(width: 44, height: 44)
                     }
-                    .foregroundColor(.cyan)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.15))
-                    .clipShape(Capsule())
-                    // Floating elegantly below the gauge
-                    .offset(y: 30)
+                    .offset(y: 4) // Center aesthetically below menu bar
                 }
                 .shadow(color: .black.opacity(0.4), radius: 3)
             }
@@ -375,6 +452,8 @@ struct EnergyWire3D: View {
     var isCharging: Bool
     var batteryLevel: Int
     
+    @AppStorage("twinCableStyle") private var cableStyle: String = "p"
+    
     var body: some View {
         GeometryReader { geometry in
             // Coordinates tight to the boundaries, allowing the ZStack positioning to handle overlap visually.
@@ -389,27 +468,56 @@ struct EnergyWire3D: View {
             let coilPath: Path = {
                 var path = Path()
                 path.move(to: start)
-                let topNode = CGPoint(x: geometry.size.width * 0.45, y: start.y - 25)
-                let bottomNode = CGPoint(x: geometry.size.width * 0.55, y: end.y + 15)
                 
-                // Curve 1: Depart horizontally, sweep right and up, arrive at top going LEFT
-                path.addCurve(
-                    to: topNode,
-                    control1: CGPoint(x: start.x + 35, y: start.y),
-                    control2: CGPoint(x: topNode.x + 35, y: topNode.y)
-                )
-                // Curve 2: Depart left, sweep down and arrive at bottom going RIGHT
-                path.addCurve(
-                    to: bottomNode,
-                    control1: CGPoint(x: topNode.x - 35, y: topNode.y),
-                    control2: CGPoint(x: bottomNode.x - 35, y: bottomNode.y)
-                )
-                // Curve 3: Depart right, sweep right and up, arrive horizontally into Mac
-                path.addCurve(
-                    to: end,
-                    control1: CGPoint(x: bottomNode.x + 35, y: bottomNode.y),
-                    control2: CGPoint(x: end.x - 35, y: end.y)
-                )
+                if cableStyle == "j" {
+                    // J-type meticulous routing
+                    let coilStartX = geometry.size.width * 0.42
+                    let coilEndX = geometry.size.width * 0.58
+                    
+                    path.addLine(to: CGPoint(x: coilStartX, y: start.y))
+                    
+                    let loops = 6
+                    let loopHeightY = (end.y - start.y)
+                    
+                    for i in 0..<loops {
+                        let t1 = CGFloat(i) / CGFloat(loops)
+                        let t2 = CGFloat(i + 1) / CGFloat(loops)
+                        
+                        let currentX = coilStartX + t1 * (coilEndX - coilStartX)
+                        let nextX = coilStartX + t2 * (coilEndX - coilStartX)
+                        let currentY = start.y + t1 * loopHeightY
+                        let nextY = start.y + t2 * loopHeightY
+                        
+                        // Draw tight spring-like loops spanning the gap
+                        path.addCurve(
+                            to: CGPoint(x: nextX, y: nextY),
+                            control1: CGPoint(x: currentX + 26, y: currentY - 14),
+                            control2: CGPoint(x: nextX - 26, y: nextY + 14)
+                        )
+                    }
+                    
+                    path.addLine(to: end)
+                } else {
+                    // P-type sweeping loose curve
+                    let topNode = CGPoint(x: geometry.size.width * 0.45, y: start.y - 25)
+                    let bottomNode = CGPoint(x: geometry.size.width * 0.55, y: end.y + 15)
+                    
+                    path.addCurve(
+                        to: topNode,
+                        control1: CGPoint(x: start.x + 35, y: start.y),
+                        control2: CGPoint(x: topNode.x + 35, y: topNode.y)
+                    )
+                    path.addCurve(
+                        to: bottomNode,
+                        control1: CGPoint(x: topNode.x - 35, y: topNode.y),
+                        control2: CGPoint(x: bottomNode.x - 35, y: bottomNode.y)
+                    )
+                    path.addCurve(
+                        to: end,
+                        control1: CGPoint(x: bottomNode.x + 35, y: bottomNode.y),
+                        control2: CGPoint(x: end.x - 35, y: end.y)
+                    )
+                }
                 return path
             }()
             
@@ -475,6 +583,13 @@ struct EnergyWire3D: View {
                             .frame(width: 2.0, height: 2.0)
                     }
                     .position(x: end.x, y: end.y)
+                }
+            }
+            .contentShape(Rectangle()) // Expand hit area
+            // Tap on the right side area or generally on the cable bounds to toggle
+            .onTapGesture {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    cableStyle = (cableStyle == "p") ? "j" : "p"
                 }
             }
         }
