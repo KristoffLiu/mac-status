@@ -527,8 +527,8 @@ struct LiveWirePreview: View {
     var style: String
     var body: some View {
         ZStack {
-            // Brighter neutral background so the 0.15-opacity black cable stands out clearly
-            LinearGradient(colors: [Color(white: 0.5), Color(white: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Lighter neutral background so the 0.15-opacity black cable stands out clearly
+            LinearGradient(colors: [Color(white: 0.7), Color(white: 0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
             
             EnergyWire3D(
                 isActive: true, // Show the dark grey cable structure
@@ -539,6 +539,7 @@ struct LiveWirePreview: View {
                 cableStyle: style
             )
             .frame(width: 140, height: 100) // Compact preview
+            .offset(y: -10) // Move the wire up slightly so it is centered vertically
             .scaleEffect(0.3) // Fit in the button
         }
         .frame(width: 44, height: 32)

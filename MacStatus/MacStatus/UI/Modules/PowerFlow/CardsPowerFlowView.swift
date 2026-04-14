@@ -9,7 +9,7 @@ struct CardsPowerFlowView: View {
     @State private var savedOffset: CGFloat = 0
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 6) {
             // Top Bar
             HStack {
                 // Status Badge
@@ -264,7 +264,7 @@ struct CardsPowerFlowView: View {
                 .clipShape(Circle())
         }
         .padding(14)
-        .frame(width: 160)
+        .frame(width: 160, height: 132)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor))

@@ -29,10 +29,10 @@ struct SankeyPowerFlowView: View {
                     let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
                     let sysFraction = sysFlowWatts / effectiveTotalForFractions
                     let batFraction = batChargeWatts / effectiveTotalForFractions
-                    let topHeightRaw = 35.0 + 35.0 * sysFraction
+                    let topHeightRaw = 120.0 * sysFraction
                     let topHeight = max(64.0, topHeightRaw)
                     
-                    let botHeightRaw = 35.0 + 35.0 * batFraction
+                    let botHeightRaw = 120.0 * batFraction
                     let predictedBotHeight = max(64.0, botHeightRaw)
                     let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
                     let H_total = actualTopH + (batChargeWatts > 0.1 ? 12.0 + predictedBotHeight : 0)
@@ -102,10 +102,13 @@ struct SankeyPowerFlowView: View {
                     let adFraction = powerFlow.adapterPower / totalSource
                     let batFraction = powerFlow.batteryPower / totalSource
                     
-                    let topHeight = max(64.0, 35.0 + 35.0 * adFraction)
-                    let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
+                    let topHeightRaw = 120.0 * adFraction
+                    let botHeightRaw = 120.0 * batFraction
                     
-                    let H_total_left = topHeight + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
+                    let topHeight = powerFlow.adapterPower > 0 ? max(64.0, topHeightRaw) : 0.0
+                    let botHeight = powerFlow.batteryPower > 0 ? max(64.0, botHeightRaw) : 0.0
+                    
+                    let H_total_left = topHeight + botHeight + (powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0 ? 12.0 : 0.0)
                     let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0
                     let global_H = max(H_total_left, actualRightH)
                     
@@ -132,6 +135,7 @@ struct SankeyPowerFlowView: View {
                             .zIndex(2)
                             
                             // Col 2: Pipes
+                            let offsetGap = (powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0) ? 12.0 : 0.0
                             VStack(spacing: 12) {
                                 if powerFlow.adapterPower > 0 {
                                     ThickFlowBlock(
@@ -155,7 +159,7 @@ struct SankeyPowerFlowView: View {
                                         endColor: .gray.opacity(0.2),
                                         isSubFlow: powerFlow.adapterPower > 0,
                                         parentHeight: botHeight,
-                                        explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + 12.0), rightOffsetY + actualRightH - (leftOffsetY + topHeight + 12.0)]
+                                        explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + offsetGap), rightOffsetY + actualRightH - (leftOffsetY + topHeight + offsetGap)]
                                     )
                                     .frame(height: botHeight)
                                     .zIndex(0)
@@ -268,7 +272,7 @@ struct ThickFlowBlock: View {
         let actualParentH = parentHeight ?? baseHeight
         
         // Proportional waist for watchband style:
-        let proportionalThickness = max(12.0, CGFloat(fraction) * 40.0)
+        let proportionalThickness = max(24.0, CGFloat(fraction) * 52.0)
         
         let isStandard = sankeyStyle == "standard"
         // Standard is uniformly thick (eats actualParentH everywhere)
@@ -318,9 +322,12 @@ struct ThickFlowBlock: View {
             // Text inside the block
             if showValues {
                 let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
+                let dynamicSize: CGFloat = actualParentH > 50 ? 14 : 10
+                let dynamicColor: Color = actualParentH > 50 ? .primary : .secondary
+                
                 Text(textValue)
-                    .font(.system(size: isSubFlow ? 10 : 14, weight: .bold, design: .rounded))
-                    .foregroundColor(isSubFlow ? .secondary : .primary)
+                    .font(.system(size: dynamicSize, weight: .bold, design: .rounded))
+                    .foregroundColor(dynamicColor)
                     // White shadow to ensure readability on variable colors
                     .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
                     .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
@@ -364,13 +371,20 @@ struct WatchBandShape: Shape {
         let halfLeft = clampedLeft / 2.0
         let halfRight = clampedRight / 2.0
         
-        var realLeftCurveW: CGFloat = w * 0.75 // Default sweep side
-        var realRightCurveW: CGFloat = min(w - realLeftCurveW, 32.0)
+        // --- Apple Watch Band Organic Geometry ---
+        // Expand the curvature zone to make the transition incredibly swoopy and soft
+        let curveW = w * 0.45
         
+        var realLeftCurveW: CGFloat = curveW
+        var realRightCurveW: CGFloat = curveW
+        
+        // If merging asymmetrically, skew the curve lengths slightly
         if mergeMode == .rightTopMerge || mergeMode == .rightBottomMerge {
-            // Swap sweep lengths so the long graceful sweep happens on the right side
-            realRightCurveW = w * 0.75
-            realLeftCurveW = min(w - realRightCurveW, 32.0)
+            realRightCurveW = w * 0.6
+            realLeftCurveW = w * 0.3
+        } else if mergeMode == .topMerge || mergeMode == .bottomMerge {
+            realLeftCurveW = w * 0.6
+            realRightCurveW = w * 0.3
         }
         
         // Dynamic Anchor Calculations for contiguous Y-gap bridging
@@ -431,32 +445,32 @@ struct WatchBandShape: Shape {
         
         // Left sweep/flare (Top Edge)
         path.addCurve(to: CGPoint(x: realLeftCurveW, y: centerY - halfThick),
-                      control1: CGPoint(x: realLeftCurveW * 0.5, y: leftTopY),
-                      control2: CGPoint(x: realLeftCurveW * 0.5, y: centerY - halfThick))
+                      control1: CGPoint(x: realLeftCurveW * 0.6, y: leftTopY),
+                      control2: CGPoint(x: realLeftCurveW * 0.4, y: centerY - halfThick))
         
         // Straight segment
         path.addLine(to: CGPoint(x: w - realRightCurveW, y: centerY - halfThick))
         
         // Right sweep/flare (Top Edge)
         path.addCurve(to: CGPoint(x: w, y: rightTopY),
-                      control1: CGPoint(x: w - realRightCurveW * 0.5, y: centerY - halfThick),
-                      control2: CGPoint(x: w - realRightCurveW * 0.5, y: rightTopY))
+                      control1: CGPoint(x: w - realRightCurveW * 0.6, y: centerY - halfThick),
+                      control2: CGPoint(x: w - realRightCurveW * 0.4, y: rightTopY))
         
         // Right edge
         path.addLine(to: CGPoint(x: w, y: rightBotY))
         
         // Right sweep/flare (Bottom Edge)
         path.addCurve(to: CGPoint(x: w - realRightCurveW, y: centerY + halfThick),
-                      control1: CGPoint(x: w - realRightCurveW * 0.5, y: rightBotY),
-                      control2: CGPoint(x: w - realRightCurveW * 0.5, y: centerY + halfThick))
+                      control1: CGPoint(x: w - realRightCurveW * 0.4, y: rightBotY),
+                      control2: CGPoint(x: w - realRightCurveW * 0.6, y: centerY + halfThick))
         
         // Straight segment back
         path.addLine(to: CGPoint(x: realLeftCurveW, y: centerY + halfThick))
         
         // Left sweep/flare (Bottom Edge)
         path.addCurve(to: CGPoint(x: 0, y: leftBotY),
-                      control1: CGPoint(x: realLeftCurveW * 0.5, y: centerY + halfThick),
-                      control2: CGPoint(x: realLeftCurveW * 0.5, y: leftBotY))
+                      control1: CGPoint(x: realLeftCurveW * 0.4, y: centerY + halfThick),
+                      control2: CGPoint(x: realLeftCurveW * 0.6, y: leftBotY))
         
         path.closeSubpath()
         return path

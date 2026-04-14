@@ -121,6 +121,7 @@ struct WidgetOptionsSheet: View {
         Group {
             if plugin.hasSettings {
                 plugin.settingsView
+                    .frame(maxHeight: 600)
             } else {
                 VStack(spacing: 0) {
                     Form {
@@ -139,7 +140,7 @@ struct WidgetOptionsSheet: View {
                     }
                     .padding()
                 }
-                .frame(minHeight: 200)
+                .frame(minHeight: 200, maxHeight: 600)
             }
         }
     }
