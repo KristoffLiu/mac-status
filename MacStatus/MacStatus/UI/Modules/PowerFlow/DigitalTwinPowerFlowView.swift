@@ -200,10 +200,34 @@ struct MacDeviceSystem3D: View {
         switch deviceType {
         case "mini":
             MacMini3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+                .scaleEffect(0.85)
+                .offset(y: 20)
         case "studio":
             MacStudio3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+                .scaleEffect(0.82)
+                .offset(y: 20)
         case "imac":
             iMac3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+                .scaleEffect(0.68)
+                .offset(y: 15)
+        case "mba":
+            MacBook3DView(
+                systemPower: systemPower,
+                batteryPower: batteryPower,
+                batteryLevel: batteryLevel,
+                isCharging: isCharging,
+                isOpen: $isOpen
+            )
+            .scaleEffect(0.93)
+        case "neo":
+            MacBook3DView(
+                systemPower: systemPower,
+                batteryPower: batteryPower,
+                batteryLevel: batteryLevel,
+                isCharging: isCharging,
+                isOpen: $isOpen
+            )
+            .scaleEffect(0.85)
         default:
             MacBook3DView(
                 systemPower: systemPower,
@@ -775,17 +799,29 @@ struct EnergyWire3D: View {
             
             // Adjust port location based on device height
             let portYOffset: CGFloat = {
-                if deviceType == "mini" { return 36 }
-                if deviceType == "studio" { return 35 }
-                if deviceType == "imac" { return 25 } // Back of iMac stand area
-                return 43
+                if deviceType == "mini" { return 45 } // further down because of offset
+                if deviceType == "studio" { return 43 }
+                if deviceType == "imac" { return 40 }
+                if deviceType == "neo" { return 34 } // scaled from center moves bottom up
+                if deviceType == "mba" { return 39 } // scaled from center
+                return 43 // MBP
             }()
             
             let endX: CGFloat = {
                 if ["mini", "studio", "imac"].contains(deviceType) {
-                    return geometry.size.width / 2 + 35
+                    // Extend wire far enough to reliably hide completely behind the machine
+                    return geometry.size.width + 60
                 }
-                return geometry.size.width + 1 + (deviceType == "neo" ? -10 : 0)
+                if deviceType == "neo" {
+                    // Neo base shrinks significantly inwards
+                    return geometry.size.width + 8
+                }
+                if deviceType == "mba" {
+                    // MBA base shrinks slightly inwards
+                    return geometry.size.width + 7
+                }
+                // MBP/MBA base gap width approximation
+                return geometry.size.width + 1
             }()
             
             let end = CGPoint(x: endX, y: geometry.size.height / 2 + portYOffset)
@@ -891,24 +927,26 @@ struct EnergyWire3D: View {
                     .position(x: start.x, y: start.y)
                     
                     // MagSafe 3 Head (End)
-                    ZStack {
-                        Rectangle()
-                            .fill(Color(white: 0.15)) // Match cable dark color
-                            .frame(width: 6, height: 3) // Strain relief extended to bridge port
-                            .offset(x: -10)
+                    if !["mini", "studio", "imac"].contains(deviceType) {
+                        ZStack {
+                            Rectangle()
+                                .fill(Color(white: 0.15)) // Match cable dark color
+                                .frame(width: 6, height: 3) // Strain relief extended to bridge port
+                                .offset(x: -10)
+                                
+                            RoundedRectangle(cornerRadius: 1.0)
+                                .fill(Color(white: 0.85))
+                                .frame(width: 14, height: 5)
+                                .overlay(RoundedRectangle(cornerRadius: 1.0).stroke(Color(white: 0.75), lineWidth: 0.5))
                             
-                        RoundedRectangle(cornerRadius: 1.0)
-                            .fill(Color(white: 0.85))
-                            .frame(width: 14, height: 5)
-                            .overlay(RoundedRectangle(cornerRadius: 1.0).stroke(Color(white: 0.75), lineWidth: 0.5))
-                        
-                        // LED Indicator inside MagSafe connector
-                        let ledColor: Color = (batteryLevel >= 100 && !isCharging) ? .green : .orange
-                        Circle()
-                            .fill(ledColor)
-                            .frame(width: 2.0, height: 2.0)
+                            // LED Indicator inside MagSafe connector
+                            let ledColor: Color = (batteryLevel >= 100 && !isCharging) ? .green : .orange
+                            Circle()
+                                .fill(ledColor)
+                                .frame(width: 2.0, height: 2.0)
+                        }
+                        .position(x: end.x, y: end.y)
                     }
-                    .position(x: end.x, y: end.y)
                 }
             }
             .contentShape(Rectangle()) // Expand hit area

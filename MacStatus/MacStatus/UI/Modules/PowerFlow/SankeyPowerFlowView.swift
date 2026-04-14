@@ -43,15 +43,15 @@ struct SankeyPowerFlowView: View {
                             let botThick = max(12.0, CGFloat(batFraction) * 40.0)
                             let globalConvergence = topHeight + 6.0
                             
-                            let localHTotal = topHeight + (batChargeWatts > 0.1 ? 12.0 + max(64.0, 35.0 + 35.0 * batFraction) : 0)
                             ThickFlowBlock(
                                 watts: sysFlowWatts,
                                 fraction: min(sysFraction, 1.0),
                                 startColor: .yellow.opacity(0.8),
                                 endColor: .gray.opacity(0.2),
                                 isSubFlow: false,
-                                parentHeight: topHeight,
-                                explicitLeftYRange: [0, localHTotal * (sysFlowWatts / (sysFlowWatts + batChargeWatts))]
+                                mergeMode: (powerFlow.batteryPower > 0.1) ? .topMerge : .none,
+                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil,
+                                parentHeight: topHeight
                             )
                             .zIndex(0)
                             
