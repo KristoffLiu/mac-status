@@ -61,6 +61,7 @@ struct PowerFlowConfigView: View {
     @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowThreeStage") private var isThreeStage = false
+    @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
     @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
     @AppStorage("twinDeviceType") private var twinDeviceType: String = "mbp"
     @AppStorage("twinCableStyle") private var twinCableStyle: String = "p"
@@ -188,18 +189,25 @@ struct PowerFlowConfigView: View {
                 // 4. 桑基图设置
                 if style == .sankey {
                     Section("桑基图微调") {
+                        HStack(alignment: .top) {
+                            Text("管线风格")
+                                .padding(.top, 6)
+                            Spacer()
+                            HStack(spacing: 12) {
+                                WideOptionSelectButton(title: "标准", value: "standard", currentSelection: $sankeyStyle) { SankeyStyleSkeletonStandard() }
+                                WideOptionSelectButton(title: "Apple Watch 表带", value: "watchband", currentSelection: $sankeyStyle) { SankeyStyleSkeletonWatchBand() }
+                            }
+                        }
+                        .padding(.vertical, 2)
+                        
                         Toggle("展开系统耗电拆解 (三段式)", isOn: $isThreeStage)
                         Toggle("播放流动动画", isOn: $isAnimated)
                         Toggle("在管道上显示具体瓦数", isOn: $showValues)
                     }
                 } else if style == .twin {
-                    Section("数字孪生微调") {
-                        Toggle("播放流动动画", isOn: $isTwinAnimated)
-                        
-                        Divider()
-                        
+                    Section("硬件外观") {
                         HStack(alignment: .top) {
-                            Text("设备类型")
+                            Text("设备型号")
                                 .padding(.top, 6)
                             Spacer()
                             HStack(spacing: 8) {
@@ -210,35 +218,56 @@ struct PowerFlowConfigView: View {
                                 OptionSelectButton(title: "Neo", value: "neo", currentSelection: $twinDeviceType) { TwinSkeletonNeo() }
                             }
                         }
-                        .padding(.vertical, 2)
+                        .padding(.bottom, 4)
                         
-                        Divider()
-                        
+                        if !["mini", "studio"].contains(twinDeviceType) {
+                            HStack(alignment: .top) {
+                                Text("金属配色")
+                                    .padding(.top, 6)
+                                Spacer()
+                                if twinDeviceType == "neo" {
+                                    HStack(spacing: 8) {
+                                        OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                        OptionSelectButton(title: "桃粉色", value: "peachPink", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.95, green: 0.81, blue: 0.83), c2: Color(red: 0.86, green: 0.69, blue: 0.72)) }
+                                        OptionSelectButton(title: "柑橘黄", value: "citrusYellow", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.92, green: 0.80, blue: 0.40), c2: Color(red: 0.80, green: 0.70, blue: 0.30)) }
+                                        OptionSelectButton(title: "靛蓝色", value: "indigoBlue", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.35, green: 0.42, blue: 0.53), c2: Color(red: 0.25, green: 0.30, blue: 0.40)) }
+                                    }
+                                } else {
+                                    HStack(spacing: 8) {
+                                        OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                        OptionSelectButton(title: "深空灰", value: "spaceGray", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.65), c2: Color(white: 0.40)) }
+                                        OptionSelectButton(title: "午夜色", value: "midnight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.25, green: 0.26, blue: 0.31), c2: Color(red: 0.15, green: 0.16, blue: 0.21)) }
+                                        OptionSelectButton(title: "星光色", value: "starlight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.90, green: 0.88, blue: 0.82), c2: Color(red: 0.68, green: 0.65, blue: 0.59)) }
+                                    }
+                                }
+                            }
+                            // State auto-correction logic bound to the containing view
+                            .onChange(of: twinDeviceType) { _ in
+                                if twinDeviceType == "neo" {
+                                    if !["silver", "peachPink", "citrusYellow", "indigoBlue"].contains(twinMacColor) {
+                                        twinMacColor = "silver"
+                                    }
+                                } else {
+                                    if !["silver", "spaceGray", "midnight", "starlight"].contains(twinMacColor) {
+                                        twinMacColor = "silver"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    Section("展示与动画") {
                         HStack(alignment: .top) {
                             Text("理线风格")
                                 .padding(.top, 6)
                             Spacer()
                             HStack(spacing: 12) {
-                                OptionSelectButton(title: "P人", value: "p", currentSelection: $twinCableStyle) { TwinSkeletonCableP() }
-                                OptionSelectButton(title: "J人", value: "j", currentSelection: $twinCableStyle) { TwinSkeletonCableJ() }
+                                OptionSelectButton(title: "P人", value: "p", currentSelection: $twinCableStyle) { LiveWirePreview(style: "p") }
+                                OptionSelectButton(title: "J人", value: "j", currentSelection: $twinCableStyle) { LiveWirePreview(style: "j") }
                             }
                         }
-                        .padding(.vertical, 2)
                         
-                        Divider()
-                        
-                        HStack(alignment: .top) {
-                            Text("Mac 外观")
-                                .padding(.top, 6)
-                            Spacer()
-                            HStack(spacing: 8) {
-                                OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
-                                OptionSelectButton(title: "深空灰", value: "spaceGray", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.65), c2: Color(white: 0.40)) }
-                                OptionSelectButton(title: "午夜色", value: "midnight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.25, green: 0.26, blue: 0.31), c2: Color(red: 0.15, green: 0.16, blue: 0.21)) }
-                                OptionSelectButton(title: "星光色", value: "starlight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.90, green: 0.88, blue: 0.82), c2: Color(red: 0.68, green: 0.65, blue: 0.59)) }
-                            }
-                        }
-                        .padding(.vertical, 2)
+                        Toggle("播放全局流动动画", isOn: $isTwinAnimated)
                     }
                 }
             }
@@ -469,32 +498,24 @@ struct ColorSwatch: View {
     }
 }
 
-struct TwinSkeletonCableP: View {
+struct LiveWirePreview: View {
+    var style: String
     var body: some View {
         ZStack {
             Color(white: 0.1)
-            Path { path in
-                path.move(to: CGPoint(x: 5, y: 16))
-                path.addCurve(to: CGPoint(x: 39, y: 16), control1: CGPoint(x: 22, y: 0), control2: CGPoint(x: 22, y: 32))
-            }
-            .stroke(Color.white, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            EnergyWire3D(
+                isActive: true,
+                phase: 0,
+                isAnimated: true,
+                isCharging: true,
+                batteryLevel: 100,
+                cableStyle: style
+            )
+            .frame(width: 160, height: 120) // Use real typical dimensions so math aligns
+            .scaleEffect(0.28) // scale it to fit precisely within the 44x32 box
         }
-    }
-}
-
-struct TwinSkeletonCableJ: View {
-    var body: some View {
-        ZStack {
-            Color(white: 0.1)
-            Path { path in
-                path.move(to: CGPoint(x: 5, y: 16))
-                path.addLine(to: CGPoint(x: 15, y: 16))
-                path.addCurve(to: CGPoint(x: 22, y: 8), control1: CGPoint(x: 20, y: 16), control2: CGPoint(x: 22, y: 14))
-                path.addCurve(to: CGPoint(x: 29, y: 16), control1: CGPoint(x: 22, y: 2), control2: CGPoint(x: 29, y: 2))
-                path.addLine(to: CGPoint(x: 39, y: 16))
-            }
-            .stroke(Color.white, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-        }
+        .frame(width: 44, height: 32)
+        .clipped()
     }
 }
 
@@ -552,6 +573,75 @@ struct TwinSkeletonNeo: View {
                 RoundedRectangle(cornerRadius: 2).fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 20, height: 14)
                 RoundedRectangle(cornerRadius: 1).fill(Color.orange).frame(width: 20, height: 2)
             }
+        }
+    }
+}
+struct WideOptionSelectButton<T: Equatable, Content: View>: View {
+    let title: String
+    let value: T
+    @Binding var currentSelection: T
+    @ViewBuilder let content: Content
+    
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentSelection = value
+            }
+        }) {
+            VStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
+                    
+                    content
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .frame(width: 80, height: 44)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+                )
+                .padding(3)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .stroke(currentSelection == value ? Color.accentColor : Color.clear, lineWidth: 3)
+                )
+                
+                Text(title)
+                    .font(.system(size: 10, weight: currentSelection == value ? .semibold : .medium))
+                    .foregroundColor(currentSelection == value ? .primary : .secondary)
+            }
+            .frame(width: 90)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct SankeyStyleSkeletonStandard: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Path { path in
+                path.move(to: CGPoint(x: 4, y: 12))
+                path.addCurve(to: CGPoint(x: 76, y: 32), control1: CGPoint(x: 40, y: 12), control2: CGPoint(x: 40, y: 32))
+            }
+            .stroke(Color.cyan, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+        }
+    }
+}
+
+struct SankeyStyleSkeletonWatchBand: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Path { path in
+                path.move(to: CGPoint(x: 4, y: 12))
+                path.addCurve(to: CGPoint(x: 30, y: 22), control1: CGPoint(x: 17, y: 12), control2: CGPoint(x: 17, y: 22))
+                path.addLine(to: CGPoint(x: 50, y: 22))
+                path.addCurve(to: CGPoint(x: 76, y: 32), control1: CGPoint(x: 63, y: 22), control2: CGPoint(x: 63, y: 32))
+            }
+            .stroke(Color.orange, style: StrokeStyle(lineWidth: 6, lineCap: .round))
         }
     }
 }

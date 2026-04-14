@@ -206,6 +206,7 @@ struct ThickFlowBlock: View {
     
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
     
     @State private var phase = 0.0
     
@@ -224,11 +225,11 @@ struct ThickFlowBlock: View {
         
         ZStack {
             // White base behind everything
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
                 .fill(Color.white)
             
             // The Block
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -241,7 +242,7 @@ struct ThickFlowBlock: View {
                 )
                 .overlay(
                     // Flow animation overlay
-                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY)
+                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
                         .fill(
                             LinearGradient(
                                 stops: [
@@ -254,7 +255,7 @@ struct ThickFlowBlock: View {
                             )
                         )
                         .blendMode(.overlay)
-                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY))
+                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle))
                         .animation(isAnimated ? .linear(duration: 1.5).repeatForever(autoreverses: false) : .default, value: phase)
                         .opacity(isAnimated ? 1.0 : 0.0)
                 )
@@ -283,6 +284,7 @@ struct WatchBandShape: Shape {
     var rightHeight: CGFloat
     var mergeMode: FlowMergeMode = .none
     var localConvergenceY: CGFloat? = nil
+    var sankeyStyle: String = "watchband"
     
     var animatableData: CGFloat {
         get { thickness }
@@ -345,7 +347,24 @@ struct WatchBandShape: Shape {
             rightBotY = convergence + mergeSpread
         }
         
+        
         path.move(to: CGPoint(x: 0, y: leftTopY))
+        
+        if sankeyStyle == "standard" {
+            // Standard continuous Sankey S-curve
+            path.addCurve(to: CGPoint(x: w, y: rightTopY),
+                          control1: CGPoint(x: w * 0.5, y: leftTopY),
+                          control2: CGPoint(x: w * 0.5, y: rightTopY))
+            
+            path.addLine(to: CGPoint(x: w, y: rightBotY))
+            
+            path.addCurve(to: CGPoint(x: 0, y: leftBotY),
+                          control1: CGPoint(x: w * 0.5, y: rightBotY),
+                          control2: CGPoint(x: w * 0.5, y: leftBotY))
+            
+            path.closeSubpath()
+            return path
+        }
         
         // Left sweep/flare (Top Edge)
         path.addCurve(to: CGPoint(x: realLeftCurveW, y: centerY - halfThick),

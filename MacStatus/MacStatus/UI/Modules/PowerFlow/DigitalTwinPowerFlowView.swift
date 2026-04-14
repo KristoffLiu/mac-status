@@ -6,6 +6,7 @@ struct DigitalTwinPowerFlowView: View {
     
     @State private var flowPhase: CGFloat = 0.0
     @AppStorage("powerFlowTwinAnimated") private var isAnimated = true
+    @AppStorage("twinCableStyle") private var twinCableStyle = "p"
     @State private var isLidOpen: Bool = false
     @State private var adapterRotation: Double = 0.0
     
@@ -38,7 +39,11 @@ struct DigitalTwinPowerFlowView: View {
                     phase: flowPhase,
                     isAnimated: isAnimated,
                     isCharging: powerFlow.isCharging,
-                    batteryLevel: batteryData?.currentCapacity ?? 0
+                    batteryLevel: batteryData?.currentCapacity ?? 0,
+                    cableStyle: twinCableStyle,
+                    onToggleStyle: {
+                        twinCableStyle = (twinCableStyle == "p") ? "j" : "p"
+                    }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 // Overlap perfectly to embed into the ports
@@ -222,16 +227,11 @@ struct MacMini3DView: View {
             // Holographic HUD
             VStack(spacing: 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    if isCharging {
-                        Image(systemName: "bolt.fill").font(.system(size: 18)).foregroundColor(.green)
-                    }
+                    if isCharging { Image(systemName: "bolt.fill").font(.system(size: 18)).foregroundColor(.green) }
                     Text("\(batteryLevel)").font(.system(size: 42, weight: .heavy, design: .rounded))
                     Text("%").font(.system(size: 20, weight: .bold, design: .rounded)).foregroundColor(.secondary)
                 }
-                HStack(spacing: 4) {
-                    Image(systemName: "cpu")
-                    Text("System \(Int(systemPower)) W")
-                }
+                HStack(spacing: 4) { Image(systemName: "cpu"); Text("System \(Int(systemPower)) W") }
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundColor(.cyan)
             }
@@ -240,11 +240,23 @@ struct MacMini3DView: View {
             .zIndex(1)
             
             // Mac Mini Body
-            RoundedRectangle(cornerRadius: 8.0, style: .continuous)
-                .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .top, endPoint: .bottom))
-                .frame(width: 140, height: 16)
-                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
-                .zIndex(2)
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 10.0, style: .continuous)
+                    .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 140, height: 16)
+                    .overlay(
+                        // Power LED Indicator
+                        Circle().fill(Color.white).frame(width: 1.5, height: 1.5)
+                            .shadow(color: .white, radius: 2)
+                            .padding(.trailing, 16).padding(.bottom, 4), alignment: .bottomTrailing
+                    )
+                // Black hovering base intake
+                RoundedRectangle(cornerRadius: 8.0, style: .continuous)
+                    .fill(Color(white: 0.1))
+                    .frame(width: 130, height: 3)
+            }
+            .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+            .zIndex(2)
         }
         .background(
             Ellipse().fill(Color.black.opacity(0.15)).frame(width: 140, height: 20).offset(y: 45).blur(radius: 6)
@@ -274,34 +286,43 @@ struct MacStudio3DView: View {
                 .foregroundColor(.cyan)
             }
             .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0)
-            .offset(y: -70)
+            .offset(y: -75)
             .zIndex(1)
             
             // Mac Studio Body
             VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 10.0, style: .continuous)
+                RoundedRectangle(cornerRadius: 12.0, style: .continuous)
                     .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 140, height: 44)
+                    .frame(width: 140, height: 50)
                     .overlay(
-                        // Front port details
-                        HStack(spacing: 6) {
+                        // Front port details: 2 USB-C (left) + 1 SDXC (right) + LED
+                        HStack(spacing: 12) {
+                            HStack(spacing: 8) {
+                                RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 5, height: 3)
+                                RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 5, height: 3)
+                            }
+                            .padding(.leading, 14)
+                            
                             Spacer()
-                            Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
-                            Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
-                            RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.15)).frame(width: 12, height: 2)
+                            
+                            RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 16, height: 2)
+                            
+                            Circle().fill(Color.white).frame(width: 1.5, height: 1.5)
+                                .shadow(color: .white, radius: 2)
+                                .padding(.leading, 6).padding(.trailing, 10)
                         }
-                        .padding(.trailing, 10).padding(.bottom, 6), alignment: .bottom
+                        .padding(.bottom, 6), alignment: .bottom
                     )
-                // Base
+                // Black base grill
                 RoundedRectangle(cornerRadius: 8.0, style: .continuous)
-                    .fill(Color(white: 0.15))
-                    .frame(width: 130, height: 4)
+                    .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 126, height: 6)
             }
-            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
+            .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 4)
             .zIndex(2)
         }
         .background(
-            Ellipse().fill(Color.black.opacity(0.2)).frame(width: 140, height: 25).offset(y: 45).blur(radius: 6)
+            Ellipse().fill(Color.black.opacity(0.25)).frame(width: 140, height: 30).offset(y: 50).blur(radius: 8)
         )
         .offset(y: -10)
     }
@@ -411,6 +432,9 @@ struct TwinMacColor {
         case "spaceGray": return [Color(white: 0.55), Color(white: 0.35)]
         case "midnight": return [Color(red: 0.22, green: 0.23, blue: 0.28), Color(red: 0.12, green: 0.13, blue: 0.18)]
         case "starlight": return [Color(red: 0.85, green: 0.82, blue: 0.76), Color(red: 0.65, green: 0.62, blue: 0.56)]
+        case "peachPink": return [Color(red: 0.95, green: 0.81, blue: 0.83), Color(red: 0.86, green: 0.69, blue: 0.72)]
+        case "citrusYellow": return [Color(red: 0.92, green: 0.86, blue: 0.50), Color(red: 0.82, green: 0.75, blue: 0.40)]
+        case "indigoBlue": return [Color(red: 0.40, green: 0.45, blue: 0.55), Color(red: 0.25, green: 0.30, blue: 0.40)]
         case "silver": fallthrough
         default: return [Color(white: 0.7), Color(white: 0.5)]
         }
@@ -421,6 +445,9 @@ struct TwinMacColor {
         case "spaceGray": return [Color(white: 0.65), Color(white: 0.40)]
         case "midnight": return [Color(red: 0.25, green: 0.26, blue: 0.31), Color(red: 0.15, green: 0.16, blue: 0.21)]
         case "starlight": return [Color(red: 0.90, green: 0.88, blue: 0.82), Color(red: 0.68, green: 0.65, blue: 0.59)]
+        case "peachPink": return [Color(red: 0.90, green: 0.78, blue: 0.80), Color(red: 0.80, green: 0.65, blue: 0.68)]
+        case "citrusYellow": return [Color(red: 0.88, green: 0.82, blue: 0.45), Color(red: 0.78, green: 0.70, blue: 0.35)]
+        case "indigoBlue": return [Color(red: 0.45, green: 0.50, blue: 0.60), Color(red: 0.30, green: 0.35, blue: 0.45)]
         case "silver": fallthrough
         default: return [Color(white: 0.88), Color(white: 0.55)]
         }
@@ -438,18 +465,16 @@ struct MacBookKeyboardBase: View {
             let isMBA = deviceType == "mba"
             let isNeo = deviceType == "neo"
             
-            let baseColor1 = isNeo ? Color.orange : TwinMacColor.baseColors(for: twinMacColor)[0]
-            let baseColor2 = isNeo ? Color.pink : TwinMacColor.baseColors(for: twinMacColor)[1]
-            
             RoundedRectangle(cornerRadius: 3.0, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [baseColor1, baseColor2],
+                        colors: TwinMacColor.baseColors(for: twinMacColor),
                         startPoint: .top, endPoint: .bottom
                     )
                 )
                 // MBA is thinner at the front (wedge shape logic handled by thin height)
-                .frame(width: isNeo ? 160 : 180, height: isMBA ? 6 : 9)
+                // Neo is widened to 172 to comfortably hold the 160 lid with solid borders
+                .frame(width: isNeo ? 172 : 180, height: isMBA ? 6 : 9)
                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
             
             // Thumb Notch for opening
@@ -479,15 +504,13 @@ struct MacBookScreenLid: View {
     
     var body: some View {
         let isNeo = deviceType == "neo"
-        let lidColor1 = isNeo ? Color.purple : TwinMacColor.lidColors(for: twinMacColor)[0]
-        let lidColor2 = isNeo ? Color.blue : TwinMacColor.lidColors(for: twinMacColor)[1]
         
         ZStack {
             // A Plane (Lid Back)
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [lidColor1, lidColor2],
+                        colors: TwinMacColor.lidColors(for: twinMacColor),
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
@@ -625,8 +648,9 @@ struct EnergyWire3D: View {
     var isAnimated: Bool
     var isCharging: Bool
     var batteryLevel: Int
+    var cableStyle: String
+    var onToggleStyle: (() -> Void)? = nil
     
-    @AppStorage("twinCableStyle") private var cableStyle: String = "p"
     @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
     
     var body: some View {
@@ -762,7 +786,7 @@ struct EnergyWire3D: View {
             // Tap on the right side area or generally on the cable bounds to toggle
             .onTapGesture {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    cableStyle = (cableStyle == "p") ? "j" : "p"
+                    onToggleStyle?()
                 }
             }
         }
