@@ -4,7 +4,6 @@ struct DigitalTwinPowerFlowView: View {
     var powerFlow: PowerFlowData
     var batteryData: BatteryData?
     
-    @State private var flowPhase: CGFloat = 0.0
     @AppStorage("powerFlowTwinAnimated") private var isAnimatedSetting = true
     @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
     private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
@@ -38,7 +37,7 @@ struct DigitalTwinPowerFlowView: View {
                 // 2. 能量连线 (Energy Wire)
                 EnergyWire3D(
                     isActive: powerFlow.adapterPower > 2,
-                    phase: flowPhase,
+                    adapterPower: powerFlow.adapterPower,
                     isAnimated: isAnimated,
                     isCharging: powerFlow.isCharging,
                     batteryLevel: batteryData?.currentCapacity ?? 0,
@@ -83,15 +82,7 @@ struct DigitalTwinPowerFlowView: View {
                 }
             }
         }
-        .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
-            if isAnimated && powerFlow.adapterPower > 2 {
-                // 功率越高脉冲越快 (最小0.5倍，最大4倍速度)
-                let speedMultiplier = max(0.5, min(4.0, 0.4 + (powerFlow.adapterPower / 60.0)))
-                flowPhase += (2.5 * CGFloat(speedMultiplier))
-                if flowPhase > 10000 { flowPhase -= 10000 }
-            }
         }
-    }
 }
 
 // MARK: - 3D Adapter
@@ -783,13 +774,14 @@ struct MacBookScreenLid: View {
 
 struct EnergyWire3D: View {
     var isActive: Bool
-    var phase: CGFloat
+    var adapterPower: Double
     var isAnimated: Bool
     var isCharging: Bool
     var batteryLevel: Int
     var cableStyle: String
     var onToggleStyle: (() -> Void)? = nil
     
+    @State private var phase: CGFloat = 0.0
     @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
     
     var body: some View {
@@ -954,6 +946,13 @@ struct EnergyWire3D: View {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     onToggleStyle?()
                 }
+            }
+        }
+        .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
+            if isAnimated && isActive {
+                let speedMultiplier = max(0.5, min(4.0, 0.4 + (adapterPower / 60.0)))
+                phase += (2.5 * CGFloat(speedMultiplier))
+                if phase > 10000 { phase -= 10000 }
             }
         }
     }

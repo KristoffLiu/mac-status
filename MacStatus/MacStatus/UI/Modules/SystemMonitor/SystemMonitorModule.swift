@@ -199,6 +199,7 @@ struct CPUHeatmapView: View {
                                 .frame(width: heatmapSize, height: heatmapSize)
                         }
                     }
+                    .drawingGroup()
                 }
             }
 
@@ -217,6 +218,7 @@ struct CPUHeatmapView: View {
                                 .frame(width: heatmapSize * 1.5, height: heatmapSize * 1.5)
                         }
                     }
+                    .drawingGroup()
             }
         }
         .animation(.easeInOut(duration: 0.3), value: loads)
@@ -458,6 +460,7 @@ struct UnifiedMemCard: View {
                             .frame(width: heatmapSize, height: heatmapSize)
                         }
                     }
+                    .drawingGroup()
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -834,6 +837,7 @@ struct GPUHeatmapView: View {
                     .frame(width: heatmapSize, height: heatmapSize)
                 }
             }
+            .drawingGroup()
         }
     }
 }

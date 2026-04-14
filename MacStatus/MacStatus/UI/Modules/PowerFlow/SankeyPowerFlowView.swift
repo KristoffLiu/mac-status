@@ -344,7 +344,6 @@ struct ThickFlowBlock: View {
                             )
                         )
                         .blendMode(.overlay)
-                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange))
                         .animation(isAnimated ? .linear(duration: 1.5).repeatForever(autoreverses: false) : .default, value: phase)
                         .opacity(isAnimated ? 1.0 : 0.0)
                 )

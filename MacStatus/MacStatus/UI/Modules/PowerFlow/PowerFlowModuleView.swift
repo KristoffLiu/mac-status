@@ -262,7 +262,7 @@ struct PowerFlowConfigView: View {
                             }
                         }
                         // State auto-correction logic bound to the containing view
-                        .onChange(of: twinDeviceType) { _ in
+                        .onChange(of: twinDeviceType) { _, _ in
                             if twinDeviceType == "imac" {
                                 if !["silver", "blue", "green", "pink", "yellow", "orange", "purple"].contains(twinMacColor) {
                                     twinMacColor = "silver"
@@ -532,7 +532,7 @@ struct LiveWirePreview: View {
             
             EnergyWire3D(
                 isActive: true, // Show the dark grey cable structure
-                phase: 0,
+                adapterPower: 65.0,
                 isAnimated: true,
                 isCharging: true,
                 batteryLevel: 50, // 50 to show pulsing orange or neutral
