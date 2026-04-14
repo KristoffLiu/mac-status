@@ -23,143 +23,177 @@ struct SankeyPowerFlowView: View {
                 
                 if powerFlow.topology == .topologyA {
                     // Topology A: Adapter provides all power
-                    NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
-                        .zIndex(1)
+                    let totalSource = max(powerFlow.adapterPower, 0.1)
+                    let sysFlowWatts = powerFlow.systemPower
+                    let batChargeWatts = max(powerFlow.batteryPower, 0.0)
+                    let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
+                    let sysFraction = sysFlowWatts / effectiveTotalForFractions
+                    let batFraction = batChargeWatts / effectiveTotalForFractions
+                    let topHeightRaw = 35.0 + 35.0 * sysFraction
+                    let topHeight = max(64.0, topHeightRaw)
                     
-                    // Paths VStack
-                    VStack(spacing: 12) {
-                        // System Path
-                        let totalSource = max(powerFlow.adapterPower, 0.1)
-                        let sysFlowWatts = powerFlow.systemPower
-                        let batChargeWatts = max(powerFlow.batteryPower, 0.0)
-                        let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
-                        let sysFraction = sysFlowWatts / effectiveTotalForFractions
-                        let batFraction = batChargeWatts / effectiveTotalForFractions
+                    let botHeightRaw = 35.0 + 35.0 * batFraction
+                    let predictedBotHeight = max(64.0, botHeightRaw)
+                    let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
+                    let H_total = actualTopH + (batChargeWatts > 0.1 ? 12.0 + predictedBotHeight : 0)
+                    
+                    // Root Container
+                    HStack(alignment: .top, spacing: -12) {
                         
-                        let topHeight = 35.0 + 35.0 * sysFraction
+                        // Col 1: Adapter
+                        NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
+                            .frame(height: H_total)
+                            .zIndex(2)
                         
-                        HStack(alignment: .top, spacing: -12) {
-                            let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
-                            let botThick = max(12.0, CGFloat(batFraction) * 40.0)
-                            let globalConvergence = topHeight + 6.0
-                            
+                        // Col 2: Pipes
+                        VStack(spacing: 12) {
                             ThickFlowBlock(
                                 watts: sysFlowWatts,
                                 fraction: min(sysFraction, 1.0),
                                 startColor: .yellow.opacity(0.8),
                                 endColor: .gray.opacity(0.2),
                                 isSubFlow: false,
-                                mergeMode: (powerFlow.batteryPower > 0.1) ? .topMerge : .none,
-                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil,
-                                parentHeight: topHeight
+                                parentHeight: actualTopH,
+                                explicitLeftYRange: [0, H_total * (sysFlowWatts / (sysFlowWatts + batChargeWatts))]
                             )
+                            .frame(height: actualTopH)
                             .zIndex(0)
                             
-                            NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(sysFlowWatts))W" : nil, iconColor: .primary, stretchHeight: true)
-                                .zIndex(1)
-                                
-                            if isThreeStage {
-                                ThreeStageSinksView(powerFlow: powerFlow)
-                                    .zIndex(0)
-                            }
-                        }
-                        .frame(minHeight: topHeight)
-                        
-                        // Battery Path
-                        if batChargeWatts > 0.1 {
-                            let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
-                            let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
-                            let H_total = actualTopH + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
-                            
-                            HStack(alignment: .bottom, spacing: -12) {
+                            if batChargeWatts > 0.1 {
                                 ThickFlowBlock(
-                                    watts: powerFlow.batteryPower,
+                                    watts: batChargeWatts,
                                     fraction: min(batFraction, 1.0),
                                     startColor: .yellow.opacity(0.8),
                                     endColor: .green,
                                     isSubFlow: true,
-                                    parentHeight: botHeight,
-                                    explicitLeftYRange: [H_total * (sysFlowWatts / (sysFlowWatts + batChargeWatts)) - (actualTopH + 12.0), botHeight]
+                                    parentHeight: predictedBotHeight,
+                                    explicitLeftYRange: [H_total * (sysFlowWatts / (sysFlowWatts + batChargeWatts)) - (actualTopH + 12.0), predictedBotHeight]
                                 )
+                                .frame(height: predictedBotHeight)
                                 .zIndex(0)
+                            }
+                        }
+                        .zIndex(0)
+                        
+                        // Col 3: System & Battery Nodes
+                        VStack(spacing: 12) {
+                            NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(sysFlowWatts))W" : nil, iconColor: .primary, stretchHeight: true)
+                                .frame(height: actualTopH)
+                                .zIndex(1)
                                 
-                                NodePill(icon: "battery.100.bolt", value: showValues ? "\(Int(batChargeWatts))W" : nil, iconColor: .green, isSubNode: false, stretchHeight: true)
+                            if batChargeWatts > 0.1 {
+                                NodePill(icon: "battery.100.bolt", value: showValues ? "\(Int(batChargeWatts))W" : nil, iconColor: .green, stretchHeight: true)
+                                    .frame(height: predictedBotHeight)
                                     .zIndex(1)
                             }
-                            .frame(height: botHeight)
                         }
-                    }
-                    .zIndex(0)
-                } else {
-                    // Topology B: System is the sink
-                    VStack(spacing: 12) {
-                        // Is Adapter present?
-                        if powerFlow.adapterPower > 0 {
-                            // Adapter is MAIN source, Battery is Sub source
-                            let totalSource = max(powerFlow.adapterPower + powerFlow.batteryPower, 0.1)
-                            let adFraction = powerFlow.adapterPower / totalSource
-                            let batFraction = powerFlow.batteryPower / totalSource
-                            
-                            let topHeight = max(64.0, 35.0 + 35.0 * adFraction)
-                            let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
-                            
-                            let H_total_left = topHeight + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
-                            let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0
-                            let global_H = max(H_total_left, actualRightH)
-                            
-                            let leftOffsetY = (global_H - H_total_left) / 2.0
-                            let rightOffsetY = (global_H - actualRightH) / 2.0
-                            
-                            HStack(alignment: .top, spacing: -12) {
-                                NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
-                                    .zIndex(1)
-                                ThickFlowBlock(
-                                    watts: powerFlow.adapterPower,
-                                    fraction: min(adFraction, 1.0),
-                                    startColor: .yellow.opacity(0.8),
-                                    endColor: .gray.opacity(0.2),
-                                    isSubFlow: false,
-                                    parentHeight: topHeight,
-                                    explicitRightYRange: [rightOffsetY - leftOffsetY, rightOffsetY + actualRightH * adFraction - leftOffsetY]
-                                ).zIndex(0)
-                            }.frame(height: topHeight)
-                            
-                            HStack(alignment: .bottom, spacing: -12) {
-                                NodePill(icon: "battery.100", value: nil, iconColor: .blue, isSubNode: false, stretchHeight: true)
-                                    .zIndex(1)
-                                ThickFlowBlock(
-                                    watts: powerFlow.batteryPower,
-                                    fraction: min(batFraction, 1.0),
-                                    startColor: .blue,
-                                    endColor: .gray.opacity(0.2),
-                                    isSubFlow: true,
-                                    parentHeight: botHeight,
-                                    explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + 12.0), rightOffsetY + actualRightH - (leftOffsetY + topHeight + 12.0)]
-                                ).zIndex(0)
-                            }.frame(height: botHeight)
-                        } else {
-                            // Battery is MAIN and ONLY source
-                            let batFraction = 1.0
-                            HStack(spacing: -12) {
-                                NodePill(icon: "battery.100", value: nil, iconColor: .blue)
-                                    .zIndex(1)
-                                ThickFlowBlock(
-                                    watts: powerFlow.batteryPower,
-                                    fraction: batFraction,
-                                    startColor: .blue,
-                                    endColor: .gray.opacity(0.2),
-                                    isSubFlow: false
-                                ).zIndex(0)
-                            }.frame(height: 70)
-                        }
-                    }
-                    .zIndex(0)
-                    NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(powerFlow.systemPower))W" : nil, iconColor: .primary, stretchHeight: true)
                         .zIndex(1)
                         
-                    if isThreeStage {
-                        ThreeStageSinksView(powerFlow: powerFlow)
+                        // Col 4 & 5: Three Stage Sinks
+                        if isThreeStage {
+                            ThreeStageSinksView(powerFlow: powerFlow)
+                                .frame(height: actualTopH)
+                                .zIndex(0)
+                        }
+                    }
+                } else {
+                    // Topology B: System is the sink
+                    let totalSource = max(powerFlow.adapterPower + powerFlow.batteryPower, 0.1)
+                    let adFraction = powerFlow.adapterPower / totalSource
+                    let batFraction = powerFlow.batteryPower / totalSource
+                    
+                    let topHeight = max(64.0, 35.0 + 35.0 * adFraction)
+                    let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
+                    
+                    let H_total_left = topHeight + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
+                    let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0
+                    let global_H = max(H_total_left, actualRightH)
+                    
+                    let leftOffsetY = (global_H - H_total_left) / 2.0
+                    let rightOffsetY = (global_H - actualRightH) / 2.0
+                    
+                    // Root Container
+                    HStack(alignment: .center, spacing: -12) {
+                        
+                        if powerFlow.adapterPower > 0 || powerFlow.batteryPower > 0 {
+                            // Col 1: Sources
+                            VStack(spacing: 12) {
+                                if powerFlow.adapterPower > 0 {
+                                    NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
+                                        .frame(height: topHeight)
+                                        .zIndex(2)
+                                }
+                                if powerFlow.batteryPower > 0 {
+                                    NodePill(icon: "battery.100", value: nil, iconColor: .blue, stretchHeight: true)
+                                        .frame(height: botHeight)
+                                        .zIndex(2)
+                                }
+                            }
+                            .zIndex(2)
+                            
+                            // Col 2: Pipes
+                            VStack(spacing: 12) {
+                                if powerFlow.adapterPower > 0 {
+                                    ThickFlowBlock(
+                                        watts: powerFlow.adapterPower,
+                                        fraction: min(adFraction, 1.0),
+                                        startColor: .yellow.opacity(0.8),
+                                        endColor: .gray.opacity(0.2),
+                                        isSubFlow: false,
+                                        parentHeight: topHeight,
+                                        explicitRightYRange: [rightOffsetY - leftOffsetY, rightOffsetY + actualRightH * adFraction - leftOffsetY]
+                                    )
+                                    .frame(height: topHeight)
+                                    .zIndex(0)
+                                }
+                                
+                                if powerFlow.batteryPower > 0 {
+                                    ThickFlowBlock(
+                                        watts: powerFlow.batteryPower,
+                                        fraction: min(batFraction, 1.0),
+                                        startColor: .blue,
+                                        endColor: .gray.opacity(0.2),
+                                        isSubFlow: powerFlow.adapterPower > 0,
+                                        parentHeight: botHeight,
+                                        explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + 12.0), rightOffsetY + actualRightH - (leftOffsetY + topHeight + 12.0)]
+                                    )
+                                    .frame(height: botHeight)
+                                    .zIndex(0)
+                                }
+                            }
                             .zIndex(0)
+                        } else {
+                            // Fallback minimal column layout
+                            VStack(spacing: 12) {
+                                NodePill(icon: "powerplug.fill", value: nil, iconColor: .gray, stretchHeight: true)
+                                    .frame(height: 70)
+                                    .zIndex(2)
+                            }
+                            VStack(spacing: 12) {
+                                ThickFlowBlock(
+                                    watts: 0,
+                                    fraction: 1.0,
+                                    startColor: .gray,
+                                    endColor: .gray.opacity(0.2),
+                                    isSubFlow: false,
+                                    parentHeight: 70
+                                )
+                                .frame(height: 70)
+                                .zIndex(0)
+                            }
+                        }
+                        
+                        // Col 3: System Node
+                        NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(powerFlow.systemPower))W" : nil, iconColor: .primary, stretchHeight: true)
+                            .frame(height: actualRightH)
+                            .zIndex(1)
+                            
+                        // Col 4 & 5: Three Stage Sinks
+                        if isThreeStage {
+                            ThreeStageSinksView(powerFlow: powerFlow)
+                                .frame(height: actualRightH)
+                                .zIndex(0)
+                        }
                     }
                 }
             }
@@ -353,7 +387,10 @@ struct WatchBandShape: Shape {
         let mergeSpread = sankeyStyle == "standard" ? safeThick : (safeThick * 1.5 + 12.0)
         
         // Apply Left merges
-        if mergeMode == .topMerge, let convergence = localConvergenceY {
+        if let explicitLeft = explicitLeftYRange, explicitLeft.count == 2 {
+            leftTopY = explicitLeft[0]
+            leftBotY = explicitLeft[1]
+        } else if mergeMode == .topMerge, let convergence = localConvergenceY {
             leftBotY = convergence
             leftTopY = convergence - mergeSpread // Expands dynamically to form a visually substantial Y-fork
         } else if mergeMode == .bottomMerge, let convergence = localConvergenceY {
@@ -362,7 +399,10 @@ struct WatchBandShape: Shape {
         }
         
         // Apply Right merges
-        if mergeMode == .rightTopMerge, let convergence = localConvergenceY {
+        if let explicitRight = explicitRightYRange, explicitRight.count == 2 {
+            rightTopY = explicitRight[0]
+            rightBotY = explicitRight[1]
+        } else if mergeMode == .rightTopMerge, let convergence = localConvergenceY {
             rightBotY = convergence
             rightTopY = convergence - mergeSpread
         } else if mergeMode == .rightBottomMerge, let convergence = localConvergenceY {

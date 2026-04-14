@@ -527,17 +527,19 @@ struct LiveWirePreview: View {
     var style: String
     var body: some View {
         ZStack {
-            Color(white: 0.1)
+            // Brighter neutral background so the 0.15-opacity black cable stands out clearly
+            LinearGradient(colors: [Color(white: 0.5), Color(white: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            
             EnergyWire3D(
-                isActive: true,
+                isActive: true, // Show the dark grey cable structure
                 phase: 0,
                 isAnimated: true,
                 isCharging: true,
-                batteryLevel: 100,
+                batteryLevel: 50, // 50 to show pulsing orange or neutral
                 cableStyle: style
             )
-            .frame(width: 160, height: 120) // Use real typical dimensions so math aligns
-            .scaleEffect(0.28) // scale it to fit precisely within the 44x32 box
+            .frame(width: 140, height: 100) // Compact preview
+            .scaleEffect(0.3) // Fit in the button
         }
         .frame(width: 44, height: 32)
         .clipped()
