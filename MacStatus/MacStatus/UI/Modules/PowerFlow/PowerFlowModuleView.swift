@@ -62,6 +62,7 @@ struct PowerFlowConfigView: View {
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowThreeStage") private var isThreeStage = false
     @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
+    @AppStorage("twinDeviceType") private var twinDeviceType: String = "mbp"
     @AppStorage("twinCableStyle") private var twinCableStyle: String = "p"
     @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
@@ -195,17 +196,49 @@ struct PowerFlowConfigView: View {
                     Section("数字孪生微调") {
                         Toggle("播放流动动画", isOn: $isTwinAnimated)
                         
-                        Picker("理线风格", selection: $twinCableStyle) {
-                            Text("随性自然 (P人)").tag("p")
-                            Text("横平竖直 (J人)").tag("j")
-                        }
+                        Divider()
                         
-                        Picker("Mac 外观", selection: $twinMacColor) {
-                            Text("银色").tag("silver")
-                            Text("深空灰").tag("spaceGray")
-                            Text("午夜色").tag("midnight")
-                            Text("星光色").tag("starlight")
+                        HStack(alignment: .top) {
+                            Text("设备类型")
+                                .padding(.top, 6)
+                            Spacer()
+                            HStack(spacing: 8) {
+                                OptionSelectButton(title: "MBP", value: "mbp", currentSelection: $twinDeviceType) { TwinSkeletonMBP() }
+                                OptionSelectButton(title: "Air", value: "mba", currentSelection: $twinDeviceType) { TwinSkeletonMBA() }
+                                OptionSelectButton(title: "Mini", value: "mini", currentSelection: $twinDeviceType) { TwinSkeletonMini() }
+                                OptionSelectButton(title: "Studio", value: "studio", currentSelection: $twinDeviceType) { TwinSkeletonStudio() }
+                                OptionSelectButton(title: "Neo", value: "neo", currentSelection: $twinDeviceType) { TwinSkeletonNeo() }
+                            }
                         }
+                        .padding(.vertical, 2)
+                        
+                        Divider()
+                        
+                        HStack(alignment: .top) {
+                            Text("理线风格")
+                                .padding(.top, 6)
+                            Spacer()
+                            HStack(spacing: 12) {
+                                OptionSelectButton(title: "P人", value: "p", currentSelection: $twinCableStyle) { TwinSkeletonCableP() }
+                                OptionSelectButton(title: "J人", value: "j", currentSelection: $twinCableStyle) { TwinSkeletonCableJ() }
+                            }
+                        }
+                        .padding(.vertical, 2)
+                        
+                        Divider()
+                        
+                        HStack(alignment: .top) {
+                            Text("Mac 外观")
+                                .padding(.top, 6)
+                            Spacer()
+                            HStack(spacing: 8) {
+                                OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                OptionSelectButton(title: "深空灰", value: "spaceGray", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.65), c2: Color(white: 0.40)) }
+                                OptionSelectButton(title: "午夜色", value: "midnight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.25, green: 0.26, blue: 0.31), c2: Color(red: 0.15, green: 0.16, blue: 0.21)) }
+                                OptionSelectButton(title: "星光色", value: "starlight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.90, green: 0.88, blue: 0.82), c2: Color(red: 0.68, green: 0.65, blue: 0.59)) }
+                            }
+                        }
+                        .padding(.vertical, 2)
                     }
                 }
             }
@@ -309,6 +342,48 @@ struct StyleSelectButton<Content: View>: View {
     }
 }
 
+struct OptionSelectButton<T: Equatable, Content: View>: View {
+    let title: String
+    let value: T
+    @Binding var currentSelection: T
+    @ViewBuilder let content: Content
+    
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentSelection = value
+            }
+        }) {
+            VStack(spacing: 4) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
+                    
+                    content
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .frame(width: 44, height: 32)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+                )
+                .padding(2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(currentSelection == value ? Color.accentColor : Color.clear, lineWidth: 2)
+                )
+                
+                Text(title)
+                    .font(.system(size: 9, weight: currentSelection == value ? .semibold : .medium))
+                    .foregroundColor(currentSelection == value ? .primary : .secondary)
+            }
+            .frame(width: 48)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Skeleton Drawings
 struct TwinSkeleton: View {
     var body: some View {
@@ -379,6 +454,103 @@ struct CardsSkeleton: View {
                     RoundedRectangle(cornerRadius: 3).fill(Color.orange).frame(width: 14, height: 10)
                     RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Option Visualizations
+
+struct ColorSwatch: View {
+    var c1: Color
+    var c2: Color
+    var body: some View {
+        LinearGradient(colors: [c1, c2], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+struct TwinSkeletonCableP: View {
+    var body: some View {
+        ZStack {
+            Color(white: 0.1)
+            Path { path in
+                path.move(to: CGPoint(x: 5, y: 16))
+                path.addCurve(to: CGPoint(x: 39, y: 16), control1: CGPoint(x: 22, y: 0), control2: CGPoint(x: 22, y: 32))
+            }
+            .stroke(Color.white, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        }
+    }
+}
+
+struct TwinSkeletonCableJ: View {
+    var body: some View {
+        ZStack {
+            Color(white: 0.1)
+            Path { path in
+                path.move(to: CGPoint(x: 5, y: 16))
+                path.addLine(to: CGPoint(x: 15, y: 16))
+                path.addCurve(to: CGPoint(x: 22, y: 8), control1: CGPoint(x: 20, y: 16), control2: CGPoint(x: 22, y: 14))
+                path.addCurve(to: CGPoint(x: 29, y: 16), control1: CGPoint(x: 22, y: 2), control2: CGPoint(x: 29, y: 2))
+                path.addLine(to: CGPoint(x: 39, y: 16))
+            }
+            .stroke(Color.white, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        }
+    }
+}
+
+struct TwinSkeletonMBP: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 1) {
+                RoundedRectangle(cornerRadius: 1).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 24, height: 16)
+                RoundedRectangle(cornerRadius: 0.5).fill(Color(white: 0.7)).frame(width: 24, height: 2)
+            }
+        }
+    }
+}
+
+struct TwinSkeletonMBA: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 1) {
+                RoundedRectangle(cornerRadius: 1).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 24, height: 16)
+                // Wedge shape logic via overlapping or simply thinner base
+                RoundedRectangle(cornerRadius: 0.5).fill(Color(white: 0.7)).frame(width: 24, height: 1)
+            }
+        }
+    }
+}
+
+struct TwinSkeletonMini: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 22, height: 6)
+        }
+    }
+}
+
+struct TwinSkeletonStudio: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 20, height: 12)
+                RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.1)).frame(width: 18, height: 2)
+            }
+        }
+    }
+}
+
+struct TwinSkeletonNeo: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 1) {
+                RoundedRectangle(cornerRadius: 2).fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 20, height: 14)
+                RoundedRectangle(cornerRadius: 1).fill(Color.orange).frame(width: 20, height: 2)
             }
         }
     }

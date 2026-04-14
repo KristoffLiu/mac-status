@@ -45,10 +45,10 @@ struct DigitalTwinPowerFlowView: View {
                 .padding(.horizontal, -1)
                 .zIndex(1) // Goes behind adapter and macbook
                 
-                // 3. 开合 MacBook (MacBook Twin)
+                // 3. 开合 MacBook / Mac Desktop (Mac Twin)
                 VStack {
                     Spacer()
-                    MacBook3DView(
+                    MacDeviceSystem3D(
                         systemPower: powerFlow.systemPower,
                         batteryPower: powerFlow.batteryPower,
                         batteryLevel: batteryData?.currentCapacity ?? 0,
@@ -180,6 +180,133 @@ struct MacAdapter3DView: View {
     }
 }
 
+// MARK: - 3D Devices Router
+
+struct MacDeviceSystem3D: View {
+    var systemPower: Double
+    var batteryPower: Double
+    var batteryLevel: Int
+    var isCharging: Bool
+    
+    @Binding var isOpen: Bool
+    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
+    
+    var body: some View {
+        switch deviceType {
+        case "mini":
+            MacMini3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+        case "studio":
+            MacStudio3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+        default:
+            MacBook3DView(
+                systemPower: systemPower,
+                batteryPower: batteryPower,
+                batteryLevel: batteryLevel,
+                isCharging: isCharging,
+                isOpen: $isOpen
+            )
+        }
+    }
+}
+
+// MARK: - 3D Desktop Macs
+struct MacMini3DView: View {
+    var systemPower: Double
+    var batteryLevel: Int
+    var isCharging: Bool
+    
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Holographic HUD
+            VStack(spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    if isCharging {
+                        Image(systemName: "bolt.fill").font(.system(size: 18)).foregroundColor(.green)
+                    }
+                    Text("\(batteryLevel)").font(.system(size: 42, weight: .heavy, design: .rounded))
+                    Text("%").font(.system(size: 20, weight: .bold, design: .rounded)).foregroundColor(.secondary)
+                }
+                HStack(spacing: 4) {
+                    Image(systemName: "cpu")
+                    Text("System \(Int(systemPower)) W")
+                }
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(.cyan)
+            }
+            .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0)
+            .offset(y: -50)
+            .zIndex(1)
+            
+            // Mac Mini Body
+            RoundedRectangle(cornerRadius: 8.0, style: .continuous)
+                .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .top, endPoint: .bottom))
+                .frame(width: 140, height: 16)
+                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                .zIndex(2)
+        }
+        .background(
+            Ellipse().fill(Color.black.opacity(0.15)).frame(width: 140, height: 20).offset(y: 45).blur(radius: 6)
+        )
+        .offset(y: -10)
+    }
+}
+
+struct MacStudio3DView: View {
+    var systemPower: Double
+    var batteryLevel: Int
+    var isCharging: Bool
+    
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Holographic HUD
+            VStack(spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    if isCharging { Image(systemName: "bolt.fill").font(.system(size: 18)).foregroundColor(.green) }
+                    Text("\(batteryLevel)").font(.system(size: 42, weight: .heavy, design: .rounded))
+                    Text("%").font(.system(size: 20, weight: .bold, design: .rounded)).foregroundColor(.secondary)
+                }
+                HStack(spacing: 4) { Image(systemName: "cpu"); Text("System \(Int(systemPower)) W") }
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(.cyan)
+            }
+            .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0)
+            .offset(y: -70)
+            .zIndex(1)
+            
+            // Mac Studio Body
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 10.0, style: .continuous)
+                    .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 140, height: 44)
+                    .overlay(
+                        // Front port details
+                        HStack(spacing: 6) {
+                            Spacer()
+                            Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
+                            Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
+                            RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.15)).frame(width: 12, height: 2)
+                        }
+                        .padding(.trailing, 10).padding(.bottom, 6), alignment: .bottom
+                    )
+                // Base
+                RoundedRectangle(cornerRadius: 8.0, style: .continuous)
+                    .fill(Color(white: 0.15))
+                    .frame(width: 130, height: 4)
+            }
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
+            .zIndex(2)
+        }
+        .background(
+            Ellipse().fill(Color.black.opacity(0.2)).frame(width: 140, height: 25).offset(y: 45).blur(radius: 6)
+        )
+        .offset(y: -10)
+    }
+}
+
 // MARK: - 3D MacBook Hinge
 
 struct MacBook3DView: View {
@@ -300,22 +427,29 @@ struct TwinMacColor {
     }
 }
 
-// 底座实体 (完美恢复：纯正优雅的 2D 矢量边框！绝佳的前侧质感，无厚度拉伸)
+// 底座实体
 struct MacBookKeyboardBase: View {
     @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
     
     var body: some View {
         ZStack(alignment: .top) {
-            // Main Front Lip (Smooth metal finish)
+            // Main Front Lip
+            let isMBA = deviceType == "mba"
+            let isNeo = deviceType == "neo"
+            
+            let baseColor1 = isNeo ? Color.orange : TwinMacColor.baseColors(for: twinMacColor)[0]
+            let baseColor2 = isNeo ? Color.pink : TwinMacColor.baseColors(for: twinMacColor)[1]
+            
             RoundedRectangle(cornerRadius: 3.0, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: TwinMacColor.baseColors(for: twinMacColor),
+                        colors: [baseColor1, baseColor2],
                         startPoint: .top, endPoint: .bottom
                     )
                 )
-                .frame(width: 180, height: 9) // 闭合时与屏幕尺寸严丝合缝
-                // Subtle grounding shadow
+                // MBA is thinner at the front (wedge shape logic handled by thin height)
+                .frame(width: isNeo ? 160 : 180, height: isMBA ? 6 : 9)
                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
             
             // Thumb Notch for opening
@@ -341,18 +475,23 @@ struct MacBookScreenLid: View {
     var isOpen: Bool
     
     @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
     
     var body: some View {
+        let isNeo = deviceType == "neo"
+        let lidColor1 = isNeo ? Color.purple : TwinMacColor.lidColors(for: twinMacColor)[0]
+        let lidColor2 = isNeo ? Color.blue : TwinMacColor.lidColors(for: twinMacColor)[1]
+        
         ZStack {
-            // A Plane (Lid Back) - Metal - Sharper corners
+            // A Plane (Lid Back)
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: TwinMacColor.lidColors(for: twinMacColor),
+                        colors: [lidColor1, lidColor2],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 180, height: 116)
+                .frame(width: isNeo ? 160 : 180, height: isNeo ? 104 : 116)
             
             // Display Plane (Inside)
             ZStack {
@@ -488,16 +627,15 @@ struct EnergyWire3D: View {
     var batteryLevel: Int
     
     @AppStorage("twinCableStyle") private var cableStyle: String = "p"
+    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
     
     var body: some View {
         GeometryReader { geometry in
-            // Coordinates tight to the boundaries, allowing the ZStack positioning to handle overlap visually.
-            let start = CGPoint(x: 2, y: geometry.size.height / 2) // Snug into adapter's Type-C port
+            let start = CGPoint(x: 2, y: geometry.size.height / 2) // Adapter Type-C
             
-            // Push X precisely inside the Mac's UI boundary (geometry.size.width + 1)
-            // Since Mac is zIndex(2), the port structurally "vanishes" into the side wall.
-            // Y is tweaked perfectly to center inside the under-taper.
-            let end = CGPoint(x: geometry.size.width + 1, y: geometry.size.height / 2 + 43) // Adjusted down slightly from 40
+            // Adjust port location based on device height
+            let portYOffset: CGFloat = deviceType == "mini" ? 36 : (deviceType == "studio" ? 22 : 43)
+            let end = CGPoint(x: geometry.size.width + 1 + (deviceType == "neo" ? -10 : 0), y: geometry.size.height / 2 + portYOffset)
             
             // To ensure the connection enters perfectly straight at the ends AND coils in the middle:
             let coilPath: Path = {

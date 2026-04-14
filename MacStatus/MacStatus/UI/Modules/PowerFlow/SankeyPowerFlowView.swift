@@ -4,6 +4,7 @@ struct SankeyPowerFlowView: View {
     var powerFlow: PowerFlowData
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    @AppStorage("powerFlowThreeStage") private var isThreeStage = false
     
     var body: some View {
         VStack(spacing: 12) {
@@ -45,8 +46,13 @@ struct SankeyPowerFlowView: View {
                             
                             NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(sysFlowWatts))W" : nil, iconColor: .primary, stretchHeight: true)
                                 .zIndex(1)
+                                
+                            if isThreeStage {
+                                ThreeStageSinksView(powerFlow: powerFlow)
+                                    .zIndex(0)
+                            }
                         }
-                        .frame(height: topHeight)
+                        .frame(minHeight: topHeight)
                         
                         // Battery Path
                         if batChargeWatts > 0.1 {
@@ -132,9 +138,13 @@ struct SankeyPowerFlowView: View {
                         }
                     }
                     .zIndex(0)
-                    
                     NodePill(icon: "laptopcomputer", value: showValues ? "\(Int(powerFlow.systemPower))W" : nil, iconColor: .primary, stretchHeight: true)
                         .zIndex(1)
+                        
+                    if isThreeStage {
+                        ThreeStageSinksView(powerFlow: powerFlow)
+                            .zIndex(0)
+                    }
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
@@ -368,5 +378,87 @@ struct WatchBandShape: Shape {
         
         path.closeSubpath()
         return path
+    }
+}
+
+// MARK: - Three Stage Sinks View
+
+struct ThreeStageSinksView: View {
+    var powerFlow: PowerFlowData
+    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    
+    var body: some View {
+        let appW = powerFlow.topAppWatts ?? 0.0
+        let coreW = powerFlow.coreWatts ?? 0.0
+        let periW = powerFlow.peripheralWatts ?? 0.0
+        
+        let total = max(appW + coreW + periW, 0.1)
+        
+        let appF = appW / total
+        let coreF = coreW / total
+        let periF = periW / total
+        
+        let elementsCount = (appW > 0.1 ? 1 : 0) + (coreW > 0.1 ? 1 : 0) + (periW > 0.1 ? 1 : 0)
+        
+        VStack(spacing: 12) {
+            // 1. Top App
+            if appW > 0.1 {
+                let h = 35.0 + 35.0 * appF
+                HStack(alignment: .center, spacing: -12) {
+                    ThickFlowBlock(
+                        watts: appW, 
+                        fraction: appF, 
+                        startColor: .primary.opacity(0.8), 
+                        endColor: .orange, 
+                        mergeMode: elementsCount > 1 ? .topMerge : .none, 
+                        localConvergenceY: elementsCount > 1 ? h + 12.0 : nil
+                    )
+                    .zIndex(0)
+                    
+                    NodePill(icon: "app.badge.fill", value: showValues ? (powerFlow.topAppName ?? "App") : nil, iconColor: .orange, stretchHeight: true)
+                        .zIndex(1)
+                }
+                .frame(height: h)
+            }
+            
+            // 2. Core
+            if coreW > 0.1 {
+                let h = 35.0 + 35.0 * coreF
+                HStack(alignment: .center, spacing: -12) {
+                    ThickFlowBlock(
+                        watts: coreW, 
+                        fraction: coreF, 
+                        startColor: .primary.opacity(0.8), 
+                        endColor: .cyan, 
+                        mergeMode: .none
+                    )
+                    .zIndex(0)
+                    
+                    NodePill(icon: "cpu", value: showValues ? "\(String(format: "%.1f", coreW))W" : nil, iconColor: .cyan, stretchHeight: true)
+                        .zIndex(1)
+                }
+                .frame(height: h)
+            }
+            
+            // 3. Peripherals
+            if periW > 0.1 {
+                let h = 35.0 + 35.0 * periF
+                HStack(alignment: .center, spacing: -12) {
+                    ThickFlowBlock(
+                        watts: periW, 
+                        fraction: periF, 
+                        startColor: .primary.opacity(0.8), 
+                        endColor: .gray, 
+                        mergeMode: elementsCount > 1 ? .bottomMerge : .none, 
+                        localConvergenceY: elementsCount > 1 ? -12.0 : nil
+                    )
+                    .zIndex(0)
+                    
+                    NodePill(icon: "cable.connector", value: showValues ? "\(String(format: "%.1f", periW))W" : nil, iconColor: .gray, stretchHeight: true)
+                        .zIndex(1)
+                }
+                .frame(height: h)
+            }
+        }
     }
 }
