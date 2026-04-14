@@ -277,32 +277,35 @@ struct CardsPowerFlowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 // Top row layout
                 // Left: Big wattage
-                if let p = power, p >= 0 {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", p))
-                            .font(.system(size: 24, weight: .heavy, design: .rounded))
-                            .foregroundColor(color == .secondary ? .primary : color)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                        Text("W")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                Group {
+                    if let p = power, p >= 0 {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text(String(format: "%.1f", p))
+                                .font(.system(size: 24, weight: .heavy, design: .rounded))
+                                .foregroundColor(color == .secondary ? .primary : color)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                            Text("W")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                    } else if title == "电池" && power == nil {
+                        Text("待机")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
+                    } else {
+                        Text("--")
+                            .font(.system(size: 24, weight: .heavy, design: .rounded))
+                            .foregroundColor(.secondary.opacity(0.3))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
-                } else if title == "电池" && power == nil {
-                    Text("待机")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                } else {
-                    Text("--")
-                        .font(.system(size: 24, weight: .heavy, design: .rounded))
-                        .foregroundColor(.secondary.opacity(0.3))
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
                 }
+                .frame(height: 30, alignment: .leading)
                 
                 // Title
                 Text(NSLocalizedString(title, comment: ""))

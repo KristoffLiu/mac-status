@@ -221,7 +221,6 @@ struct CPUHeatmapView: View {
                     .drawingGroup()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: loads)
     }
 }
 
