@@ -5,7 +5,9 @@ struct DigitalTwinPowerFlowView: View {
     var batteryData: BatteryData?
     
     @State private var flowPhase: CGFloat = 0.0
-    @AppStorage("powerFlowTwinAnimated") private var isAnimated = true
+    @AppStorage("powerFlowTwinAnimated") private var isAnimatedSetting = true
+    @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
+    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
     @AppStorage("twinCableStyle") private var twinCableStyle = "p"
     @State private var isLidOpen: Bool = false
     @State private var adapterRotation: Double = 0.0

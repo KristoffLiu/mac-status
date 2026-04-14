@@ -156,12 +156,6 @@ struct MainPanelView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .onAppear {
-            EnergyEfficiencyManager.shared.appState = .active
-        }
-        .onDisappear {
-            EnergyEfficiencyManager.shared.appState = .background
-        }
     }
 }
 

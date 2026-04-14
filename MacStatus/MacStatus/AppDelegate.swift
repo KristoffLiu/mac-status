@@ -123,6 +123,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     private func hidePanel() {
+        EnergyEfficiencyManager.shared.appState = .background
+        
         let enableAnim = UserDefaults.standard.object(forKey: "enablePanelAnimations") == nil ? true : UserDefaults.standard.bool(forKey: "enablePanelAnimations")
         
         if enableAnim {
@@ -138,6 +140,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     private func showPanel() {
+        EnergyEfficiencyManager.shared.appState = .active
+        
         guard let button = statusItem.button, let window = button.window else { return }
         
         // Refresh fitting size in case of layout changes

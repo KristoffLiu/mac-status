@@ -2,7 +2,9 @@ import SwiftUI
 
 struct SankeyPowerFlowView: View {
     var powerFlow: PowerFlowData
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowSankeyAnimated") private var isAnimatedSetting = true
+    @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
+    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
     @AppStorage("powerFlowThreeStage") private var isThreeStage = false
     
@@ -269,7 +271,9 @@ struct ThickFlowBlock: View {
     var explicitLeftYRange: [CGFloat]? = nil
     var explicitRightYRange: [CGFloat]? = nil
     
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowSankeyAnimated") private var isAnimatedSetting = true
+    @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
+    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
     @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
     

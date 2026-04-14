@@ -15,19 +15,27 @@ class HighPowerAppsService: ObservableObject {
     
     @Published var highPowerApps: [AppEnergyImpact] = []
     
-    private var timer: AnyCancellable?
+    private var timerCancellable: AnyCancellable?
+    private var lastFetchTime = Date.distantPast
     
     private init() {
         startPolling()
     }
     
     func startPolling() {
-        // Poll every 10 seconds to avoid excessive CPU usage by 'top'
-        timer = Timer.publish(every: 10, on: .main, in: .common)
-            .autoconnect()
+        timerCancellable = EnergyEfficiencyManager.shared.tickPublisher
             .sink { [weak self] _ in
-                self?.fetchTopApps()
+                guard let self = self else { return }
+                let now = Date()
+                let intervalToWait = EnergyEfficiencyManager.shared.appState == .active ? 8.0 : 30.0
+                if now.timeIntervalSince(self.lastFetchTime) >= intervalToWait {
+                    self.lastFetchTime = now
+                    self.fetchTopApps()
+                }
             }
+        
+        // Initial fetch
+        fetchTopApps()
     }
     
     private func fetchTopApps() {
@@ -53,6 +61,25 @@ class HighPowerAppsService: ObservableObject {
                 print("Error running top: \(error)")
             }
         }
+    }
+    
+    private func downsampleIcon(_ icon: NSImage?) -> NSImage? {
+        guard let icon = icon else { return nil }
+        
+        let targetSize = NSSize(width: 32, height: 32)
+        let newImage = NSImage(size: targetSize)
+        
+        newImage.lockFocus()
+        NSGraphicsContext.current?.imageInterpolation = .high
+        icon.draw(
+            in: NSRect(origin: .zero, size: targetSize),
+            from: NSRect(origin: .zero, size: icon.size),
+            operation: .copy,
+            fraction: 1.0
+        )
+        newImage.unlockFocus()
+        
+        return newImage
     }
     
     private func parseTopOutput(_ output: String) {
@@ -88,7 +115,7 @@ class HighPowerAppsService: ObservableObject {
                         // Filter out system processes that are often high but expected
                         if !isSystemProcess(name) {
                             let app = NSRunningApplication(processIdentifier: pidValue)
-                            let icon = app?.icon
+                            let icon = self.downsampleIcon(app?.icon)
                             results.append(AppEnergyImpact(pid: pidValue, name: name, power: powerValue, icon: icon))
                         }
                     }
