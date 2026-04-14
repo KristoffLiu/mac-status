@@ -19,6 +19,9 @@ struct MenuBarSettingsView: View {
     @AppStorage("showMacOSCondition") private var showMacOSCondition = false
     @AppStorage("showCycles") private var showCycles = false
     
+    // 预览外观
+    @AppStorage("previewIsDark") private var previewIsDark = true
+    
     // 电池规格
     @AppStorage("showTemperature") private var showTemperature = false
     @AppStorage("showTimeRemaining") private var showTimeRemaining = false
@@ -190,21 +193,30 @@ struct MenuBarSettingsView: View {
             // --- 沉浸式浮动预览卡片 ---
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: "eyes")
+                    Image(systemName: "menubar.rectangle")
                         .foregroundColor(.blue)
                     Text("实时体验预览")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(previewIsDark ? .white : .primary)
                     Spacer()
+                    Button(action: { previewIsDark.toggle() }) {
+                        Image(systemName: previewIsDark ? "moon.fill" : "sun.max.fill")
+                            .foregroundColor(previewIsDark ? .yellow : .orange)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
                 }
                 
-                HStack(spacing: menuItemSpacing) {
-                    HStack(spacing: mainIconGroupSpacing) {
+                HStack(spacing: CGFloat(menuItemSpacing)) {
+                    HStack(spacing: CGFloat(mainIconGroupSpacing)) {
+                        let isPreviewLowPower = iconLowPowerColor
+                        let previewCapacity = isPreviewLowPower ? 15 : 75
+                        
                         let innerPreview = Group {
                             BatteryGraphicView(
-                                capacity: 75,
-                                isCharging: true,
+                                capacity: previewCapacity,
+                                isCharging: !isPreviewLowPower, // Don't show charging if we want to preview low power red color
                                 isColored: batteryFillStyle == "status_color",
                                 showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
                                 showNumber: batteryInnerContent == "number",
@@ -214,9 +226,8 @@ struct MenuBarSettingsView: View {
                         
                         if batteryLayout == "left" { innerPreview }
                         
-                        if showPercentage { Text("75%") }
-                        if showChargingStatus { Image(systemName: "bolt.fill") }
-                        if iconLowPowerColor { Circle().fill(Color.orange).frame(width: 8, height: 8) }
+                        if showPercentage { Text("\(previewCapacity)%") }
+                        if showChargingStatus && !isPreviewLowPower { Image(systemName: "bolt.fill") }
                         
                         if batteryLayout == "right" { innerPreview }
                     }
@@ -246,9 +257,11 @@ struct MenuBarSettingsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 16)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(previewIsDark ? Color.black : Color.white)
+                .foregroundColor(previewIsDark ? .white : .primary)
+                .environment(\.colorScheme, previewIsDark ? .dark : .light)
                 .cornerRadius(8)
-                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
             }
             .padding(16)
             .background(.regularMaterial)

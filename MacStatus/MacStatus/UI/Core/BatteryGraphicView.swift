@@ -146,10 +146,14 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("showAlDenteSailing") private var showAlDenteSailing = false
     @AppStorage("showAlDenteFull") private var showAlDenteFull = false
     
+    // Spacing
+    @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
+    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
+    
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: CGFloat(menuItemSpacing)) {
             // Main Icon Group
-            HStack(spacing: 4) {
+            HStack(spacing: CGFloat(mainIconGroupSpacing)) {
                 if batteryLayout == "left", let image = generatedMenuImage { Image(nsImage: image) }
                 
                 if showPercentage { Text("\(viewModel.currentCapacity)%") }

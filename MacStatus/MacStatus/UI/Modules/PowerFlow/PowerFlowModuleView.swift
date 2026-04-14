@@ -476,40 +476,75 @@ struct SankeySkeleton: View {
 struct BlocksSkeleton: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
             HStack(spacing: 4) {
-                VStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 22)
-                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 12)
+                VStack(spacing: 3) {
+                    pill(color: .yellow)
+                    pill(color: .blue)
                 }
-                VStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 12)
-                    RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)).frame(width: 22, height: 22)
+                Image(systemName: "arrow.right").font(.system(size: 8, weight: .bold)).foregroundColor(Color(white: 0.5))
+                VStack(spacing: 3) {
+                    pill(color: .white)
+                    pill(color: .green)
                 }
             }
         }
+    }
+    
+    private func pill(color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(Color(white: 0.25))
+            .overlay(
+                HStack(spacing: 2) {
+                    Circle().fill(color).frame(width: 4, height: 4)
+                    RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.5)).frame(width: 10, height: 2)
+                }
+            )
+            .frame(width: 22, height: 10)
     }
 }
 
 struct CardsSkeleton: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(spacing: 5) {
-                HStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3).fill(Color.blue).frame(width: 14, height: 10)
-                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
-                }
-                HStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3).fill(Color.green).frame(width: 14, height: 10)
-                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
-                }
-                HStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3).fill(Color.orange).frame(width: 14, height: 10)
-                    RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.25)).frame(width: 32, height: 10)
-                }
-            }
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            
+            // Battery Card (Right)
+            card(color: .green)
+                .offset(x: 14)
+                .zIndex(1)
+            
+            // System Card (Center)
+            card(color: .white)
+                .offset(x: 0)
+                .zIndex(2)
+            
+            // Adapter Card (Left)
+            card(color: .yellow)
+                .offset(x: -14)
+                .zIndex(3)
         }
+    }
+    
+    private func card(color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(Color(white: 0.25))
+            .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.black.opacity(0.3), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+            .overlay(
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.6)).frame(width: 8, height: 4)
+                        Spacer()
+                        Circle().fill(color).frame(width: 4, height: 4)
+                    }
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 0.5).fill(Color(white: 0.5)).frame(width: 12, height: 1.5)
+                    RoundedRectangle(cornerRadius: 0.5).fill(Color(white: 0.5)).frame(width: 8, height: 1.5)
+                }
+                .padding(2)
+            )
+            .frame(width: 22, height: 28)
     }
 }
 
