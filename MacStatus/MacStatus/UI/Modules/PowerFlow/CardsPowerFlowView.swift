@@ -75,28 +75,8 @@ struct CardsPowerFlowView: View {
                                     .foregroundColor(.secondary.opacity(0.8))
                                 
                                 
-                                if let active = adapter.activeProfile, !adapter.profiles.isEmpty {
-                                    var items = [active]
-                                    for p in adapter.profiles.sorted(by: { $0.maxWatts > $1.maxWatts }) {
-                                        if p.maxVoltage != active.maxVoltage || p.maxCurrent != active.maxCurrent {
-                                            items.append(p)
-                                        }
-                                    }
-                                    let profilesText = items.map { pd -> String in
-                                        let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
-                                        let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
-                                        return "\(vStr)V/\(cStr)A"
-                                    }.joined(separator: "，")
-                                    
+                                if let profilesText = formattedProfiles(adapter: adapter) {
                                     Text("档位: \(profilesText)")
-                                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
-                                        .foregroundColor(.secondary.opacity(0.8))
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                } else if let pd = adapter.activeProfile {
-                                    let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
-                                    let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
-                                    Text("档位: \(vStr)V/\(cStr)A")
                                         .font(.system(size: 9.5, weight: .medium, design: .monospaced))
                                         .foregroundColor(.secondary.opacity(0.8))
                                         .lineLimit(1)
@@ -357,6 +337,23 @@ struct CardsPowerFlowView: View {
         )
     }
     
+    private func formattedProfiles(adapter: AdapterInfo) -> String? {
+        guard let active = adapter.activeProfile else { return nil }
+        var items = [active]
+        if !adapter.profiles.isEmpty {
+            for p in adapter.profiles.sorted(by: { $0.maxWatts > $1.maxWatts }) {
+                if p.maxVoltage != active.maxVoltage || p.maxCurrent != active.maxCurrent {
+                    items.append(p)
+                }
+            }
+        }
+        return items.map { pd -> String in
+            let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
+            let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
+            return "\(vStr)V/\(cStr)A"
+        }.joined(separator: "，")
+    }
+
     private var statusText: String {
         let hasAdapter = powerFlow.adapterPower > 2
         if hasAdapter && powerFlow.isDischarging { return "混合供电" }

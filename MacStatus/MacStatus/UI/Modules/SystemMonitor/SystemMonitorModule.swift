@@ -9,6 +9,9 @@ struct SystemMonitorModule: View {
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
+    @AppStorage("sysMonChartPixelSize") private var chartPixelSize: Double = 5.0
+    @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+    @AppStorage("sysMonHeatmapSize") private var heatmapSize: Double = 8.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -59,7 +62,7 @@ struct SystemMonitorModule: View {
                         }
 
                         // 正方形热力图
-                        CPUHeatmapView(loads: service.coreLoads, pCoreCount: service.pCoreCount, eCoreCount: service.eCoreCount)
+                        CPUHeatmapView(loads: service.coreLoads, pCoreCount: service.pCoreCount, eCoreCount: service.eCoreCount, heatmapSize: CGFloat(heatmapSize))
                         
                         Spacer(minLength: 0)
                         
@@ -68,9 +71,9 @@ struct SystemMonitorModule: View {
                             data: service.cpuHistory,
                             maxRows: 8,
                             baseColor: cpuTotalColor(service.cpuTotal),
-                            gap: CGFloat(pixelGap)
+                            gap: CGFloat(pixelGap),
+                            chartPixelSize: chartPixelSize
                         )
-                        .frame(height: 40)
                         .clipShape(RoundedRectangle(cornerRadius: 2))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -80,7 +83,9 @@ struct SystemMonitorModule: View {
                     // GPU Card
                     GPUMatrixCard(
                         utilization: service.gpuUtilization,
-                        history: service.gpuHistory
+                        history: service.gpuHistory,
+                        heatmapSize: CGFloat(heatmapSize),
+                        chartPixelSize: chartPixelSize
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
@@ -98,7 +103,9 @@ struct SystemMonitorModule: View {
                     totalGB: service.memTotalGB,
                     sysHistory: service.memHistory,
                     gpuHistory: service.gpuMemHistory,
-                    pressure: service.memPressure
+                    pressure: service.memPressure,
+                    heatmapSize: CGFloat(heatmapSize),
+                    chartPixelSize: chartPixelSize
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 } // end showMemory
@@ -115,7 +122,8 @@ struct SystemMonitorModule: View {
                         upKBps:      service.netUpKBps,
                         downHistory: service.netDownHistory,
                         upHistory:   service.netUpHistory,
-                        symmetricGraph: symmetricGraph
+                        symmetricGraph: symmetricGraph,
+                        chartPixelSize: chartPixelSize
                     )
                     .frame(maxWidth: .infinity, alignment: .top)
 
@@ -126,7 +134,8 @@ struct SystemMonitorModule: View {
                         writeMBps:    service.diskWriteMBps,
                         readHistory:  service.diskReadHistory,
                         writeHistory: service.diskWriteHistory,
-                        symmetricGraph: symmetricGraph
+                        symmetricGraph: symmetricGraph,
+                        chartPixelSize: chartPixelSize
                     )
                     .frame(maxWidth: .infinity, alignment: .top)
                 }
@@ -150,6 +159,7 @@ struct CPUHeatmapView: View {
     let loads: [Double]
     let pCoreCount: Int
     let eCoreCount: Int
+    let heatmapSize: CGFloat
 
     private var eCoreLoads: [Double] {
         if eCoreCount > 0 && eCoreCount + pCoreCount <= loads.count {
@@ -166,11 +176,11 @@ struct CPUHeatmapView: View {
     }
 
     private var eColumns: [GridItem] {
-        return [GridItem(.adaptive(minimum: 8, maximum: 8), spacing: 2)]
+        return [GridItem(.adaptive(minimum: heatmapSize, maximum: heatmapSize), spacing: 2)]
     }
 
     private var pColumns: [GridItem] {
-        return [GridItem(.adaptive(minimum: 14, maximum: 14), spacing: 2)]
+        return [GridItem(.adaptive(minimum: heatmapSize * 1.5, maximum: heatmapSize * 1.5), spacing: 2)]
     }
 
     var body: some View {
@@ -186,7 +196,7 @@ struct CPUHeatmapView: View {
                     LazyVGrid(columns: eColumns, alignment: .leading, spacing: 2) {
                         ForEach(0..<eCoreLoads.count, id: \.self) { i in
                             HeatCell(load: eCoreLoads[i])
-                                .frame(width: 8, height: 8)
+                                .frame(width: heatmapSize, height: heatmapSize)
                         }
                     }
                 }
@@ -201,12 +211,12 @@ struct CPUHeatmapView: View {
                         .padding(.top, 1)
                 }
 
-                LazyVGrid(columns: pColumns, alignment: .leading, spacing: 2) {
-                    ForEach(0..<pCoreLoads.count, id: \.self) { i in
-                        HeatCell(load: pCoreLoads[i])
-                            .frame(width: 14, height: 14)
+                    LazyVGrid(columns: pColumns, alignment: .leading, spacing: 2) {
+                        ForEach(0..<pCoreLoads.count, id: \.self) { i in
+                            HeatCell(load: pCoreLoads[i])
+                                .frame(width: heatmapSize * 1.5, height: heatmapSize * 1.5)
+                        }
                     }
-                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: loads)
@@ -255,52 +265,59 @@ struct PixelBarChartView: View {
     let baseColor: Color
     let gap: CGFloat
     var invertY: Bool = false
+    let chartPixelSize: Double
 
     @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
     @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+    @AppStorage("sysMonBlockInterval") private var blockInterval: Int = 0
 
     var body: some View {
-        GeometryReader { geo in
-            let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
-            
-            // 1. 我们基于高度决定单个正方形格子的尺寸
-            let cellH = (geo.size.height - gap * CGFloat(max(finalRows - 1, 0))) / CGFloat(max(finalRows, 1))
-            let size = cellH // 维持绝对的正方形视觉
-            
-            // 2. 算出现在这个宽度下能塞下多少列（向上取整，以确保左边缘被完填满）
-            let maxCols = Int(ceil((geo.size.width + gap) / (size + gap)))
+        let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
+        
+        let rowGroups = (blockInterval == 1 || blockInterval == 3) ? max(0, finalRows - 1) / 4 : 0
+        let extraHTotal = CGFloat(rowGroups) * gap
+        let totalGapsH = gap * CGFloat(max(finalRows - 1, 0)) + extraHTotal
+        
+        let size = CGFloat(chartPixelSize)
+        let calculatedHeight = max(1, size * CGFloat(finalRows) + totalGapsH)
+
+        return GeometryReader { geo in
+            let avgCellW = size + gap + ((blockInterval >= 2) ? gap / 4 : 0)
+            let maxCols = Int(ceil((geo.size.width + gap) / avgCellW))
             let cols = maxCols > 0 ? maxCols : 1
             
-            // 3. 从数据末尾（最新）往前取对应数量，不够则全取
             let visibleData = data.count > cols ? Array(data.suffix(cols)) : data
             let c = visibleData.count > 0 ? visibleData.count : 1
             
-            // 居右偏移（确保最新的波形一直咬着右边缘，左侧超出部分由负的offsetX切除）
-            let totalW = size * CGFloat(c) + gap * CGFloat(max(c - 1, 0))
-            let totalH = size * CGFloat(finalRows) + gap * CGFloat(max(finalRows - 1, 0))
+            let colGroups = (blockInterval >= 2) ? max(0, c - 1) / 4 : 0
+            let extraWTotal = CGFloat(colGroups) * gap
+            
+            let totalW = size * CGFloat(c) + gap * CGFloat(max(c - 1, 0)) + extraWTotal
+            let totalH = size * CGFloat(finalRows) + totalGapsH
             let offsetX = geo.size.width - totalW
             let offsetY = (geo.size.height - totalH) / 2
 
-            // 数据已经在 service 中归一化为 0.0~1.0，所以满载刻度固定为 1.0
             let maxVal = 1.0
 
             Canvas { ctx, _ in
                 for col in 0..<c {
                     let v = visibleData[col]
-                    // 根据相对比例决定亮起几个格子
                     let ratio = v / maxVal
-                    let fillRows = Int(ceil(ratio * Double(finalRows))) // ceil 确保有一点数据就会亮一格
+                    let fillRows = Int(ceil(ratio * Double(finalRows)))
                     
                     for row in 0..<finalRows {
                         let isFilled: Bool
                         if invertY {
-                            isFilled = row < fillRows // 从上往下
+                            isFilled = row < fillRows
                         } else {
-                            isFilled = (finalRows - 1 - row) < fillRows // 从下往上
+                            isFilled = (finalRows - 1 - row) < fillRows
                         }
                         
-                        let x = offsetX + (size + gap) * CGFloat(col)
-                        let y = offsetY + (size + gap) * CGFloat(row)
+                        let addColGap = (blockInterval >= 2) ? CGFloat(col / 4) * gap : 0
+                        let addRowGap = (blockInterval == 1 || blockInterval == 3) ? CGFloat(row / 4) * gap : 0
+                        
+                        let x = offsetX + (size + gap) * CGFloat(col) + addColGap
+                        let y = offsetY + (size + gap) * CGFloat(row) + addRowGap
                         let rect = CGRect(x: x, y: y, width: size, height: size)
                         
                         let path: Path
@@ -321,6 +338,7 @@ struct PixelBarChartView: View {
                 }
             }
         }
+        .frame(height: calculatedHeight)
     }
 }
 
@@ -332,6 +350,8 @@ struct UnifiedMemCard: View {
     let sysHistory: [Double]
     let gpuHistory: [Double]
     let pressure: Double
+    let heatmapSize: CGFloat
+    let chartPixelSize: Double
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
     @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
 
@@ -347,21 +367,14 @@ struct UnifiedMemCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Header
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 4) {
-                    Text("统一内存")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(.primary.opacity(0.7))
-                    
-                    Spacer()
-                    
-                    Text(String(format: "%.0fGB", totalGB))
-                        .font(.system(.caption, design: .rounded).monospacedDigit())
-                        .foregroundColor(pressureColor)
-                        .fontWeight(.semibold)
-                }
+            HStack(spacing: 4) {
+                Text("统一内存")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.primary.opacity(0.7))
                 
-                // Detailed Breakdown
+                Spacer()
+                
+                // Detailed Breakdown inline
                 HStack(spacing: 6) {
                     HStack(spacing: 2) {
                         Circle().fill(pressureColor).frame(width: 5, height: 5)
@@ -382,6 +395,13 @@ struct UnifiedMemCard: View {
                             .foregroundColor(.secondary.opacity(0.7))
                     }
                 }
+                
+                Spacer().frame(width: 4)
+                
+                Text(String(format: "%.0fGB", totalGB))
+                    .font(.system(.caption, design: .rounded).monospacedDigit())
+                    .foregroundColor(pressureColor)
+                    .fontWeight(.semibold)
             }
 
             HStack(alignment: .top, spacing: 8) {
@@ -389,12 +409,13 @@ struct UnifiedMemCard: View {
                 StackedPixelBarChartView(
                     bottomData: sysHistory,
                     topData: gpuHistory,
-                    maxRows: 11,
+                    maxRows: 8,
                     bottomColor: pressureColor,
                     topColor: .teal,
-                    gap: CGFloat(pixelGap)
+                    gap: CGFloat(pixelGap),
+                    chartPixelSize: chartPixelSize
                 )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 2))
                 
                 Divider().opacity(0.3)
@@ -402,40 +423,44 @@ struct UnifiedMemCard: View {
                 // 右侧: 热力图阵列 (增加到 6 行)
                 GeometryReader { geo in
                     let spacing: CGFloat = 2
-                    let cellSize: CGFloat = 8
-                    let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
+                    let cols = Int((geo.size.width + spacing) / (heatmapSize + spacing))
                     let actualCols = max(cols, 1)
-                    let c = actualCols * 6 
-                    let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
+                    
+                    let rows = Int((geo.size.height + spacing) / (heatmapSize + spacing))
+                    let actualRows = max(rows, 1)
+                    let c = actualCols * actualRows 
+                    
+                    let gridCols = Array(repeating: GridItem(.fixed(heatmapSize), spacing: spacing), count: actualCols)
                     
                     LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
                         ForEach(0..<c, id: \.self) { i in
                             let threshold = Double(i) / Double(c)
                             let isSys = threshold < sysRatio
                             let isGpu = threshold >= sysRatio && threshold < (sysRatio + gpuRatio)
+                            let fillCol = isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09))
+                            let strokeCol = isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear)
                             
                             Group {
                                 if pixelShape == 2 {
                                     Circle()
-                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
-                                        .overlay(Circle().stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                        .fill(fillCol)
+                                        .overlay(Circle().stroke(strokeCol, lineWidth: 0.5))
                                 } else if pixelShape == 1 {
                                     Rectangle()
-                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
-                                        .overlay(Rectangle().stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                        .fill(fillCol)
+                                        .overlay(Rectangle().stroke(strokeCol, lineWidth: 0.5))
                                 } else {
                                     RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
-                                        .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                        .fill(fillCol)
+                                        .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(strokeCol, lineWidth: 0.5))
                                 }
                             }
-                            .frame(width: cellSize, height: cellSize)
+                            .frame(width: heatmapSize, height: heatmapSize)
                         }
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
-            .frame(height: 58)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -449,16 +474,25 @@ struct StackedPixelBarChartView: View {
     let bottomColor: Color
     let topColor: Color
     let gap: CGFloat
+    let chartPixelSize: Double
     
     @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
     @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+    @AppStorage("sysMonBlockInterval") private var blockInterval: Int = 0
     
     var body: some View {
-        GeometryReader { geo in
-            let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
-            
-            let size = (geo.size.height - gap * CGFloat(max(finalRows - 1, 0))) / CGFloat(finalRows)
-            let c = Int((geo.size.width + gap) / (size + gap))
+        let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
+        
+        let rowGroups = (blockInterval == 1 || blockInterval == 3) ? max(0, finalRows - 1) / 4 : 0
+        let extraHTotal = CGFloat(rowGroups) * gap
+        let totalGapsH = gap * CGFloat(max(finalRows - 1, 0)) + extraHTotal
+        
+        let size = CGFloat(chartPixelSize)
+        let calculatedHeight = max(1, size * CGFloat(finalRows) + totalGapsH)
+        
+        return GeometryReader { geo in
+            let avgCellW = size + gap + ((blockInterval >= 2) ? gap / 4 : 0)
+            let c = Int((geo.size.width + gap) / avgCellW)
             let actualCols = max(1, c)
             
             let bData = bottomData.suffix(actualCols)
@@ -466,8 +500,11 @@ struct StackedPixelBarChartView: View {
             let bVisible = Array(repeating: 0.0, count: max(0, actualCols - bData.count)) + bData
             let tVisible = Array(repeating: 0.0, count: max(0, actualCols - tData.count)) + tData
             
-            let totalW = size * CGFloat(actualCols) + gap * CGFloat(max(actualCols - 1, 0))
-            let totalH = size * CGFloat(finalRows) + gap * CGFloat(max(finalRows - 1, 0))
+            let colGroups = (blockInterval >= 2) ? max(0, actualCols - 1) / 4 : 0
+            let extraWTotal = CGFloat(colGroups) * gap
+            
+            let totalW = size * CGFloat(actualCols) + gap * CGFloat(max(actualCols - 1, 0)) + extraWTotal
+            let totalH = size * CGFloat(finalRows) + totalGapsH
             let offsetX = geo.size.width - totalW
             let offsetY = (geo.size.height - totalH) / 2
             
@@ -485,8 +522,11 @@ struct StackedPixelBarChartView: View {
                         let isBottomFilled = (finalRows - 1 - row) < bFillRows
                         let isTopFilled = (finalRows - 1 - row) >= bFillRows && (finalRows - 1 - row) < (bFillRows + tFillRows)
                         
-                        let x = offsetX + (size + gap) * CGFloat(col)
-                        let y = offsetY + (size + gap) * CGFloat(row)
+                        let addColGap = (blockInterval >= 2) ? CGFloat(col / 4) * gap : 0
+                        let addRowGap = (blockInterval == 1 || blockInterval == 3) ? CGFloat(row / 4) * gap : 0
+                        
+                        let x = offsetX + (size + gap) * CGFloat(col) + addColGap
+                        let y = offsetY + (size + gap) * CGFloat(row) + addRowGap
                         let rect = CGRect(x: x, y: y, width: size, height: size)
                         
                         let path: Path
@@ -509,6 +549,7 @@ struct StackedPixelBarChartView: View {
                 }
             }
         }
+        .frame(height: calculatedHeight)
     }
 }
 
@@ -519,12 +560,9 @@ struct NetMatrixCard: View {
     let downHistory: [Double]
     let upHistory: [Double]
     let symmetricGraph: Bool
+    let chartPixelSize: Double
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
-    // 上下各 4 行 → 对应更密的矩阵，但我们的历史记录是60。
-    // 如果上下各4行，则共8行。如果共用60历史，每部分60/4=15列。
-    // 这里上行、下行各占3行（18历史？或者我们裁剪历史数组到 3*15=45 也可以，或者就缩短为30即可让列数为10）。
-    // 这里保持渲染完整 60 个数据，各占用 4 行 × 15 列。
     private let rows = 4
 
     var body: some View {
@@ -542,22 +580,22 @@ struct NetMatrixCard: View {
             // ↓ 下行条形图
             PixelBarChartView(
                 data: downHistory,
-                maxRows: 5,
+                maxRows: rows,
                 baseColor: .cyan,
-                gap: CGFloat(pixelGap)
+                gap: CGFloat(pixelGap),
+                chartPixelSize: chartPixelSize
             )
-            .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
 
             // ↑ 上行条形图
             PixelBarChartView(
                 data: upHistory,
-                maxRows: 5,
+                maxRows: rows,
                 baseColor: .green,
                 gap: CGFloat(pixelGap),
-                invertY: symmetricGraph
+                invertY: symmetricGraph,
+                chartPixelSize: chartPixelSize
             )
-            .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
 
             // 数值行
@@ -592,9 +630,9 @@ struct DiskMatrixCard: View {
     let readHistory: [Double]
     let writeHistory: [Double]
     let symmetricGraph: Bool
+    let chartPixelSize: Double
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
 
-    // 跟网络同理，各占4行（4×15列=60记录）
     private let rows = 4
 
     var body: some View {
@@ -612,22 +650,22 @@ struct DiskMatrixCard: View {
             // 读条形图
             PixelBarChartView(
                 data: readHistory,
-                maxRows: 5,
+                maxRows: rows,
                 baseColor: .yellow,
-                gap: CGFloat(pixelGap)
+                gap: CGFloat(pixelGap),
+                chartPixelSize: chartPixelSize
             )
-            .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
 
             // 写条形图
             PixelBarChartView(
                 data: writeHistory,
-                maxRows: 5,
+                maxRows: rows,
                 baseColor: .orange,
                 gap: CGFloat(pixelGap),
-                invertY: symmetricGraph
+                invertY: symmetricGraph,
+                chartPixelSize: chartPixelSize
             )
-            .frame(height: 25)
             .clipShape(RoundedRectangle(cornerRadius: 2))
 
             // 数值行
@@ -701,6 +739,8 @@ struct TempBadgeView: View {
 struct GPUMatrixCard: View {
     let utilization: Double
     let history: [Double]
+    let heatmapSize: CGFloat
+    let chartPixelSize: Double
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
     
     var body: some View {
@@ -727,7 +767,7 @@ struct GPUMatrixCard: View {
             }
             
             // Faux heatmap matching CPU's P-cores width
-            GPUHeatmapView(load: utilization)
+            GPUHeatmapView(load: utilization, heatmapSize: heatmapSize)
             
             Spacer(minLength: 0)
             
@@ -735,11 +775,12 @@ struct GPUMatrixCard: View {
                 data: history,
                 maxRows: 8,
                 baseColor: gpuColor,
-                gap: CGFloat(pixelGap)
+                gap: CGFloat(pixelGap),
+                chartPixelSize: chartPixelSize
             )
-            .frame(height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 2))
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
     
     private var gpuColor: Color {
@@ -751,44 +792,49 @@ struct GPUMatrixCard: View {
 
 struct GPUHeatmapView: View {
     let load: Double
+    let heatmapSize: CGFloat
     @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
     
     var body: some View {
         // 与内存矩阵一致，使用高度为28的3行方格阵列来填满区域并完美对齐 CPU
         GeometryReader { geo in
             let spacing: CGFloat = 2
-            let cellSize: CGFloat = 8
-            let cols = Int((geo.size.width + spacing) / (cellSize + spacing))
+            let cols = Int((geo.size.width + spacing) / (heatmapSize + spacing))
             let actualCols = max(cols, 1)
-            let c = actualCols * 3 
-            let gridCols = Array(repeating: GridItem(.fixed(cellSize), spacing: spacing), count: actualCols)
+            
+            let rows = Int((geo.size.height + spacing) / (heatmapSize + spacing))
+            let actualRows = max(rows, 1)
+            let c = actualCols * actualRows 
+            
+            let gridCols = Array(repeating: GridItem(.fixed(heatmapSize), spacing: spacing), count: actualCols)
             
             LazyVGrid(columns: gridCols, alignment: .leading, spacing: spacing) {
                 ForEach(0..<c, id: \.self) { i in
                     let threshold = Double(i) / Double(c)
                     let loadRatio = load // GPU Utilization
                     let isActive = loadRatio > threshold
+                    let fillCol = isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09)
+                    let strokeCol = isActive ? Color.indigo.opacity(0.3) : Color.clear
                     
                     Group {
                         if pixelShape == 2 {
                             Circle()
-                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
-                                .overlay(Circle().stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                                .fill(fillCol)
+                                .overlay(Circle().stroke(strokeCol, lineWidth: 0.5))
                         } else if pixelShape == 1 {
                             Rectangle()
-                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
-                                .overlay(Rectangle().stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                                .fill(fillCol)
+                                .overlay(Rectangle().stroke(strokeCol, lineWidth: 0.5))
                         } else {
                             RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
-                                .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                                .fill(fillCol)
+                                .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(strokeCol, lineWidth: 0.5))
                         }
                     }
-                    .frame(width: cellSize, height: cellSize)
+                    .frame(width: heatmapSize, height: heatmapSize)
                 }
             }
         }
-        .frame(height: 28) // 精准锁定高度，与 CPU/内存 齐平
     }
 }
 
@@ -801,19 +847,24 @@ struct SystemMonitorConfigView: View {
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
     @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
     @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+    @AppStorage("sysMonBlockInterval") private var blockInterval: Int = 0
+    @AppStorage("sysMonChartPixelSize") private var chartPixelSize: Double = 5.0
+    @AppStorage("sysMonHeatmapSize") private var heatmapSize: Double = 8.0
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         HStack(spacing: 0) {
             // 左侧：独立的侧边栏式预览
-            VStack {
-                SystemMonitorModule()
-                    .frame(width: 400)
-                    .padding(.top, 20)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-                
-                Spacer(minLength: 0)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack {
+                    SystemMonitorModule()
+                        .frame(width: 400)
+                        .padding(.top, 20)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                    
+                    Spacer(minLength: 0)
+                }
             }
             .background(Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -825,11 +876,41 @@ struct SystemMonitorConfigView: View {
             // 右侧：偏好设置详情
             VStack(spacing: 0) {
                 Form {
-                    Section("通用设置") {
+                    Section("显示模块") {
                         Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
                         Toggle("统一内存", isOn: $showMemory)
                         Toggle("网络与磁盘", isOn: $showNetDisk)
+                    }
+                    
+                    Section("图表与尺寸") {
+                        Picker("网络磁盘走势向", selection: $symmetricGraph) {
+                            Text("正向堆叠").tag(false)
+                            Text("双向发散").tag(true)
+                        }
+                        .pickerStyle(.menu)
                         
+                        VStack(spacing: 6) {
+                            HStack {
+                                Text("走势图颗粒尺寸")
+                                Spacer()
+                                Text("\(String(format: "%.1f", chartPixelSize))pt").foregroundColor(.secondary)
+                            }
+                            Slider(value: $chartPixelSize, in: 2.0...10.0)
+                        }
+                        .padding(.vertical, 4)
+                        
+                        VStack(spacing: 6) {
+                            HStack {
+                                Text("热力方块尺寸")
+                                Spacer()
+                                Text("\(String(format: "%.1f", heatmapSize))pt").foregroundColor(.secondary)
+                            }
+                            Slider(value: $heatmapSize, in: 4.0...20.0)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    Section("像素风格渲染") {
                         Picker("像素个体形态", selection: $pixelShape) {
                             Text("圆角矩阵").tag(0)
                             Text("锐利方块").tag(1)
@@ -850,12 +931,12 @@ struct SystemMonitorConfigView: View {
                             Text("致密 (x1.5)").tag(1.5)
                         }
                         .pickerStyle(.segmented)
-                    }
-                    
-                    Section("网络与磁盘") {
-                        Picker("走势图方向", selection: $symmetricGraph) {
-                            Text("正向堆叠").tag(false)
-                            Text("双向发散").tag(true)
+                        
+                        Picker("分隔网格模式", selection: $blockInterval) {
+                            Text("无分隔 (平滑)").tag(0)
+                            Text("行分隔 (纵向)").tag(1)
+                            Text("列分隔 (横向)").tag(2)
+                            Text("行列开阵列").tag(3)
                         }
                         .pickerStyle(.menu)
                     }

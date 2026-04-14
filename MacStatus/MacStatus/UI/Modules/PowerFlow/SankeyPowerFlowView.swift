@@ -29,10 +29,13 @@ struct SankeyPowerFlowView: View {
                     let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
                     let sysFraction = sysFlowWatts / effectiveTotalForFractions
                     let batFraction = batChargeWatts / effectiveTotalForFractions
-                    let topHeightRaw = 120.0 * sysFraction
+                    
+                    let dynamicBaseHeight = 64.0 + CGFloat(pow(min(totalSource, 140.0) / 140.0, 0.6)) * 56.0
+                    
+                    let topHeightRaw = dynamicBaseHeight * sysFraction
                     let topHeight = max(64.0, topHeightRaw)
                     
-                    let botHeightRaw = 120.0 * batFraction
+                    let botHeightRaw = dynamicBaseHeight * batFraction
                     let predictedBotHeight = max(64.0, botHeightRaw)
                     let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
                     let H_total = actualTopH + (batChargeWatts > 0.1 ? 12.0 + predictedBotHeight : 0)
@@ -102,8 +105,10 @@ struct SankeyPowerFlowView: View {
                     let adFraction = powerFlow.adapterPower / totalSource
                     let batFraction = powerFlow.batteryPower / totalSource
                     
-                    let topHeightRaw = 120.0 * adFraction
-                    let botHeightRaw = 120.0 * batFraction
+                    let dynamicBaseHeight = 64.0 + CGFloat(pow(min(totalSource, 140.0) / 140.0, 0.6)) * 56.0
+                    
+                    let topHeightRaw = dynamicBaseHeight * adFraction
+                    let botHeightRaw = dynamicBaseHeight * batFraction
                     
                     let topHeight = powerFlow.adapterPower > 0 ? max(64.0, topHeightRaw) : 0.0
                     let botHeight = powerFlow.batteryPower > 0 ? max(64.0, botHeightRaw) : 0.0
