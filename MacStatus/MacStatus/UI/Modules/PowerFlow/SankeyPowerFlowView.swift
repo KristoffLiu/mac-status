@@ -216,6 +216,7 @@ struct NodePill: View {
     var iconColor: Color
     var isSubNode: Bool = false
     var stretchHeight: Bool = false
+    var width: CGFloat = 60.0
     
     var body: some View {
         VStack(spacing: 4) {
@@ -226,10 +227,12 @@ struct NodePill: View {
             if let val = value {
                 Text(val)
                     .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
         .padding(.vertical, 8)
-        .frame(width: 60)
+        .frame(width: width)
         .frame(height: stretchHeight ? nil : 70)
         .frame(maxHeight: stretchHeight ? .infinity : nil)
         .background(
@@ -266,6 +269,24 @@ struct ThickFlowBlock: View {
     @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
     
     @State private var phase = 0.0
+    
+    private var textYOffset: CGFloat {
+        let baseHeight: CGFloat = isSubFlow ? 35.0 : 70.0
+        let actH: CGFloat = parentHeight ?? baseHeight
+        
+        var leftMid = actH / 2.0
+        if let el = explicitLeftYRange, el.count == 2 {
+            leftMid = (el[0] + el[1]) / 2.0
+        }
+        
+        var rightMid = actH / 2.0
+        if let er = explicitRightYRange, er.count == 2 {
+            rightMid = (er[0] + er[1]) / 2.0
+        }
+        
+        let pathCenterY = (leftMid + rightMid) / 2.0
+        return pathCenterY - (actH / 2.0)
+    }
     
     var body: some View {
         let baseHeight: CGFloat = isSubFlow ? 35 : 70
@@ -322,8 +343,8 @@ struct ThickFlowBlock: View {
             // Text inside the block
             if showValues {
                 let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
-                let dynamicSize: CGFloat = actualParentH > 50 ? 14 : 10
-                let dynamicColor: Color = actualParentH > 50 ? .primary : .secondary
+                let dynamicSize: CGFloat = proportionalThickness > 35 ? 14 : (proportionalThickness > 25 ? 12 : 10)
+                let dynamicColor: Color = proportionalThickness > 25 ? .primary : .secondary
                 
                 Text(textValue)
                     .font(.system(size: dynamicSize, weight: .bold, design: .rounded))
@@ -331,6 +352,7 @@ struct ThickFlowBlock: View {
                     // White shadow to ensure readability on variable colors
                     .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
                     .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 2, x: 0, y: 0)
+                    .offset(y: textYOffset)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -499,7 +521,7 @@ struct ThreeStageSinksView: View {
         VStack(spacing: 12) {
             // 1. Top App
             if appW > 0.1 {
-                let h = 35.0 + 35.0 * appF
+                let h = max(46.0, 100.0 * appF)
                 HStack(alignment: .center, spacing: -12) {
                     ThickFlowBlock(
                         watts: appW, 
@@ -512,7 +534,7 @@ struct ThreeStageSinksView: View {
                     )
                     .zIndex(0)
                     
-                    NodePill(icon: "app.badge.fill", value: showValues ? (powerFlow.topAppName ?? "App") : nil, iconColor: .orange, stretchHeight: true)
+                    NodePill(icon: "app.badge.fill", value: showValues ? (powerFlow.topAppName ?? "App") : nil, iconColor: .orange, stretchHeight: true, width: 80.0)
                         .zIndex(1)
                 }
                 .frame(height: h)
@@ -520,7 +542,7 @@ struct ThreeStageSinksView: View {
             
             // 2. Core
             if coreW > 0.1 {
-                let h = 35.0 + 35.0 * coreF
+                let h = max(46.0, 100.0 * coreF)
                 HStack(alignment: .center, spacing: -12) {
                     ThickFlowBlock(
                         watts: coreW, 
@@ -532,7 +554,7 @@ struct ThreeStageSinksView: View {
                     )
                     .zIndex(0)
                     
-                    NodePill(icon: "cpu", value: showValues ? "\(String(format: "%.1f", coreW))W" : nil, iconColor: .cyan, stretchHeight: true)
+                    NodePill(icon: "cpu", value: showValues ? "\(String(format: "%.1f", coreW))W" : nil, iconColor: .cyan, stretchHeight: true, width: 80.0)
                         .zIndex(1)
                 }
                 .frame(height: h)
@@ -540,7 +562,7 @@ struct ThreeStageSinksView: View {
             
             // 3. Peripherals
             if periW > 0.1 {
-                let h = 35.0 + 35.0 * periF
+                let h = max(46.0, 100.0 * periF)
                 HStack(alignment: .center, spacing: -12) {
                     ThickFlowBlock(
                         watts: periW, 
@@ -553,7 +575,7 @@ struct ThreeStageSinksView: View {
                     )
                     .zIndex(0)
                     
-                    NodePill(icon: "cable.connector", value: showValues ? "\(String(format: "%.1f", periW))W" : nil, iconColor: .gray, stretchHeight: true)
+                    NodePill(icon: "cable.connector", value: showValues ? "\(String(format: "%.1f", periW))W" : nil, iconColor: .gray, stretchHeight: true, width: 80.0)
                         .zIndex(1)
                 }
                 .frame(height: h)

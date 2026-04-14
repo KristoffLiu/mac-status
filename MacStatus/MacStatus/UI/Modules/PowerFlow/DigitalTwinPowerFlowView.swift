@@ -81,15 +81,12 @@ struct DigitalTwinPowerFlowView: View {
                 }
             }
         }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 16_000_000) // ~60 FPS
-                if isAnimated && powerFlow.adapterPower > 2 {
-                    // 功率越高脉冲越快 (最小0.5倍，最大4倍速度)
-                    let speedMultiplier = max(0.5, min(4.0, 0.4 + (powerFlow.adapterPower / 60.0)))
-                    flowPhase += (2.5 * CGFloat(speedMultiplier))
-                    if flowPhase > 10000 { flowPhase -= 10000 }
-                }
+        .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
+            if isAnimated && powerFlow.adapterPower > 2 {
+                // 功率越高脉冲越快 (最小0.5倍，最大4倍速度)
+                let speedMultiplier = max(0.5, min(4.0, 0.4 + (powerFlow.adapterPower / 60.0)))
+                flowPhase += (2.5 * CGFloat(speedMultiplier))
+                if flowPhase > 10000 { flowPhase -= 10000 }
             }
         }
     }
