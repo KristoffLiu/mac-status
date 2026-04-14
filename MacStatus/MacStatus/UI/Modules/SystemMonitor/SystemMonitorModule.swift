@@ -216,14 +216,25 @@ struct CPUHeatmapView: View {
 struct HeatCell: View {
     let load: Double
 
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
+
     var body: some View {
-        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-            .fill(cellColor)
-            .overlay(
+        Group {
+            if pixelShape == 2 {
+                Circle()
+                    .fill(cellColor)
+                    .overlay(Circle().stroke(cellColor.opacity(0.3), lineWidth: 0.5))
+            } else if pixelShape == 1 {
+                Rectangle()
+                    .fill(cellColor)
+                    .overlay(Rectangle().stroke(cellColor.opacity(0.3), lineWidth: 0.5))
+            } else {
                 RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                    .stroke(cellColor.opacity(0.3), lineWidth: 0.5)
-            )
-            .shadow(color: load > 0.75 ? cellColor.opacity(0.55) : .clear, radius: 1.5)
+                    .fill(cellColor)
+                    .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(cellColor.opacity(0.3), lineWidth: 0.5))
+            }
+        }
+        .shadow(color: load > 0.75 ? cellColor.opacity(0.55) : .clear, radius: 1.5)
     }
 
     private var cellColor: Color {
@@ -245,10 +256,15 @@ struct PixelBarChartView: View {
     let gap: CGFloat
     var invertY: Bool = false
 
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
+    @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+
     var body: some View {
         GeometryReader { geo in
+            let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
+            
             // 1. 我们基于高度决定单个正方形格子的尺寸
-            let cellH = (geo.size.height - gap * CGFloat(max(maxRows - 1, 0))) / CGFloat(max(maxRows, 1))
+            let cellH = (geo.size.height - gap * CGFloat(max(finalRows - 1, 0))) / CGFloat(max(finalRows, 1))
             let size = cellH // 维持绝对的正方形视觉
             
             // 2. 算出现在这个宽度下能塞下多少列（向上取整，以确保左边缘被完填满）
@@ -261,7 +277,7 @@ struct PixelBarChartView: View {
             
             // 居右偏移（确保最新的波形一直咬着右边缘，左侧超出部分由负的offsetX切除）
             let totalW = size * CGFloat(c) + gap * CGFloat(max(c - 1, 0))
-            let totalH = size * CGFloat(maxRows) + gap * CGFloat(max(maxRows - 1, 0))
+            let totalH = size * CGFloat(finalRows) + gap * CGFloat(max(finalRows - 1, 0))
             let offsetX = geo.size.width - totalW
             let offsetY = (geo.size.height - totalH) / 2
 
@@ -273,20 +289,28 @@ struct PixelBarChartView: View {
                     let v = visibleData[col]
                     // 根据相对比例决定亮起几个格子
                     let ratio = v / maxVal
-                    let fillRows = Int(ceil(ratio * Double(maxRows))) // ceil 确保有一点数据就会亮一格
+                    let fillRows = Int(ceil(ratio * Double(finalRows))) // ceil 确保有一点数据就会亮一格
                     
-                    for row in 0..<maxRows {
+                    for row in 0..<finalRows {
                         let isFilled: Bool
                         if invertY {
                             isFilled = row < fillRows // 从上往下
                         } else {
-                            isFilled = (maxRows - 1 - row) < fillRows // 从下往上
+                            isFilled = (finalRows - 1 - row) < fillRows // 从下往上
                         }
                         
                         let x = offsetX + (size + gap) * CGFloat(col)
                         let y = offsetY + (size + gap) * CGFloat(row)
                         let rect = CGRect(x: x, y: y, width: size, height: size)
-                        let path = Path(roundedRect: rect, cornerRadius: 1.0) 
+                        
+                        let path: Path
+                        if pixelShape == 2 {
+                            path = Path(ellipseIn: rect)
+                        } else if pixelShape == 1 {
+                            path = Path(rect)
+                        } else {
+                            path = Path(roundedRect: rect, cornerRadius: max(1.0, size * 0.15)) 
+                        }
 
                         if isFilled {
                             ctx.fill(path, with: .color(baseColor.opacity(0.85)))
@@ -309,6 +333,7 @@ struct UnifiedMemCard: View {
     let gpuHistory: [Double]
     let pressure: Double
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
 
     private var sysRatio: Double { totalGB > 0 ? sysUsedGB / totalGB : 0 }
     private var gpuRatio: Double { totalGB > 0 ? gpuUsedGB / totalGB : 0 }
@@ -322,34 +347,40 @@ struct UnifiedMemCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Header
-            HStack(spacing: 4) {
-                Image(systemName: "memorychip")
-                    .font(.caption.weight(.bold))
-                    .foregroundColor(pressureColor)
-                Text("统一内存")
-                    .font(.caption.weight(.bold))
-                    .foregroundColor(.primary.opacity(0.7))
-                
-                Spacer()
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 4) {
+                    Text("统一内存")
+                        .font(.caption.weight(.bold))
+                        .foregroundColor(.primary.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Text(String(format: "%.0fGB", totalGB))
+                        .font(.system(.caption, design: .rounded).monospacedDigit())
+                        .foregroundColor(pressureColor)
+                        .fontWeight(.semibold)
+                }
                 
                 // Detailed Breakdown
                 HStack(spacing: 6) {
                     HStack(spacing: 2) {
                         Circle().fill(pressureColor).frame(width: 5, height: 5)
-                        Text(String(format: "系统: %.1fGB", sysUsedGB))
+                        Text(String(format: "%.1fGB", sysUsedGB))
                             .font(.system(size: 9, design: .rounded).monospacedDigit())
                             .foregroundColor(.secondary)
+                        Text("系统")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary.opacity(0.7))
                     }
                     HStack(spacing: 2) {
                         Circle().fill(Color.teal.opacity(0.8)).frame(width: 5, height: 5)
-                        Text(String(format: "图形: %.1fGB", gpuUsedGB))
+                        Text(String(format: "%.1fGB", gpuUsedGB))
                             .font(.system(size: 9, design: .rounded).monospacedDigit())
                             .foregroundColor(.secondary)
+                        Text("图形")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary.opacity(0.7))
                     }
-                    Text(String(format: "%.0fGB", totalGB))
-                        .font(.system(.caption, design: .rounded).monospacedDigit())
-                        .foregroundColor(pressureColor)
-                        .fontWeight(.semibold)
                 }
             }
 
@@ -383,13 +414,22 @@ struct UnifiedMemCard: View {
                             let isSys = threshold < sysRatio
                             let isGpu = threshold >= sysRatio && threshold < (sysRatio + gpuRatio)
                             
-                            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
-                                .overlay(
+                            Group {
+                                if pixelShape == 2 {
+                                    Circle()
+                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
+                                        .overlay(Circle().stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                } else if pixelShape == 1 {
+                                    Rectangle()
+                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
+                                        .overlay(Rectangle().stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                } else {
                                     RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                        .stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5)
-                                )
-                                .frame(width: cellSize, height: cellSize)
+                                        .fill(isSys ? pressureColor.opacity(0.8) : (isGpu ? Color.teal.opacity(0.8) : Color.primary.opacity(0.09)))
+                                        .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(isSys ? pressureColor.opacity(0.3) : (isGpu ? Color.teal.opacity(0.3) : Color.clear), lineWidth: 0.5))
+                                }
+                            }
+                            .frame(width: cellSize, height: cellSize)
                         }
                     }
                 }
@@ -410,9 +450,14 @@ struct StackedPixelBarChartView: View {
     let topColor: Color
     let gap: CGFloat
     
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
+    @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
+    
     var body: some View {
         GeometryReader { geo in
-            let size = (geo.size.height - gap * CGFloat(max(maxRows - 1, 0))) / CGFloat(maxRows)
+            let finalRows = max(1, Int(ceil(Double(maxRows) * pixelDensity)))
+            
+            let size = (geo.size.height - gap * CGFloat(max(finalRows - 1, 0))) / CGFloat(finalRows)
             let c = Int((geo.size.width + gap) / (size + gap))
             let actualCols = max(1, c)
             
@@ -422,7 +467,7 @@ struct StackedPixelBarChartView: View {
             let tVisible = Array(repeating: 0.0, count: max(0, actualCols - tData.count)) + tData
             
             let totalW = size * CGFloat(actualCols) + gap * CGFloat(max(actualCols - 1, 0))
-            let totalH = size * CGFloat(maxRows) + gap * CGFloat(max(maxRows - 1, 0))
+            let totalH = size * CGFloat(finalRows) + gap * CGFloat(max(finalRows - 1, 0))
             let offsetX = geo.size.width - totalW
             let offsetY = (geo.size.height - totalH) / 2
             
@@ -433,17 +478,25 @@ struct StackedPixelBarChartView: View {
                     let bRatio = bVisible[col] / maxVal
                     let tRatio = tVisible[col] / maxVal
                     
-                    let bFillRows = Int(ceil(bRatio * Double(maxRows)))
-                    let tFillRows = Int(ceil(tRatio * Double(maxRows)))
+                    let bFillRows = Int(ceil(bRatio * Double(finalRows)))
+                    let tFillRows = Int(ceil(tRatio * Double(finalRows)))
                     
-                    for row in 0..<maxRows {
-                        let isBottomFilled = (maxRows - 1 - row) < bFillRows
-                        let isTopFilled = (maxRows - 1 - row) >= bFillRows && (maxRows - 1 - row) < (bFillRows + tFillRows)
+                    for row in 0..<finalRows {
+                        let isBottomFilled = (finalRows - 1 - row) < bFillRows
+                        let isTopFilled = (finalRows - 1 - row) >= bFillRows && (finalRows - 1 - row) < (bFillRows + tFillRows)
                         
                         let x = offsetX + (size + gap) * CGFloat(col)
                         let y = offsetY + (size + gap) * CGFloat(row)
                         let rect = CGRect(x: x, y: y, width: size, height: size)
-                        let path = Path(roundedRect: rect, cornerRadius: 1.0)
+                        
+                        let path: Path
+                        if pixelShape == 2 {
+                            path = Path(ellipseIn: rect)
+                        } else if pixelShape == 1 {
+                            path = Path(rect)
+                        } else {
+                            path = Path(roundedRect: rect, cornerRadius: max(1.0, size * 0.15))
+                        }
                         
                         if isBottomFilled {
                             ctx.fill(path, with: .color(bottomColor.opacity(0.85)))
@@ -698,6 +751,7 @@ struct GPUMatrixCard: View {
 
 struct GPUHeatmapView: View {
     let load: Double
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
     
     var body: some View {
         // 与内存矩阵一致，使用高度为28的3行方格阵列来填满区域并完美对齐 CPU
@@ -715,14 +769,22 @@ struct GPUHeatmapView: View {
                     let loadRatio = load // GPU Utilization
                     let isActive = loadRatio > threshold
                     
-                    RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                        // 使用 HeatCell 的渲染逻辑或自定义的主题色
-                        .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
-                        .overlay(
+                    Group {
+                        if pixelShape == 2 {
+                            Circle()
+                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
+                                .overlay(Circle().stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                        } else if pixelShape == 1 {
+                            Rectangle()
+                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
+                                .overlay(Rectangle().stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                        } else {
                             RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                .stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5)
-                        )
-                        .frame(width: cellSize, height: cellSize)
+                                .fill(isActive ? Color.indigo.opacity(0.8) : Color.primary.opacity(0.09))
+                                .overlay(RoundedRectangle(cornerRadius: 1.5, style: .continuous).stroke(isActive ? Color.indigo.opacity(0.3) : Color.clear, lineWidth: 0.5))
+                        }
+                    }
+                    .frame(width: cellSize, height: cellSize)
                 }
             }
         }
@@ -737,6 +799,8 @@ struct SystemMonitorConfigView: View {
     @AppStorage("sysMonShowNetDisk") private var showNetDisk = true
     @AppStorage("sysMonSymmetricGraph") private var symmetricGraph = false
     @AppStorage("sysMonPixelGap") private var pixelGap: Double = 1.5
+    @AppStorage("sysMonPixelShape") private var pixelShape: Int = 0
+    @AppStorage("sysMonPixelDensity") private var pixelDensity: Double = 1.0
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -761,20 +825,34 @@ struct SystemMonitorConfigView: View {
             // 右侧：偏好设置详情
             VStack(spacing: 0) {
                 Form {
-                    Section("总概与全局控制") {
-                        Toggle("模块：计算 (CPU 与 GPU)", isOn: $showCompute)
-                        Toggle("模块：统一内存", isOn: $showMemory)
-                        Toggle("模块：网络与磁盘", isOn: $showNetDisk)
+                    Section("通用设置") {
+                        Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
+                        Toggle("统一内存", isOn: $showMemory)
+                        Toggle("网络与磁盘", isOn: $showNetDisk)
+                        
+                        Picker("像素个体形态", selection: $pixelShape) {
+                            Text("圆角矩阵").tag(0)
+                            Text("锐利方块").tag(1)
+                            Text("浑圆点阵").tag(2)
+                        }
+                        .pickerStyle(.menu)
                         
                         Picker("像素阵列间距", selection: $pixelGap) {
                             Text("紧密 (1.0)").tag(1.0)
                             Text("标准 (1.5)").tag(1.5)
-                            Text("呼吸 (2.5)").tag(2.5)
+                            Text("宽松 (2.5)").tag(2.5)
                         }
                         .pickerStyle(.menu)
+                        
+                        Picker("网格致密程度", selection: $pixelDensity) {
+                            Text("稀疏 (x0.5)").tag(0.5)
+                            Text("标准 (x1.0)").tag(1.0)
+                            Text("致密 (x1.5)").tag(1.5)
+                        }
+                        .pickerStyle(.segmented)
                     }
                     
-                    Section("网络与磁盘：单独配置") {
+                    Section("网络与磁盘") {
                         Picker("走势图方向", selection: $symmetricGraph) {
                             Text("正向堆叠").tag(false)
                             Text("双向发散").tag(true)

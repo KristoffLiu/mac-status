@@ -43,29 +43,81 @@ struct CardsPowerFlowView: View {
                     let adapterV = powerFlow.adapterVoltage ?? (batteryData?.adapter?.voltage ?? 0)
                     let adapterA = powerFlow.adapterCurrent ?? (batteryData?.adapter?.current ?? 0)
                     
-                    let adapterDetails: [String] = {
-                        var details = [String(format: "实测: %.2fV %.2fA", adapterV, adapterA)]
-                        if let adapter = batteryData?.adapter {
-                            details.append("峰值: \(adapter.designWatts)W")
-                            if let pd = adapter.activeProfile {
-                                let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
-                                let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
-                                details.append("协议: \(vStr)V/\(cStr)A")
-                            }
-                            if let mfg = adapter.manufacturer, !mfg.isEmpty {
-                                details.append("厂商: \(mfg)")
-                            }
-                            details.append("FmCode: \(adapter.familyCode)")
-                        }
-                        return details
-                    }()
-                    
                     card(icon: "powerplug.fill", 
                          title: adapterName, 
                          power: powerFlow.adapterPower, 
-                         color: !powerFlow.isDischarging ? .blue : .secondary.opacity(0.5), 
-                         details: adapterDetails)
-                        .offset(x: isExpanded ? -168 : -98)
+                         color: !powerFlow.isDischarging ? .blue : .secondary.opacity(0.5)) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            if let adapter = batteryData?.adapter {
+                                if let mfg = adapter.manufacturer, !mfg.isEmpty {
+                                    let isApple = mfg.localizedCaseInsensitiveContains("apple")
+                                    Text(isApple ? "Apple 官方" : mfg)
+                                        .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                                        .foregroundColor(isApple ? .blue : .primary.opacity(0.6))
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
+                                        .background(isApple ? Color.blue.opacity(0.12) : Color.primary.opacity(0.06))
+                                        .cornerRadius(4)
+                                        .padding(.bottom, 2)
+                                }
+                                
+                                HStack(spacing: 4) {
+                                    Text(String(format: "%.2fV", adapterV))
+                                    Text("•").foregroundColor(.secondary.opacity(0.5))
+                                    Text(String(format: "%.2fA", adapterA))
+                                }
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.primary.opacity(0.85))
+                                .padding(.bottom, 1)
+                                
+                                Text("峰值: \(adapter.designWatts)W")
+                                    .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                
+                                
+                                if let active = adapter.activeProfile, !adapter.profiles.isEmpty {
+                                    var items = [active]
+                                    for p in adapter.profiles.sorted(by: { $0.maxWatts > $1.maxWatts }) {
+                                        if p.maxVoltage != active.maxVoltage || p.maxCurrent != active.maxCurrent {
+                                            items.append(p)
+                                        }
+                                    }
+                                    let profilesText = items.map { pd -> String in
+                                        let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
+                                        let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
+                                        return "\(vStr)V/\(cStr)A"
+                                    }.joined(separator: "，")
+                                    
+                                    Text("档位: \(profilesText)")
+                                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                } else if let pd = adapter.activeProfile {
+                                    let vStr = pd.maxVoltage.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxVoltage) : String(format: "%.1f", pd.maxVoltage)
+                                    let cStr = pd.maxCurrent.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", pd.maxCurrent) : String(format: "%.2f", pd.maxCurrent)
+                                    Text("档位: \(vStr)V/\(cStr)A")
+                                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                }
+                                
+                                Text("FmCode: \(adapter.familyCode)")
+                                    .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                            } else {
+                                HStack(spacing: 4) {
+                                    Text(String(format: "%.2fV", adapterV))
+                                    Text("•").foregroundColor(.secondary.opacity(0.5))
+                                    Text(String(format: "%.2fA", adapterA))
+                                }
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.primary.opacity(0.85))
+                            }
+                        }
+                    }
+                        .offset(x: isExpanded ? -168 : -114)
                         .zIndex(3)
                         .id(1)
                         .onTapGesture { handleTap(1) }
@@ -75,15 +127,26 @@ struct CardsPowerFlowView: View {
                     card(icon: "battery.100.bolt",
                          title: "电池输出",
                          power: powerFlow.batteryPower,
-                         color: .blue, // Act as the main source, blue indicates standard power flow
-                         details: [
-                            "\(batteryData?.currentCapacity ?? 0)% 余量",
-                            String(format: "实测: %.1fV %.2fA", batV, abs(batA)),
-                            "满充: \(batteryData?.maxCapacity ?? 0) mAh",
-                            "循环: \(batteryData?.cycleCount ?? 0) 次",
-                            String(format: "温度: %.1f°C", batteryData?.temperature ?? 0)
-                         ])
-                        .offset(x: isExpanded ? -168 : -98)
+                         color: .blue) {
+                         VStack(alignment: .leading, spacing: 3) {
+                             HStack(spacing: 4) {
+                                 Text(String(format: "%.1fV", batV))
+                                 Text("•").foregroundColor(.secondary.opacity(0.5))
+                                 Text(String(format: "%.2fA", abs(batA)))
+                             }
+                             .font(.system(size: 10, weight: .bold, design: .monospaced))
+                             .foregroundColor(.primary.opacity(0.85))
+                             .padding(.bottom, 1)
+
+                             Text("\(batteryData?.currentCapacity ?? 0)% 余量")
+                             Text("满充: \(batteryData?.maxCapacity ?? 0) mAh")
+                             Text("循环: \(batteryData?.cycleCount ?? 0) 次")
+                             Text(String(format: "温度: %.1f°C", batteryData?.temperature ?? 0))
+                         }
+                         .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                         .foregroundColor(.secondary.opacity(0.8))
+                    }
+                        .offset(x: isExpanded ? -168 : -114)
                         .zIndex(3)
                         .id(1)
                         .onTapGesture { handleTap(1) }
@@ -97,20 +160,20 @@ struct CardsPowerFlowView: View {
                 }
                 
                 // Card 2: System Card
-                let systemDetails: [String] = {
-                    var details: [String] = []
-                    if let core = powerFlow.coreWatts { details.append(String(format: "核心: %.1fW", core)) }
-                    if let peri = powerFlow.peripheralWatts { details.append(String(format: "外设: %.1fW", peri)) }
-                    if let topApp = powerFlow.topAppName, let appW = powerFlow.topAppWatts {
-                        details.append(String(format: "前台: %.1fW (%@)", appW, String(topApp.prefix(8))))
-                    }
-                    return details
-                }()
                 card(icon: "laptopcomputer", 
                      title: "系统", 
                      power: powerFlow.systemPower, 
-                     color: .primary, 
-                     details: systemDetails)
+                     color: .primary) {
+                     VStack(alignment: .leading, spacing: 3) {
+                         if let core = powerFlow.coreWatts { Text(String(format: "核心: %.1fW", core)) }
+                         if let peri = powerFlow.peripheralWatts { Text(String(format: "外设: %.1fW", peri)) }
+                         if let topApp = powerFlow.topAppName, let appW = powerFlow.topAppWatts {
+                             Text(String(format: "前台: %.1fW (%@)", appW, String(topApp.prefix(8))))
+                         }
+                     }
+                     .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                     .foregroundColor(.secondary.opacity(0.8))
+                }
                     .offset(x: 0)
                     .zIndex(2)
                     .id(2)
@@ -134,15 +197,26 @@ struct CardsPowerFlowView: View {
                     card(icon: powerFlow.isCharging ? "battery.100.bolt" : "battery.100", 
                          title: "电池", 
                          power: batPowerValue,
-                         color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary),
-                         details: [
-                            "\(batteryData?.currentCapacity ?? 0)% 余量",
-                            String(format: "%.1fV %.2fA", batV, abs(batA)),
-                            "满充: \(batteryData?.maxCapacity ?? 0) mAh",
-                            "循环: \(batteryData?.cycleCount ?? 0) 次",
-                            String(format: "温度: %.1f°C", batteryData?.temperature ?? 0)
-                         ])
-                        .offset(x: isExpanded ? 168 : 98)
+                         color: powerFlow.isDischarging ? .blue : (powerFlow.isCharging ? .green : .secondary)) {
+                         VStack(alignment: .leading, spacing: 3) {
+                             HStack(spacing: 4) {
+                                 Text(String(format: "%.1fV", batV))
+                                 Text("•").foregroundColor(.secondary.opacity(0.5))
+                                 Text(String(format: "%.2fA", abs(batA)))
+                             }
+                             .font(.system(size: 10, weight: .bold, design: .monospaced))
+                             .foregroundColor(.primary.opacity(0.85))
+                             .padding(.bottom, 1)
+
+                             Text("\(batteryData?.currentCapacity ?? 0)% 余量")
+                             Text("满充: \(batteryData?.maxCapacity ?? 0) mAh")
+                             Text("循环: \(batteryData?.cycleCount ?? 0) 次")
+                             Text(String(format: "温度: %.1f°C", batteryData?.temperature ?? 0))
+                         }
+                         .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                         .foregroundColor(.secondary.opacity(0.8))
+                    }
+                        .offset(x: isExpanded ? 168 : 114)
                         .zIndex(1)
                         .id(3)
                         .onTapGesture { handleTap(3) }
@@ -157,21 +231,21 @@ struct CardsPowerFlowView: View {
                         guard isExpanded else { return }
                         let hasAdapter = powerFlow.adapterPower > 2
                         let proposedOffset = savedOffset + value.translation.width
-                        let minBound: CGFloat = hasAdapter ? -70 : 0
-                        dragOffset = min(max(proposedOffset, minBound), 70)
+                        let minBound: CGFloat = hasAdapter ? -54 : 0
+                        dragOffset = min(max(proposedOffset, minBound), 54)
                     }
                     .onEnded { value in
                         guard isExpanded else { return }
                         let hasAdapter = powerFlow.adapterPower > 2
-                        let minBound: CGFloat = hasAdapter ? -70 : 0
+                        let minBound: CGFloat = hasAdapter ? -54 : 0
                         let finalOffset = dragOffset
                         let targetOffset: CGFloat
-                        if finalOffset > 35 { targetOffset = 70; focusedCard = 1 }
-                        else if finalOffset < -35 && hasAdapter { targetOffset = -70; focusedCard = 3 }
+                        if finalOffset > 27 { targetOffset = 54; focusedCard = 1 }
+                        else if finalOffset < -27 && hasAdapter { targetOffset = -54; focusedCard = 3 }
                         else { targetOffset = 0; focusedCard = 2 }
                         
                         // Fallback logic incase state changes radically
-                        let safeTarget = min(max(targetOffset, minBound), 70)
+                        let safeTarget = min(max(targetOffset, minBound), 54)
                         
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                             dragOffset = safeTarget
@@ -207,9 +281,9 @@ struct CardsPowerFlowView: View {
                 focusedCard = id
                 
                 let targetOffset: CGFloat
-                if id == 1 { targetOffset = 70 }
+                if id == 1 { targetOffset = 54 }
                 else if id == 2 { targetOffset = 0 }
-                else if id == 3 && hasAdapter { targetOffset = -70 }
+                else if id == 3 && hasAdapter { targetOffset = -54 }
                 else { targetOffset = 0 }
                 
                 dragOffset = targetOffset
@@ -218,7 +292,7 @@ struct CardsPowerFlowView: View {
         }
     }
 
-    private func card(icon: String, title: String, power: Double?, color: Color, details: [String]) -> some View {
+    private func card<Details: View>(icon: String, title: String, power: Double?, color: Color, @ViewBuilder details: () -> Details) -> some View {
         ZStack(alignment: .topTrailing) {
             VStack(alignment: .leading, spacing: 2) {
                 // Top row layout
@@ -259,18 +333,8 @@ struct CardsPowerFlowView: View {
                     .padding(.top, 4)
                 
                 // Details List
-                if !details.isEmpty {
-                    VStack(alignment: .leading, spacing: 3) {
-                        ForEach(details.indices, id: \.self) { i in
-                            Text(details[i])
-                                .font(.system(size: 9.5, weight: .medium, design: .monospaced))
-                                .foregroundColor(.secondary.opacity(0.8))
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                        }
-                    }
+                details()
                     .padding(.top, 4)
-                }
                 
                 Spacer(minLength: 0)
             }
@@ -284,8 +348,8 @@ struct CardsPowerFlowView: View {
                 .background((color == .secondary ? Color.primary : color).opacity(0.1))
                 .clipShape(Circle())
         }
-        .padding(14)
-        .frame(width: 148, height: 160)
+        .padding(12)
+        .frame(width: 148, height: 160, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -294,16 +358,22 @@ struct CardsPowerFlowView: View {
     }
     
     private var statusText: String {
+        let hasAdapter = powerFlow.adapterPower > 2
+        if hasAdapter && powerFlow.isDischarging { return "混合供电" }
         if powerFlow.isCharging { return "电池充电" }
         if powerFlow.isDischarging { return "电池供电" }
-        if powerFlow.adapterPower > 2 { return "旁路供电" }
+        if hasAdapter { return "旁路供电" }
         return "电池闲置"
     }
     
     private var adapterName: String {
         let name = batteryData?.adapter?.name ?? "pd charger"
-        if name.lowercased() == "pd charger" {
-            return "pd charger"
+        if name.lowercased() == "pd charger" || name.lowercased() == "未知设备" {
+            let watts = batteryData?.adapter?.designWatts ?? Int(powerFlow.adapterPower)
+            if watts > 0 {
+                return "通用 \(watts)W PD 充电器"
+            }
+            return "通用 PD 充电器"
         }
         return name
     }

@@ -188,7 +188,7 @@ struct PowerFlowConfigView: View {
                 
                 // 4. 桑基图设置
                 if style == .sankey {
-                    Section("桑基图微调") {
+                    Section("管线外观") {
                         HStack(alignment: .top) {
                             Text("管线风格")
                                 .padding(.top, 6)
