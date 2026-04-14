@@ -76,33 +76,43 @@ public class SMCService {
         return value
     }
     
+    private var keyInfoCache: [UInt32: SMCParamStruct] = [:]
+    
     public func readFloat(key: String) -> Double? {
         guard conn != 0 else {
             print("SMCService: Connection is 0!")
             return nil
         }
         
-        var inKey = SMCParamStruct()
-        inKey.key = fourCharToInt(key)
-        inKey.data8 = 9 // kSMCGetKeyInfo
-        var outKey = inKey
+        let keyNumeric = fourCharToInt(key)
         var size = MemoryLayout<SMCParamStruct>.size
+        var res: kern_return_t
+        var outKey: SMCParamStruct
         
-        var res = IOConnectCallStructMethod(conn, 2, &inKey, size, &outKey, &size)
-        if res != kIOReturnSuccess || outKey.kIDataSize == 0 {
-            print("SMCService: GetKeyInfo failed for \(key) with result \(res), dataSize \(outKey.kIDataSize), structSize \(size)")
-            return nil
+        if let cachedInfo = keyInfoCache[keyNumeric] {
+            outKey = cachedInfo
+        } else {
+            var inKey = SMCParamStruct()
+            inKey.key = keyNumeric
+            inKey.data8 = 9 // kSMCGetKeyInfo
+            outKey = inKey
+            
+            res = IOConnectCallStructMethod(conn, 2, &inKey, size, &outKey, &size)
+            if res != kIOReturnSuccess || outKey.kIDataSize == 0 {
+                // Not ideal to print all the time if keys don't exist (e.g. TC0P on some Macs)
+                return nil
+            }
+            keyInfoCache[keyNumeric] = outKey
         }
         
         var inVal = SMCParamStruct()
-        inVal.key = fourCharToInt(key)
+        inVal.key = keyNumeric
         inVal.kIDataSize = outKey.kIDataSize
         inVal.data8 = 5 // kSMCReadKey
         var outVal = inVal
         
         res = IOConnectCallStructMethod(conn, 2, &inVal, size, &outVal, &size)
         if res != kIOReturnSuccess {
-            print("SMCService: ReadKey failed for \(key) with result \(res)")
             return nil
         }
         
@@ -111,7 +121,6 @@ public class SMCService {
         let arr: [UInt8] = [b.0, b.1, b.2, b.3]
         let floatVal = arr.withUnsafeBytes { $0.load(as: Float.self) }
         
-        print("SMCService: Read \(key) -> \(floatVal)W")
         return Double(floatVal)
     }
     

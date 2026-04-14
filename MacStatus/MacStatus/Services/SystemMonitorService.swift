@@ -61,6 +61,9 @@ class SystemMonitorService: ObservableObject {
 
     private let numLogicalCPUs: Int
 
+    private var cachedGPUServices: [io_registry_entry_t] = []
+    private var cachedDiskServices: [io_registry_entry_t] = []
+
     init() {
         numLogicalCPUs = ProcessInfo.processInfo.processorCount
         coreLoads = Array(repeating: 0.0, count: numLogicalCPUs)
@@ -90,6 +93,29 @@ class SystemMonitorService: ObservableObject {
         EnergyEfficiencyManager.shared.tickPublisher
             .sink { [weak self] _ in self?.refresh() }
             .store(in: &cancellables)
+            
+        // Pre-cache hardware registry descriptors for constant-time lookups (huge CPU saver)
+        let gpuMatching = IOServiceMatching("IOAccelerator")
+        var gpuIter: io_iterator_t = 0
+        if IOServiceGetMatchingServices(kIOMainPortDefault, gpuMatching, &gpuIter) == KERN_SUCCESS {
+            var service = IOIteratorNext(gpuIter)
+            while service != 0 {
+                cachedGPUServices.append(service)
+                service = IOIteratorNext(gpuIter)
+            }
+            IOObjectRelease(gpuIter)
+        }
+
+        let diskMatching = IOServiceMatching("IOBlockStorageDriver")
+        var diskIter: io_iterator_t = 0
+        if IOServiceGetMatchingServices(kIOMainPortDefault, diskMatching, &diskIter) == KERN_SUCCESS {
+            var service = IOIteratorNext(diskIter)
+            while service != 0 {
+                cachedDiskServices.append(service)
+                service = IOIteratorNext(diskIter)
+            }
+            IOObjectRelease(diskIter)
+        }
     }
 
     deinit {
@@ -98,6 +124,8 @@ class SystemMonitorService: ObservableObject {
                           vm_address_t(bitPattern: prev),
                           vm_size_t(Int(prevCpuInfoCount) * MemoryLayout<integer_t>.size))
         }
+        for service in cachedGPUServices { IOObjectRelease(service) }
+        for service in cachedDiskServices { IOObjectRelease(service) }
     }
 
     private func refresh() {
@@ -112,6 +140,8 @@ class SystemMonitorService: ObservableObject {
             let gpu   = self.collectGPU()
             let temp  = SMCService.shared.readFloat(key: "Tp09") ?? SMCService.shared.readFloat(key: "TC0P") ?? 0.0
             DispatchQueue.main.async {
+                self.objectWillChange.send()
+                
                 self.coreLoads  = cpu.cores
                 self.cpuTotal   = cpu.total
                 self.cpuUser    = cpu.user
@@ -291,18 +321,9 @@ class SystemMonitorService: ObservableObject {
     private struct DiskResult { var read: Double; var write: Double }
 
     private func collectDisk() -> DiskResult {
-        let matching = IOServiceMatching("IOBlockStorageDriver")
-        var iter: io_iterator_t = 0
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS else {
-            return DiskResult(read: 0, write: 0)
-        }
-        defer { IOObjectRelease(iter) }
-
         var totalRead: UInt64 = 0; var totalWrite: UInt64 = 0
-        var service = IOIteratorNext(iter)
-        while service != 0 {
-            defer { IOObjectRelease(service); service = IOIteratorNext(iter) }
-
+        
+        for service in cachedDiskServices {
             var props: Unmanaged<CFMutableDictionary>?
             IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
             if let dict = props?.takeRetainedValue() as? [String: Any],
@@ -327,20 +348,10 @@ class SystemMonitorService: ObservableObject {
     private struct GPUResult { var utilization: Double; var memUsedBytes: UInt64 }
 
     private func collectGPU() -> GPUResult {
-        let matching = IOServiceMatching("IOAccelerator")
-        var iter: io_iterator_t = 0
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS else {
-            return GPUResult(utilization: 0, memUsedBytes: 0)
-        }
-        defer { IOObjectRelease(iter) }
-
-        var service = IOIteratorNext(iter)
         var util: Double = 0
         var memBytes: UInt64 = 0
 
-        while service != 0 {
-            defer { IOObjectRelease(service); service = IOIteratorNext(iter) }
-            
+        for service in cachedGPUServices {
             var props: Unmanaged<CFMutableDictionary>?
             IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
             if let dict = props?.takeRetainedValue() as? [String: Any],
