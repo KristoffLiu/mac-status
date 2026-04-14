@@ -222,37 +222,38 @@ struct MacBook3DView: View {
             MacBookKeyboardBase()
             .zIndex(2) // Lip is always conceptually closer to the viewer
             
-            // Hovering Info Pill when Closed
+            // Hovering Info HUD when Closed
             if !isOpen {
-                HStack(spacing: 8) {
-                    // Battery
-                    HStack(spacing: 2) {
-                        Image(systemName: isCharging ? "bolt.fill" : "battery.100")
-                            .font(.system(size: 7))
-                            .foregroundColor(isCharging ? .green : .primary)
-                        Text("\(batteryLevel)%")
+                VStack(spacing: 0) {
+                    // Huge Battery Percentage
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        if isCharging {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.green)
+                        }
+                        Text("\(batteryLevel)")
+                            .font(.system(size: 42, weight: .heavy, design: .rounded))
+                        Text("%")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.secondary)
                     }
                     
-                    // CPU Power
-                    HStack(spacing: 2) {
+                    // Elegantly understated CPU Power
+                    HStack(spacing: 4) {
                         Image(systemName: "cpu")
-                            .font(.system(size: 7))
-                        Text("\(Int(systemPower))W")
+                        Text("System \(Int(systemPower)) W")
                     }
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundColor(.cyan)
                 }
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule()
-                        .fill(Color(NSColor.controlBackgroundColor).opacity(0.8))
-                        .overlay(Capsule().stroke(Color(NSColor.separatorColor), lineWidth: 0.5))
-                        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
-                )
-                .offset(y: -16) // visually hover above the closed flat chassis
-                .zIndex(3)
-                .transition(.scale(scale: 0.8, anchor: .bottom).combined(with: .opacity))
+                .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0) // diffuse glow for text contrast
+                .offset(y: -40) // lowered slightly
+                .zIndex(0) // Pushed BEHIND the screen lid (zIndex 1) to prevent clipping overflow when opening/closing
+                .transition(.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.4).delay(0.15)),
+                    removal: .opacity.animation(.easeIn(duration: 0.2)) // fast fade out behind the rising screen
+                ))
             }
         }
         .onTapGesture {
@@ -275,15 +276,41 @@ struct MacBook3DView: View {
     }
 }
 
+// MARK: - Mac Colors
+
+struct TwinMacColor {
+    static func lidColors(for color: String) -> [Color] {
+        switch color {
+        case "spaceGray": return [Color(white: 0.55), Color(white: 0.35)]
+        case "midnight": return [Color(red: 0.22, green: 0.23, blue: 0.28), Color(red: 0.12, green: 0.13, blue: 0.18)]
+        case "starlight": return [Color(red: 0.85, green: 0.82, blue: 0.76), Color(red: 0.65, green: 0.62, blue: 0.56)]
+        case "silver": fallthrough
+        default: return [Color(white: 0.7), Color(white: 0.5)]
+        }
+    }
+    
+    static func baseColors(for color: String) -> [Color] {
+        switch color {
+        case "spaceGray": return [Color(white: 0.65), Color(white: 0.40)]
+        case "midnight": return [Color(red: 0.25, green: 0.26, blue: 0.31), Color(red: 0.15, green: 0.16, blue: 0.21)]
+        case "starlight": return [Color(red: 0.90, green: 0.88, blue: 0.82), Color(red: 0.68, green: 0.65, blue: 0.59)]
+        case "silver": fallthrough
+        default: return [Color(white: 0.88), Color(white: 0.55)]
+        }
+    }
+}
+
 // 底座实体 (完美恢复：纯正优雅的 2D 矢量边框！绝佳的前侧质感，无厚度拉伸)
 struct MacBookKeyboardBase: View {
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    
     var body: some View {
         ZStack(alignment: .top) {
             // Main Front Lip (Smooth metal finish)
             RoundedRectangle(cornerRadius: 3.0, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.88), Color(white: 0.55)],
+                        colors: TwinMacColor.baseColors(for: twinMacColor),
                         startPoint: .top, endPoint: .bottom
                     )
                 )
@@ -313,13 +340,15 @@ struct MacBookScreenLid: View {
     var isCharging: Bool
     var isOpen: Bool
     
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    
     var body: some View {
         ZStack {
             // A Plane (Lid Back) - Metal - Sharper corners
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.7), Color(white: 0.5)],
+                        colors: TwinMacColor.lidColors(for: twinMacColor),
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )

@@ -61,6 +61,8 @@ struct PowerFlowConfigView: View {
     @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
+    @AppStorage("twinCableStyle") private var twinCableStyle: String = "p"
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
     @Environment(\.dismiss) var dismiss
     
@@ -165,6 +167,18 @@ struct PowerFlowConfigView: View {
                 } else if style == .twin {
                     Section("数字孪生微调") {
                         Toggle("播放流动动画", isOn: $isTwinAnimated)
+                        
+                        Picker("理线风格", selection: $twinCableStyle) {
+                            Text("随性自然 (P人)").tag("p")
+                            Text("横平竖直 (J人)").tag("j")
+                        }
+                        
+                        Picker("Mac 外观", selection: $twinMacColor) {
+                            Text("银色").tag("silver")
+                            Text("深空灰").tag("spaceGray")
+                            Text("午夜色").tag("midnight")
+                            Text("星光色").tag("starlight")
+                        }
                     }
                 }
             }

@@ -137,6 +137,7 @@ struct SankeyPowerFlowView: View {
                         .zIndex(1)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
