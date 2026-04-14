@@ -202,6 +202,8 @@ struct MacDeviceSystem3D: View {
             MacMini3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
         case "studio":
             MacStudio3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
+        case "imac":
+            iMac3DView(systemPower: systemPower, batteryLevel: batteryLevel, isCharging: isCharging)
         default:
             MacBook3DView(
                 systemPower: systemPower,
@@ -236,30 +238,51 @@ struct MacMini3DView: View {
                 .foregroundColor(.cyan)
             }
             .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0)
-            .offset(y: -50)
+            .offset(y: -80)
             .zIndex(1)
             
-            // Mac Mini Body
-            VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 10.0, style: .continuous)
-                    .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 140, height: 16)
-                    .overlay(
-                        // Power LED Indicator
-                        Circle().fill(Color.white).frame(width: 1.5, height: 1.5)
-                            .shadow(color: .white, radius: 2)
-                            .padding(.trailing, 16).padding(.bottom, 4), alignment: .bottomTrailing
-                    )
-                // Black hovering base intake
-                RoundedRectangle(cornerRadius: 8.0, style: .continuous)
-                    .fill(Color(white: 0.1))
-                    .frame(width: 130, height: 3)
+            // M4 Mac Mini Base Vent
+            Path { path in
+                path.move(to: CGPoint(x: 10, y: 0))
+                path.addLine(to: CGPoint(x: 90, y: 0))
+                path.addLine(to: CGPoint(x: 82, y: 8))
+                path.addLine(to: CGPoint(x: 18, y: 8))
             }
-            .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+            .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
+            .frame(width: 100, height: 8)
+            .offset(y: 8)
+            .zIndex(1)
+            
+            // Mac Mini M4 Body
+            VStack(spacing: 0) {
+                Rectangle()
+                    .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 110, height: 50)
+                    .overlay(
+                        // Front IO (2 Type-C, LED, Headphone)
+                        HStack(spacing: 0) {
+                            HStack(spacing: 12) {
+                                Capsule().fill(Color(white: 0.15)).frame(width: 4, height: 12)
+                                Capsule().fill(Color(white: 0.15)).frame(width: 4, height: 12)
+                            }
+                            .padding(.leading, 20)
+                            
+                            Spacer()
+                            
+                            HStack(alignment: .center, spacing: 10) {
+                                Circle().fill(Color.white).frame(width: 1.5, height: 1.5).shadow(color: .white, radius: 2)
+                                Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
+                            }
+                            .padding(.trailing, 20)
+                        }
+                        .padding(.bottom, 12), alignment: .bottom
+                    )
+            }
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
             .zIndex(2)
         }
         .background(
-            Ellipse().fill(Color.black.opacity(0.15)).frame(width: 140, height: 20).offset(y: 45).blur(radius: 6)
+            Ellipse().fill(Color.black.opacity(0.2)).frame(width: 130, height: 20).offset(y: 40).blur(radius: 6)
         )
         .offset(y: -10)
     }
@@ -325,6 +348,74 @@ struct MacStudio3DView: View {
             Ellipse().fill(Color.black.opacity(0.25)).frame(width: 140, height: 30).offset(y: 50).blur(radius: 8)
         )
         .offset(y: -10)
+    }
+}
+
+// MARK: - iMac 3D View
+struct iMac3DView: View {
+    var systemPower: Double
+    var batteryLevel: Int
+    var isCharging: Bool
+    
+    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // iMac stand (behind the screen)
+            Path { path in
+                path.move(to: CGPoint(x: 75, y: 0))
+                path.addLine(to: CGPoint(x: 95, y: 0))
+                path.addLine(to: CGPoint(x: 105, y: 40))
+                path.addLine(to: CGPoint(x: 65, y: 40))
+            }
+            .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .top, endPoint: .bottom))
+            .frame(width: 170, height: 40)
+            .shadow(color: .black.opacity(0.15), radius: 2)
+            .offset(y: 35)
+            
+            // Screen & Chin unibody
+            VStack(spacing: 0) {
+                // Screen (White bezels with dark screen inside)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white)
+                        .frame(width: 170, height: 100)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(white: 0.05)) // Screen glass
+                        .frame(width: 160, height: 90)
+                        
+                    // Data inside screen
+                    VStack(spacing: 4) {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            if isCharging { Image(systemName: "bolt.fill").font(.system(size: 14)).foregroundColor(.green) }
+                            Text("\(batteryLevel)").font(.system(size: 32, weight: .heavy, design: .rounded))
+                            Text("%").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white.opacity(0.7))
+                        }
+                        HStack(spacing: 4) { Image(systemName: "cpu"); Text("System \(Int(systemPower)) W") }
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.cyan)
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                // iMac Chin
+                Rectangle()
+                    .fill(LinearGradient(colors: TwinMacColor.lidColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 170, height: 35)
+                    .clipShape(
+                        .rect(
+                            topLeadingRadius: 0,
+                            bottomLeadingRadius: 12,
+                            bottomTrailingRadius: 12,
+                            topTrailingRadius: 0
+                        )
+                    )
+            }
+            .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 4)
+            .zIndex(2)
+        }
+        .offset(y: -25)
     }
 }
 
@@ -435,6 +526,12 @@ struct TwinMacColor {
         case "peachPink": return [Color(red: 0.95, green: 0.81, blue: 0.83), Color(red: 0.86, green: 0.69, blue: 0.72)]
         case "citrusYellow": return [Color(red: 0.92, green: 0.86, blue: 0.50), Color(red: 0.82, green: 0.75, blue: 0.40)]
         case "indigoBlue": return [Color(red: 0.40, green: 0.45, blue: 0.55), Color(red: 0.25, green: 0.30, blue: 0.40)]
+        case "blue": return [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
+        case "green": return [Color.green.opacity(0.8), Color.green.opacity(0.6)]
+        case "pink": return [Color.pink.opacity(0.8), Color.pink.opacity(0.6)]
+        case "yellow": return [Color.yellow.opacity(0.8), Color.yellow.opacity(0.6)]
+        case "orange": return [Color.orange.opacity(0.8), Color.orange.opacity(0.6)]
+        case "purple": return [Color.purple.opacity(0.8), Color.purple.opacity(0.6)]
         case "silver": fallthrough
         default: return [Color(white: 0.7), Color(white: 0.5)]
         }
@@ -448,6 +545,12 @@ struct TwinMacColor {
         case "peachPink": return [Color(red: 0.90, green: 0.78, blue: 0.80), Color(red: 0.80, green: 0.65, blue: 0.68)]
         case "citrusYellow": return [Color(red: 0.88, green: 0.82, blue: 0.45), Color(red: 0.78, green: 0.70, blue: 0.35)]
         case "indigoBlue": return [Color(red: 0.45, green: 0.50, blue: 0.60), Color(red: 0.30, green: 0.35, blue: 0.45)]
+        case "blue": return [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
+        case "green": return [Color.green.opacity(0.8), Color.green.opacity(0.6)]
+        case "pink": return [Color.pink.opacity(0.8), Color.pink.opacity(0.6)]
+        case "yellow": return [Color.yellow.opacity(0.8), Color.yellow.opacity(0.6)]
+        case "orange": return [Color.orange.opacity(0.8), Color.orange.opacity(0.6)]
+        case "purple": return [Color.purple.opacity(0.8), Color.purple.opacity(0.6)]
         case "silver": fallthrough
         default: return [Color(white: 0.88), Color(white: 0.55)]
         }
@@ -658,7 +761,12 @@ struct EnergyWire3D: View {
             let start = CGPoint(x: 2, y: geometry.size.height / 2) // Adapter Type-C
             
             // Adjust port location based on device height
-            let portYOffset: CGFloat = deviceType == "mini" ? 36 : (deviceType == "studio" ? 22 : 43)
+            let portYOffset: CGFloat = {
+                if deviceType == "mini" { return 25 } // M4 mini is higher up
+                if deviceType == "studio" { return 22 }
+                if deviceType == "imac" { return 35 } // Back of iMac stand area
+                return 43
+            }()
             let end = CGPoint(x: geometry.size.width + 1 + (deviceType == "neo" ? -10 : 0), y: geometry.size.height / 2 + portYOffset)
             
             // To ensure the connection enters perfectly straight at the ends AND coils in the middle:

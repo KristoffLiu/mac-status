@@ -7,6 +7,16 @@ struct SankeyPowerFlowView: View {
     @AppStorage("powerFlowThreeStage") private var isThreeStage = false
     
     var body: some View {
+        let appW = powerFlow.topAppWatts ?? 0
+        let coreW = powerFlow.coreWatts ?? 0
+        let periW = powerFlow.peripheralWatts ?? 0
+        let totalSinks = max(appW + coreW + periW, 0.1)
+        let elementsCount = (appW > 0.1 ? 1 : 0) + (coreW > 0.1 ? 1 : 0) + (periW > 0.1 ? 1 : 0)
+        let sinksHeight = elementsCount > 0 ? ((appW > 0.1 ? 35.0 + 35.0 * (appW/totalSinks) : 0) + 
+                       (coreW > 0.1 ? 35.0 + 35.0 * (coreW/totalSinks) : 0) + 
+                       (periW > 0.1 ? 35.0 + 35.0 * (periW/totalSinks) : 0) +
+                       CGFloat(elementsCount - 1) * 12.0) : 0.0
+
         VStack(spacing: 12) {
             
             HStack(spacing: -12) {
@@ -40,7 +50,8 @@ struct SankeyPowerFlowView: View {
                                 endColor: .gray.opacity(0.2),
                                 isSubFlow: false,
                                 mergeMode: (powerFlow.batteryPower > 0.1) ? .topMerge : .none,
-                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil
+                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil,
+                                parentHeight: topHeight
                             )
                             .zIndex(0)
                             
@@ -57,19 +68,18 @@ struct SankeyPowerFlowView: View {
                         // Battery Path
                         if batChargeWatts > 0.1 {
                             let botHeight = 35.0 + 35.0 * batFraction
+                            let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
+                            let H_total = actualTopH + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
+                            
                             HStack(alignment: .bottom, spacing: -12) {
-                                let topThick = max(12.0, CGFloat(sysFraction) * 40.0)
-                                let botThick = max(12.0, CGFloat(batFraction) * 40.0)
-                                let globalConvergence = topHeight + 6.0
-                                
                                 ThickFlowBlock(
                                     watts: powerFlow.batteryPower,
                                     fraction: min(batFraction, 1.0),
                                     startColor: .yellow.opacity(0.8),
                                     endColor: .green,
                                     isSubFlow: true,
-                                    mergeMode: .bottomMerge,
-                                    localConvergenceY: globalConvergence - (topHeight + 12.0)
+                                    parentHeight: botHeight,
+                                    explicitLeftYRange: [H_total * sysFraction - (actualTopH + 12.0), botHeight]
                                 )
                                 .zIndex(0)
                                 
@@ -92,7 +102,13 @@ struct SankeyPowerFlowView: View {
                             
                             let topHeight = 35.0 + 35.0 * adFraction
                             let botHeight = 35.0 + 35.0 * batFraction
-                            let globalConvergence = topHeight + 6.0
+                            
+                            let H_total_left = topHeight + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
+                            let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0
+                            let global_H = max(H_total_left, actualRightH)
+                            
+                            let leftOffsetY = (global_H - H_total_left) / 2.0
+                            let rightOffsetY = (global_H - actualRightH) / 2.0
                             
                             HStack(alignment: .top, spacing: -12) {
                                 NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
@@ -103,8 +119,8 @@ struct SankeyPowerFlowView: View {
                                     startColor: .yellow.opacity(0.8),
                                     endColor: .gray.opacity(0.2),
                                     isSubFlow: false,
-                                    mergeMode: .rightTopMerge,
-                                    localConvergenceY: globalConvergence
+                                    parentHeight: topHeight,
+                                    explicitRightYRange: [rightOffsetY - leftOffsetY, rightOffsetY + actualRightH * adFraction - leftOffsetY]
                                 ).zIndex(0)
                             }.frame(height: topHeight)
                             
@@ -117,8 +133,8 @@ struct SankeyPowerFlowView: View {
                                     startColor: .blue,
                                     endColor: .gray.opacity(0.2),
                                     isSubFlow: true,
-                                    mergeMode: .rightBottomMerge,
-                                    localConvergenceY: globalConvergence - (topHeight + 12.0)
+                                    parentHeight: botHeight,
+                                    explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + 12.0), rightOffsetY + actualRightH - (leftOffsetY + topHeight + 12.0)]
                                 ).zIndex(0)
                             }.frame(height: botHeight)
                         } else {
@@ -203,6 +219,9 @@ struct ThickFlowBlock: View {
     var rightConnectHeight: CGFloat? = nil
     var mergeMode: FlowMergeMode = .none
     var localConvergenceY: CGFloat? = nil
+    var parentHeight: CGFloat? = nil
+    var explicitLeftYRange: [CGFloat]? = nil
+    var explicitRightYRange: [CGFloat]? = nil
     
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
     @AppStorage("powerFlowSankeyShowValues") private var showValues = true
@@ -210,28 +229,28 @@ struct ThickFlowBlock: View {
     
     @State private var phase = 0.0
     
-    // True Sankey logic: thickness is proportional to its fraction of total power globally
-    private var thickness: CGFloat {
-        let maxThickness: CGFloat = 40.0 // True global maximum for any path
-        return max(12.0, CGFloat(fraction) * maxThickness)
-    }
-    
     var body: some View {
         let baseHeight: CGFloat = isSubFlow ? 35 : 70
-        // Standard style expects equal straight thickness (no lug inflation).
+        let actualParentH = parentHeight ?? baseHeight
+        
+        // Proportional waist for watchband style:
+        let proportionalThickness = max(12.0, CGFloat(fraction) * 40.0)
+        
         let isStandard = sankeyStyle == "standard"
-        // The left connection should flare naturally based purely on flow thickness (proportional).
-        let leftH = leftConnectHeight ?? (isStandard ? thickness : (thickness + 16.0))
-        // Right connection hits the leading rounded corner of the right node.
-        let rightH = rightConnectHeight ?? (isStandard ? thickness : min(thickness + 16.0, max(thickness, baseHeight - 24.0)))
+        // Standard is uniformly thick (eats actualParentH everywhere)
+        // Watchband shrinks in the middle (waist) but flares to actualParentH at endpoints
+        let thickness = isStandard ? actualParentH : proportionalThickness
+        
+        let leftH = leftConnectHeight ?? actualParentH
+        let rightH = rightConnectHeight ?? actualParentH
         
         ZStack {
             // White base behind everything
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange)
                 .fill(Color.white)
             
             // The Block
-            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
+            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -244,7 +263,7 @@ struct ThickFlowBlock: View {
                 )
                 .overlay(
                     // Flow animation overlay
-                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle)
+                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange)
                         .fill(
                             LinearGradient(
                                 stops: [
@@ -257,7 +276,7 @@ struct ThickFlowBlock: View {
                             )
                         )
                         .blendMode(.overlay)
-                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle))
+                        .clipShape(WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange))
                         .animation(isAnimated ? .linear(duration: 1.5).repeatForever(autoreverses: false) : .default, value: phase)
                         .opacity(isAnimated ? 1.0 : 0.0)
                 )
@@ -287,6 +306,8 @@ struct WatchBandShape: Shape {
     var mergeMode: FlowMergeMode = .none
     var localConvergenceY: CGFloat? = nil
     var sankeyStyle: String = "watchband"
+    var explicitLeftYRange: [CGFloat]? = nil
+    var explicitRightYRange: [CGFloat]? = nil
     
     var animatableData: CGFloat {
         get { thickness }
@@ -432,7 +453,8 @@ struct ThreeStageSinksView: View {
                         startColor: .primary.opacity(0.8), 
                         endColor: .orange, 
                         mergeMode: elementsCount > 1 ? .topMerge : .none, 
-                        localConvergenceY: elementsCount > 1 ? h + 12.0 : nil
+                        localConvergenceY: elementsCount > 1 ? h + 12.0 : nil,
+                        parentHeight: h
                     )
                     .zIndex(0)
                     
@@ -451,7 +473,8 @@ struct ThreeStageSinksView: View {
                         fraction: coreF, 
                         startColor: .primary.opacity(0.8), 
                         endColor: .cyan, 
-                        mergeMode: .none
+                        mergeMode: .none,
+                        parentHeight: h
                     )
                     .zIndex(0)
                     
@@ -471,7 +494,8 @@ struct ThreeStageSinksView: View {
                         startColor: .primary.opacity(0.8), 
                         endColor: .gray, 
                         mergeMode: elementsCount > 1 ? .bottomMerge : .none, 
-                        localConvergenceY: elementsCount > 1 ? -12.0 : nil
+                        localConvergenceY: elementsCount > 1 ? -12.0 : nil,
+                        parentHeight: h
                     )
                     .zIndex(0)
                     

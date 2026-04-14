@@ -215,42 +215,67 @@ struct PowerFlowConfigView: View {
                                 OptionSelectButton(title: "Air", value: "mba", currentSelection: $twinDeviceType) { TwinSkeletonMBA() }
                                 OptionSelectButton(title: "Mini", value: "mini", currentSelection: $twinDeviceType) { TwinSkeletonMini() }
                                 OptionSelectButton(title: "Studio", value: "studio", currentSelection: $twinDeviceType) { TwinSkeletonStudio() }
+                                OptionSelectButton(title: "iMac", value: "imac", currentSelection: $twinDeviceType) { TwinSkeletoniMac() }
                                 OptionSelectButton(title: "Neo", value: "neo", currentSelection: $twinDeviceType) { TwinSkeletonNeo() }
                             }
                         }
                         .padding(.bottom, 4)
                         
-                        if !["mini", "studio"].contains(twinDeviceType) {
-                            HStack(alignment: .top) {
-                                Text("金属配色")
-                                    .padding(.top, 6)
-                                Spacer()
-                                if twinDeviceType == "neo" {
+                        
+                        HStack(alignment: .top) {
+                            Text("金属配色")
+                                .padding(.top, 6)
+                            Spacer()
+                            
+                            if twinDeviceType == "imac" {
+                                VStack(alignment: .trailing, spacing: 8) {
                                     HStack(spacing: 8) {
                                         OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
-                                        OptionSelectButton(title: "桃粉色", value: "peachPink", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.95, green: 0.81, blue: 0.83), c2: Color(red: 0.86, green: 0.69, blue: 0.72)) }
-                                        OptionSelectButton(title: "柑橘黄", value: "citrusYellow", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.92, green: 0.80, blue: 0.40), c2: Color(red: 0.80, green: 0.70, blue: 0.30)) }
-                                        OptionSelectButton(title: "靛蓝色", value: "indigoBlue", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.35, green: 0.42, blue: 0.53), c2: Color(red: 0.25, green: 0.30, blue: 0.40)) }
+                                        OptionSelectButton(title: "蓝色", value: "blue", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.blue.opacity(0.8), c2: Color.blue.opacity(0.6)) }
+                                        OptionSelectButton(title: "绿色", value: "green", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.green.opacity(0.8), c2: Color.green.opacity(0.6)) }
+                                        OptionSelectButton(title: "粉红", value: "pink", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.pink.opacity(0.8), c2: Color.pink.opacity(0.6)) }
                                     }
-                                } else {
                                     HStack(spacing: 8) {
-                                        OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
-                                        OptionSelectButton(title: "深空灰", value: "spaceGray", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.65), c2: Color(white: 0.40)) }
-                                        OptionSelectButton(title: "午夜色", value: "midnight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.25, green: 0.26, blue: 0.31), c2: Color(red: 0.15, green: 0.16, blue: 0.21)) }
-                                        OptionSelectButton(title: "星光色", value: "starlight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.90, green: 0.88, blue: 0.82), c2: Color(red: 0.68, green: 0.65, blue: 0.59)) }
+                                        OptionSelectButton(title: "黄色", value: "yellow", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.yellow.opacity(0.8), c2: Color.yellow.opacity(0.6)) }
+                                        OptionSelectButton(title: "橙色", value: "orange", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.orange.opacity(0.8), c2: Color.orange.opacity(0.6)) }
+                                        OptionSelectButton(title: "紫色", value: "purple", currentSelection: $twinMacColor) { ColorSwatch(c1: Color.purple.opacity(0.8), c2: Color.purple.opacity(0.6)) }
                                     }
                                 }
+                            } else if twinDeviceType == "neo" {
+                                HStack(spacing: 8) {
+                                    OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                    OptionSelectButton(title: "桃粉色", value: "peachPink", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.95, green: 0.81, blue: 0.83), c2: Color(red: 0.86, green: 0.69, blue: 0.72)) }
+                                    OptionSelectButton(title: "柑橘黄", value: "citrusYellow", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.92, green: 0.80, blue: 0.40), c2: Color(red: 0.80, green: 0.70, blue: 0.30)) }
+                                    OptionSelectButton(title: "靛蓝色", value: "indigoBlue", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.35, green: 0.42, blue: 0.53), c2: Color(red: 0.25, green: 0.30, blue: 0.40)) }
+                                }
+                            } else if twinDeviceType == "mini" || twinDeviceType == "studio" {
+                                HStack(spacing: 8) {
+                                    OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                }
+                            } else {
+                                HStack(spacing: 8) {
+                                    OptionSelectButton(title: "银色", value: "silver", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.88), c2: Color(white: 0.55)) }
+                                    OptionSelectButton(title: "深空灰", value: "spaceGray", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(white: 0.65), c2: Color(white: 0.40)) }
+                                    OptionSelectButton(title: "午夜色", value: "midnight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.25, green: 0.26, blue: 0.31), c2: Color(red: 0.15, green: 0.16, blue: 0.21)) }
+                                    OptionSelectButton(title: "星光色", value: "starlight", currentSelection: $twinMacColor) { ColorSwatch(c1: Color(red: 0.90, green: 0.88, blue: 0.82), c2: Color(red: 0.68, green: 0.65, blue: 0.59)) }
+                                }
                             }
-                            // State auto-correction logic bound to the containing view
-                            .onChange(of: twinDeviceType) { _ in
-                                if twinDeviceType == "neo" {
-                                    if !["silver", "peachPink", "citrusYellow", "indigoBlue"].contains(twinMacColor) {
-                                        twinMacColor = "silver"
-                                    }
-                                } else {
-                                    if !["silver", "spaceGray", "midnight", "starlight"].contains(twinMacColor) {
-                                        twinMacColor = "silver"
-                                    }
+                        }
+                        // State auto-correction logic bound to the containing view
+                        .onChange(of: twinDeviceType) { _ in
+                            if twinDeviceType == "imac" {
+                                if !["silver", "blue", "green", "pink", "yellow", "orange", "purple"].contains(twinMacColor) {
+                                    twinMacColor = "silver"
+                                }
+                            } else if twinDeviceType == "neo" {
+                                if !["silver", "peachPink", "citrusYellow", "indigoBlue"].contains(twinMacColor) {
+                                    twinMacColor = "silver"
+                                }
+                            } else if twinDeviceType == "mini" || twinDeviceType == "studio" {
+                                twinMacColor = "silver"
+                            } else {
+                                if !["silver", "spaceGray", "midnight", "starlight"].contains(twinMacColor) {
+                                    twinMacColor = "silver"
                                 }
                             }
                         }
@@ -573,6 +598,32 @@ struct TwinSkeletonNeo: View {
                 RoundedRectangle(cornerRadius: 2).fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 20, height: 14)
                 RoundedRectangle(cornerRadius: 1).fill(Color.orange).frame(width: 20, height: 2)
             }
+        }
+    }
+}
+
+struct TwinSkeletoniMac: View {
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
+            
+            Path { path in
+                path.move(to: CGPoint(x: 18, y: 0))
+                path.addLine(to: CGPoint(x: 26, y: 0))
+                path.addLine(to: CGPoint(x: 28, y: 22))
+                path.addLine(to: CGPoint(x: 16, y: 22))
+            }
+            .fill(Color(white: 0.4))
+            .offset(y: 6)
+            
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.9))
+                    .frame(width: 32, height: 18)
+                    .overlay(RoundedRectangle(cornerRadius: 1).fill(Color.black).frame(width: 30, height: 16))
+                Rectangle().fill(Color(white: 0.7))
+                    .frame(width: 32, height: 6)
+            }
+            .offset(y: -4)
         }
     }
 }
