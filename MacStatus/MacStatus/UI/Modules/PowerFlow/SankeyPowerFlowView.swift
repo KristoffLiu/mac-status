@@ -12,9 +12,9 @@ struct SankeyPowerFlowView: View {
         let periW = powerFlow.peripheralWatts ?? 0
         let totalSinks = max(appW + coreW + periW, 0.1)
         let elementsCount = (appW > 0.1 ? 1 : 0) + (coreW > 0.1 ? 1 : 0) + (periW > 0.1 ? 1 : 0)
-        let sinksHeight = elementsCount > 0 ? ((appW > 0.1 ? 35.0 + 35.0 * (appW/totalSinks) : 0) + 
-                       (coreW > 0.1 ? 35.0 + 35.0 * (coreW/totalSinks) : 0) + 
-                       (periW > 0.1 ? 35.0 + 35.0 * (periW/totalSinks) : 0) +
+        let sinksHeight = elementsCount > 0 ? ((appW > 0.1 ? max(46.0, 35.0 + 35.0 * (appW/totalSinks)) : 0) + 
+                       (coreW > 0.1 ? max(46.0, 35.0 + 35.0 * (coreW/totalSinks)) : 0) + 
+                       (periW > 0.1 ? max(46.0, 35.0 + 35.0 * (periW/totalSinks)) : 0) +
                        CGFloat(elementsCount - 1) * 12.0) : 0.0
 
         VStack(spacing: 12) {
@@ -43,15 +43,15 @@ struct SankeyPowerFlowView: View {
                             let botThick = max(12.0, CGFloat(batFraction) * 40.0)
                             let globalConvergence = topHeight + 6.0
                             
+                            let localHTotal = topHeight + (batChargeWatts > 0.1 ? 12.0 + max(64.0, 35.0 + 35.0 * batFraction) : 0)
                             ThickFlowBlock(
                                 watts: sysFlowWatts,
                                 fraction: min(sysFraction, 1.0),
                                 startColor: .yellow.opacity(0.8),
                                 endColor: .gray.opacity(0.2),
                                 isSubFlow: false,
-                                mergeMode: (powerFlow.batteryPower > 0.1) ? .topMerge : .none,
-                                localConvergenceY: (powerFlow.batteryPower > 0.1) ? globalConvergence : nil,
-                                parentHeight: topHeight
+                                parentHeight: topHeight,
+                                explicitLeftYRange: [0, localHTotal * (sysFlowWatts / (sysFlowWatts + batChargeWatts))]
                             )
                             .zIndex(0)
                             
@@ -67,7 +67,7 @@ struct SankeyPowerFlowView: View {
                         
                         // Battery Path
                         if batChargeWatts > 0.1 {
-                            let botHeight = 35.0 + 35.0 * batFraction
+                            let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
                             let actualTopH = isThreeStage ? max(topHeight, sinksHeight) : topHeight
                             let H_total = actualTopH + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
                             
@@ -79,7 +79,7 @@ struct SankeyPowerFlowView: View {
                                     endColor: .green,
                                     isSubFlow: true,
                                     parentHeight: botHeight,
-                                    explicitLeftYRange: [H_total * sysFraction - (actualTopH + 12.0), botHeight]
+                                    explicitLeftYRange: [H_total * (sysFlowWatts / (sysFlowWatts + batChargeWatts)) - (actualTopH + 12.0), botHeight]
                                 )
                                 .zIndex(0)
                                 
@@ -100,8 +100,8 @@ struct SankeyPowerFlowView: View {
                             let adFraction = powerFlow.adapterPower / totalSource
                             let batFraction = powerFlow.batteryPower / totalSource
                             
-                            let topHeight = 35.0 + 35.0 * adFraction
-                            let botHeight = 35.0 + 35.0 * batFraction
+                            let topHeight = max(64.0, 35.0 + 35.0 * adFraction)
+                            let botHeight = max(64.0, 35.0 + 35.0 * batFraction)
                             
                             let H_total_left = topHeight + (powerFlow.batteryPower > 0.1 ? 12.0 + botHeight : 0)
                             let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0

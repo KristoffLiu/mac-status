@@ -238,53 +238,53 @@ struct MacMini3DView: View {
                 .foregroundColor(.cyan)
             }
             .shadow(color: Color(NSColor.windowBackgroundColor).opacity(0.8), radius: 6, x: 0, y: 0)
-            .offset(y: -80)
+            .offset(y: -75)
             .zIndex(1)
             
             // M4 Mac Mini Base Vent
             Path { path in
                 path.move(to: CGPoint(x: 10, y: 0))
                 path.addLine(to: CGPoint(x: 90, y: 0))
-                path.addLine(to: CGPoint(x: 82, y: 8))
-                path.addLine(to: CGPoint(x: 18, y: 8))
+                path.addLine(to: CGPoint(x: 82, y: 6))
+                path.addLine(to: CGPoint(x: 18, y: 6))
             }
             .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
-            .frame(width: 100, height: 8)
-            .offset(y: 8)
+            .frame(width: 100, height: 6)
+            .offset(y: 6)
             .zIndex(1)
             
             // Mac Mini M4 Body
             VStack(spacing: 0) {
-                Rectangle()
+                RoundedRectangle(cornerRadius: 4.0, style: .continuous)
                     .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 110, height: 50)
+                    .frame(width: 110, height: 38)
                     .overlay(
                         // Front IO (2 Type-C, LED, Headphone)
                         HStack(spacing: 0) {
-                            HStack(spacing: 12) {
-                                Capsule().fill(Color(white: 0.15)).frame(width: 4, height: 12)
-                                Capsule().fill(Color(white: 0.15)).frame(width: 4, height: 12)
+                            HStack(spacing: 10) {
+                                Capsule().fill(Color(white: 0.15)).frame(width: 3.5, height: 10)
+                                Capsule().fill(Color(white: 0.15)).frame(width: 3.5, height: 10)
                             }
-                            .padding(.leading, 20)
+                            .padding(.leading, 18)
                             
                             Spacer()
                             
                             HStack(alignment: .center, spacing: 10) {
                                 Circle().fill(Color.white).frame(width: 1.5, height: 1.5).shadow(color: .white, radius: 2)
-                                Circle().fill(Color(white: 0.15)).frame(width: 4, height: 4)
+                                Circle().fill(Color(white: 0.15)).frame(width: 3.5, height: 3.5)
                             }
-                            .padding(.trailing, 20)
+                            .padding(.trailing, 18)
                         }
-                        .padding(.bottom, 12), alignment: .bottom
+                        .padding(.bottom, 8), alignment: .bottom
                     )
             }
             .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
             .zIndex(2)
         }
         .background(
-            Ellipse().fill(Color.black.opacity(0.2)).frame(width: 130, height: 20).offset(y: 40).blur(radius: 6)
+            Ellipse().fill(Color.black.opacity(0.2)).frame(width: 130, height: 20).offset(y: 45).blur(radius: 6)
         )
-        .offset(y: -10)
+        .offset(y: 5)
     }
 }
 
@@ -314,40 +314,45 @@ struct MacStudio3DView: View {
             
             // Mac Studio Body
             VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 12.0, style: .continuous)
+                RoundedRectangle(cornerRadius: 6.0, style: .continuous)
                     .fill(LinearGradient(colors: TwinMacColor.baseColors(for: twinMacColor), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 140, height: 50)
+                    .frame(width: 154, height: 60)
                     .overlay(
                         // Front port details: 2 USB-C (left) + 1 SDXC (right) + LED
                         HStack(spacing: 12) {
-                            HStack(spacing: 8) {
-                                RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 5, height: 3)
-                                RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 5, height: 3)
+                            HStack(spacing: 12) {
+                                Capsule().fill(Color(white: 0.15)).frame(width: 4.5, height: 14)
+                                Capsule().fill(Color(white: 0.15)).frame(width: 4.5, height: 14)
                             }
-                            .padding(.leading, 14)
+                            .padding(.leading, 18)
                             
                             Spacer()
                             
-                            RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 16, height: 2)
+                            RoundedRectangle(cornerRadius: 1.5).fill(Color(white: 0.15)).frame(width: 20, height: 3)
                             
                             Circle().fill(Color.white).frame(width: 1.5, height: 1.5)
                                 .shadow(color: .white, radius: 2)
-                                .padding(.leading, 6).padding(.trailing, 10)
+                                .padding(.leading, 6).padding(.trailing, 14)
                         }
-                        .padding(.bottom, 6), alignment: .bottom
+                        .padding(.bottom, 10), alignment: .bottom
                     )
                 // Black base grill
-                RoundedRectangle(cornerRadius: 8.0, style: .continuous)
-                    .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 126, height: 6)
+                Path { path in
+                    path.move(to: CGPoint(x: 10, y: 0))
+                    path.addLine(to: CGPoint(x: 130, y: 0))
+                    path.addLine(to: CGPoint(x: 120, y: 6))
+                    path.addLine(to: CGPoint(x: 20, y: 6))
+                }
+                .fill(LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
+                .frame(width: 140, height: 6)
             }
             .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 4)
             .zIndex(2)
         }
         .background(
-            Ellipse().fill(Color.black.opacity(0.25)).frame(width: 140, height: 30).offset(y: 50).blur(radius: 8)
+            Ellipse().fill(Color.black.opacity(0.25)).frame(width: 150, height: 26).offset(y: 45).blur(radius: 8)
         )
-        .offset(y: -10)
+        .offset(y: 5)
     }
 }
 
@@ -377,11 +382,19 @@ struct iMac3DView: View {
             VStack(spacing: 0) {
                 // Screen (White bezels with dark screen inside)
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
+                    Rectangle()
                         .fill(Color.white)
                         .frame(width: 170, height: 100)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: 10,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 10
+                            )
+                        )
                     
-                    RoundedRectangle(cornerRadius: 4)
+                    Rectangle()
                         .fill(Color(white: 0.05)) // Screen glass
                         .frame(width: 160, height: 90)
                         
@@ -415,7 +428,7 @@ struct iMac3DView: View {
             .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 4)
             .zIndex(2)
         }
-        .offset(y: -25)
+        .offset(y: 5)
     }
 }
 
@@ -762,12 +775,20 @@ struct EnergyWire3D: View {
             
             // Adjust port location based on device height
             let portYOffset: CGFloat = {
-                if deviceType == "mini" { return 25 } // M4 mini is higher up
-                if deviceType == "studio" { return 22 }
-                if deviceType == "imac" { return 35 } // Back of iMac stand area
+                if deviceType == "mini" { return 36 }
+                if deviceType == "studio" { return 35 }
+                if deviceType == "imac" { return 25 } // Back of iMac stand area
                 return 43
             }()
-            let end = CGPoint(x: geometry.size.width + 1 + (deviceType == "neo" ? -10 : 0), y: geometry.size.height / 2 + portYOffset)
+            
+            let endX: CGFloat = {
+                if ["mini", "studio", "imac"].contains(deviceType) {
+                    return geometry.size.width / 2 + 35
+                }
+                return geometry.size.width + 1 + (deviceType == "neo" ? -10 : 0)
+            }()
+            
+            let end = CGPoint(x: endX, y: geometry.size.height / 2 + portYOffset)
             
             // To ensure the connection enters perfectly straight at the ends AND coils in the middle:
             let coilPath: Path = {

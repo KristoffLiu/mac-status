@@ -573,7 +573,11 @@ struct TwinSkeletonMini: View {
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
-            RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 22, height: 6)
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 1).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 14, height: 5)
+                Path { p in p.move(to: CGPoint(x: 1, y:0)); p.addLine(to: CGPoint(x: 13, y:0)); p.addLine(to: CGPoint(x: 12, y:1)); p.addLine(to: CGPoint(x: 2, y:1)) }
+                    .fill(Color.black).frame(width: 14, height: 1)
+            }
         }
     }
 }
@@ -583,8 +587,9 @@ struct TwinSkeletonStudio: View {
         ZStack {
             LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
             VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 20, height: 12)
-                RoundedRectangle(cornerRadius: 1).fill(Color(white: 0.1)).frame(width: 18, height: 2)
+                RoundedRectangle(cornerRadius: 1.5).fill(LinearGradient(colors: [Color(white: 0.8), Color(white: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 18, height: 8)
+                Path { p in p.move(to: CGPoint(x: 1, y:0)); p.addLine(to: CGPoint(x: 17, y:0)); p.addLine(to: CGPoint(x: 15, y:1.5)); p.addLine(to: CGPoint(x: 3, y:1.5)) }
+                    .fill(Color.black).frame(width: 18, height: 1.5)
             }
         }
     }
@@ -608,17 +613,18 @@ struct TwinSkeletoniMac: View {
             LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom)
             
             Path { path in
-                path.move(to: CGPoint(x: 18, y: 0))
-                path.addLine(to: CGPoint(x: 26, y: 0))
-                path.addLine(to: CGPoint(x: 28, y: 22))
-                path.addLine(to: CGPoint(x: 16, y: 22))
+                path.move(to: CGPoint(x: 19, y: 0))
+                path.addLine(to: CGPoint(x: 25, y: 0))
+                path.addLine(to: CGPoint(x: 27, y: 20))
+                path.addLine(to: CGPoint(x: 17, y: 20))
             }
             .fill(Color(white: 0.4))
-            .offset(y: 6)
+            .offset(y: 8)
             
             VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 3).fill(Color(white: 0.9))
+                Rectangle().fill(Color(white: 0.9))
                     .frame(width: 32, height: 18)
+                    .clipShape(.rect(topLeadingRadius: 2, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 2))
                     .overlay(RoundedRectangle(cornerRadius: 1).fill(Color.black).frame(width: 30, height: 16))
                 Rectangle().fill(Color(white: 0.7))
                     .frame(width: 32, height: 6)
