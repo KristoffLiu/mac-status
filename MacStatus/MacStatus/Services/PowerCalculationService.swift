@@ -151,6 +151,37 @@ class PowerCalculationService {
         
 
         
+        // --- 3-Stage Breakdown ---
+        let cpuTotal = SystemMonitorService.shared.cpuTotal 
+        let gpuUtil = SystemMonitorService.shared.gpuUtilization
+        let topApp = AppEnergyMonitor.shared.topApp
+        let baseWatts = 2.0 // Macbook baseline (Screen, Idle bus)
+        
+        var coreWatts = baseWatts + (cpuTotal * 20.0) + (gpuUtil * 10.0)
+        coreWatts = min(coreWatts, systemWatts)
+        
+        var topAppWatts: Double? = nil
+        var topAppName: String? = nil
+        
+        if let app = topApp, app.cpuPercent > 5.0 {
+            let numCores = Double(SystemMonitorService.shared.pCoreCount + SystemMonitorService.shared.eCoreCount)
+            let safeNumCores = numCores > 0 ? numCores : 8.0
+            
+            let totalAvailablePercent = safeNumCores * 100.0
+            let appCoreFraction = min(1.0, app.cpuPercent / max(totalAvailablePercent * cpuTotal, 1.0))
+            
+            let dynamicCoreWatts = max(0.0, coreWatts - 2.0)
+            let allocatedAppWatts = dynamicCoreWatts * appCoreFraction
+            
+            if allocatedAppWatts >= 0.5 {
+                topAppWatts = allocatedAppWatts
+                topAppName = app.name
+                coreWatts -= allocatedAppWatts
+            }
+        }
+        
+        let peripheralWatts = max(0.0, systemWatts - coreWatts - (topAppWatts ?? 0.0))
+
         return PowerFlowData(
             adapterPower: trueAdapterWatts,
             batteryPower: batteryWatts,
@@ -159,7 +190,11 @@ class PowerCalculationService {
             isDischarging: isDischarging,
             topology: topology,
             adapterVoltage: smcAdapterVolts,
-            adapterCurrent: smcAdapterAmps
+            adapterCurrent: smcAdapterAmps,
+            coreWatts: coreWatts,
+            peripheralWatts: peripheralWatts,
+            topAppWatts: topAppWatts,
+            topAppName: topAppName
         )
     }
 }

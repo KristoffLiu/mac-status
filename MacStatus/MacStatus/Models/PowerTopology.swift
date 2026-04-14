@@ -16,4 +16,10 @@ struct PowerFlowData {
     var topology: TopologyState
     var adapterVoltage: Double?
     var adapterCurrent: Double?
+    
+    // Three-Stage Output Breakdown
+    var coreWatts: Double? = nil
+    var peripheralWatts: Double? = nil
+    var topAppWatts: Double? = nil
+    var topAppName: String? = nil
 }

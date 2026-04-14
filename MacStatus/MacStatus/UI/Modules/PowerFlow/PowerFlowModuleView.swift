@@ -60,6 +60,7 @@ private struct PowerFlowPluginContentView: View {
 struct PowerFlowConfigView: View {
     @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
     @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
+    @AppStorage("powerFlowThreeStage") private var isThreeStage = false
     @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
     @AppStorage("twinCableStyle") private var twinCableStyle: String = "p"
     @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
@@ -81,17 +82,42 @@ struct PowerFlowConfigView: View {
         let diff = effectiveAdapterPower - simSystemPower
         let batteryWatts = abs(diff)
         
+        var isCharging = false
+        var isDischarging = false
+        var topology: TopologyState = .topologyB
+        
         if effectiveAdapterPower < 0.1 {
             // 纯电池供电
-            return PowerFlowData(adapterPower: 0, batteryPower: simSystemPower, systemPower: simSystemPower, isCharging: false, isDischarging: true, topology: .topologyB, adapterVoltage: nil, adapterCurrent: nil)
+            isDischarging = true
+            topology = .topologyB
         } else if effectiveAdapterPower >= simSystemPower {
             // 适配器供电充足：旁路 + 充电(或闲置)
-            let isCharging = !simIsBatteryFull && batteryWatts > 0.1
-            return PowerFlowData(adapterPower: effectiveAdapterPower, batteryPower: batteryWatts, systemPower: simSystemPower, isCharging: isCharging, isDischarging: false, topology: .topologyA, adapterVoltage: 20.0, adapterCurrent: effectiveAdapterPower / 20.0)
+            isCharging = !simIsBatteryFull && batteryWatts > 0.1
+            topology = .topologyA
         } else {
             // 供电不足：电池与适配器混合供电
-            return PowerFlowData(adapterPower: effectiveAdapterPower, batteryPower: batteryWatts, systemPower: simSystemPower, isCharging: false, isDischarging: true, topology: .topologyB, adapterVoltage: 20.0, adapterCurrent: effectiveAdapterPower / 20.0)
+            isDischarging = true
+            topology = .topologyB
         }
+        
+        let coreW = simSystemPower * 0.4
+        let appW = simSystemPower * 0.35
+        let periW = simSystemPower - coreW - appW
+        
+        return PowerFlowData(
+            adapterPower: effectiveAdapterPower,
+            batteryPower: batteryWatts,
+            systemPower: simSystemPower,
+            isCharging: isCharging,
+            isDischarging: isDischarging,
+            topology: topology,
+            adapterVoltage: effectiveAdapterPower > 0 ? 20.0 : nil,
+            adapterCurrent: effectiveAdapterPower > 0 ? (effectiveAdapterPower / 20.0) : nil,
+            coreWatts: isThreeStage ? coreW : nil,
+            peripheralWatts: isThreeStage ? periW : nil,
+            topAppWatts: isThreeStage ? appW : nil,
+            topAppName: isThreeStage ? "Xcode" : nil
+        )
     }
     
     var currentPreviewBatteryData: BatteryData {
@@ -161,6 +187,7 @@ struct PowerFlowConfigView: View {
                 // 4. 桑基图设置
                 if style == .sankey {
                     Section("桑基图微调") {
+                        Toggle("展开系统耗电拆解 (三段式)", isOn: $isThreeStage)
                         Toggle("播放流动动画", isOn: $isAnimated)
                         Toggle("在管道上显示具体瓦数", isOn: $showValues)
                     }
