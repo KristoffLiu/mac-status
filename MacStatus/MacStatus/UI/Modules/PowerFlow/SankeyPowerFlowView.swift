@@ -218,10 +218,12 @@ struct ThickFlowBlock: View {
     
     var body: some View {
         let baseHeight: CGFloat = isSubFlow ? 35 : 70
+        // Standard style expects equal straight thickness (no lug inflation).
+        let isStandard = sankeyStyle == "standard"
         // The left connection should flare naturally based purely on flow thickness (proportional).
-        let leftH = leftConnectHeight ?? (thickness + 16.0)
-        // Right connection hits the leading rounded corner of the right node, so it MUST be strictly clamped to the flat plane (height - 24).
-        let rightH = rightConnectHeight ?? min(thickness + 16.0, max(thickness, baseHeight - 24.0))
+        let leftH = leftConnectHeight ?? (isStandard ? thickness : (thickness + 16.0))
+        // Right connection hits the leading rounded corner of the right node.
+        let rightH = rightConnectHeight ?? (isStandard ? thickness : min(thickness + 16.0, max(thickness, baseHeight - 24.0)))
         
         ZStack {
             // White base behind everything
@@ -327,7 +329,7 @@ struct WatchBandShape: Shape {
         var rightTopY = defaultRightTopY
         var rightBotY = defaultRightBotY
         
-        let mergeSpread = safeThick * 1.5 + 12.0
+        let mergeSpread = sankeyStyle == "standard" ? safeThick : (safeThick * 1.5 + 12.0)
         
         // Apply Left merges
         if mergeMode == .topMerge, let convergence = localConvergenceY {
