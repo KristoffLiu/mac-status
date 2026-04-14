@@ -121,6 +121,7 @@ struct WidgetOptionsSheet: View {
         Group {
             if plugin.hasSettings {
                 plugin.settingsView
+                    .contentMargins(.top, 16, for: .scrollIndicators)
                     .frame(maxHeight: 600)
             } else {
                 VStack(spacing: 0) {

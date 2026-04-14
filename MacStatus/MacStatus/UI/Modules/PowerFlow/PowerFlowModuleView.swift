@@ -682,11 +682,29 @@ struct SankeyStyleSkeletonStandard: View {
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            
             Path { path in
-                path.move(to: CGPoint(x: 4, y: 12))
-                path.addCurve(to: CGPoint(x: 76, y: 32), control1: CGPoint(x: 40, y: 12), control2: CGPoint(x: 40, y: 32))
+                let w: CGFloat = 72
+                let offset: CGFloat = 4
+                
+                let y1: CGFloat = 10
+                let y2: CGFloat = 20
+                let thick: CGFloat = 10
+                
+                path.move(to: CGPoint(x: offset, y: y1))
+                path.addCurve(to: CGPoint(x: offset + w, y: y2), 
+                              control1: CGPoint(x: offset + w * 0.5, y: y1), 
+                              control2: CGPoint(x: offset + w * 0.5, y: y2))
+                              
+                path.addLine(to: CGPoint(x: offset + w, y: y2 + thick))
+                
+                path.addCurve(to: CGPoint(x: offset, y: y1 + thick), 
+                              control1: CGPoint(x: offset + w * 0.5, y: y2 + thick), 
+                              control2: CGPoint(x: offset + w * 0.5, y: y1 + thick))
+                              
+                path.closeSubpath()
             }
-            .stroke(Color.cyan, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+            .fill(LinearGradient(colors: [.yellow.opacity(0.8), .yellow.opacity(0.3)], startPoint: .leading, endPoint: .trailing))
         }
     }
 }
@@ -695,13 +713,50 @@ struct SankeyStyleSkeletonWatchBand: View {
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(white: 0.15), Color(white: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            
             Path { path in
-                path.move(to: CGPoint(x: 4, y: 12))
-                path.addCurve(to: CGPoint(x: 30, y: 22), control1: CGPoint(x: 17, y: 12), control2: CGPoint(x: 17, y: 22))
-                path.addLine(to: CGPoint(x: 50, y: 22))
-                path.addCurve(to: CGPoint(x: 76, y: 32), control1: CGPoint(x: 63, y: 22), control2: CGPoint(x: 63, y: 32))
+                let w: CGFloat = 72
+                let offset: CGFloat = 4
+                
+                let leftTopY: CGFloat = 6
+                let leftBotY: CGFloat = 26
+                
+                let rightTopY: CGFloat = 14
+                let rightBotY: CGFloat = 34
+                
+                let centerY: CGFloat = 20
+                let halfThick: CGFloat = 3
+                
+                let curveW = w * 0.45
+                
+                // Top Edge
+                path.move(to: CGPoint(x: offset, y: leftTopY))
+                path.addCurve(to: CGPoint(x: offset + curveW, y: centerY - halfThick),
+                              control1: CGPoint(x: offset + curveW * 0.6, y: leftTopY),
+                              control2: CGPoint(x: offset + curveW * 0.4, y: centerY - halfThick))
+                
+                path.addLine(to: CGPoint(x: offset + w - curveW, y: centerY - halfThick))
+                
+                path.addCurve(to: CGPoint(x: offset + w, y: rightTopY),
+                              control1: CGPoint(x: offset + w - curveW * 0.6, y: centerY - halfThick),
+                              control2: CGPoint(x: offset + w - curveW * 0.4, y: rightTopY))
+                              
+                path.addLine(to: CGPoint(x: offset + w, y: rightBotY))
+                
+                // Bottom Edge
+                path.addCurve(to: CGPoint(x: offset + w - curveW, y: centerY + halfThick),
+                              control1: CGPoint(x: offset + w - curveW * 0.4, y: rightBotY),
+                              control2: CGPoint(x: offset + w - curveW * 0.6, y: centerY + halfThick))
+                              
+                path.addLine(to: CGPoint(x: offset + curveW, y: centerY + halfThick))
+                
+                path.addCurve(to: CGPoint(x: offset, y: leftBotY),
+                              control1: CGPoint(x: offset + curveW * 0.4, y: centerY + halfThick),
+                              control2: CGPoint(x: offset + curveW * 0.6, y: leftBotY))
+                              
+                path.closeSubpath()
             }
-            .stroke(Color.orange, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+            .fill(LinearGradient(colors: [.blue, .cyan.opacity(0.3)], startPoint: .leading, endPoint: .trailing))
         }
     }
 }
