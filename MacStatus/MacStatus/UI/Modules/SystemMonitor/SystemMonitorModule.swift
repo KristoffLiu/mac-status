@@ -13,17 +13,6 @@ struct SystemMonitorModule: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            // ── Section Title ───────────────────────────────────────────────
-            HStack {
-                Label("系统监控", systemImage: "cpu")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.secondary)
-                Spacer()
-                if service.cpuTemperature > 1 {
-                    TempBadgeView(temp: service.cpuTemperature)
-                }
-            }
-
             // ── 3x2 Grid Layout ──────────────────────────────────────────────
             VStack(spacing: 12) {
                 if showCompute {
@@ -35,6 +24,12 @@ struct SystemMonitorModule: View {
                             Text("CPU")
                                 .font(.caption.weight(.bold))
                                 .foregroundColor(.primary.opacity(0.7))
+                            
+                            if service.cpuTemperature > 1 {
+                                Spacer().frame(width: 4)
+                                TempBadgeView(temp: service.cpuTemperature)
+                            }
+                            
                             Spacer()
                             Text(String(format: "%.1f%%", service.cpuTotal * 100))
                                 .font(.system(.caption, design: .rounded).monospacedDigit())
@@ -351,9 +346,10 @@ struct UnifiedMemCard: View {
                             .font(.system(size: 9, design: .rounded).monospacedDigit())
                             .foregroundColor(.secondary)
                     }
-                    Text(String(format: "(共%.0fGB)", totalGB))
-                        .font(.system(size: 9, design: .rounded))
-                        .foregroundColor(.secondary.opacity(0.65))
+                    Text(String(format: "%.0fGB", totalGB))
+                        .font(.system(.caption, design: .rounded).monospacedDigit())
+                        .foregroundColor(pressureColor)
+                        .fontWeight(.semibold)
                 }
             }
 
@@ -765,25 +761,23 @@ struct SystemMonitorConfigView: View {
             // 右侧：偏好设置详情
             VStack(spacing: 0) {
                 Form {
-                    Section("显示模块") {
-                        Toggle("计算 (CPU 与 GPU)", isOn: $showCompute)
-                        Toggle("统一内存", isOn: $showMemory)
-                        Toggle("网络与磁盘", isOn: $showNetDisk)
-                    }
-                    
-                    Section("图表样式 (网络与磁盘)") {
-                        Picker("走势图方向", selection: $symmetricGraph) {
-                            Text("正向堆叠").tag(false)
-                            Text("双向发散").tag(true)
+                    Section("总概与全局控制") {
+                        Toggle("模块：计算 (CPU 与 GPU)", isOn: $showCompute)
+                        Toggle("模块：统一内存", isOn: $showMemory)
+                        Toggle("模块：网络与磁盘", isOn: $showNetDisk)
+                        
+                        Picker("像素阵列间距", selection: $pixelGap) {
+                            Text("紧密 (1.0)").tag(1.0)
+                            Text("标准 (1.5)").tag(1.5)
+                            Text("呼吸 (2.5)").tag(2.5)
                         }
                         .pickerStyle(.menu)
                     }
                     
-                    Section("全局图表渲染") {
-                        Picker("像素阵列间距", selection: $pixelGap) {
-                            Text("紧密集约 (1.0)").tag(1.0)
-                            Text("标准 (1.5)").tag(1.5)
-                            Text("呼吸松散 (2.5)").tag(2.5)
+                    Section("网络与磁盘：单独配置") {
+                        Picker("走势图方向", selection: $symmetricGraph) {
+                            Text("正向堆叠").tag(false)
+                            Text("双向发散").tag(true)
                         }
                         .pickerStyle(.menu)
                     }

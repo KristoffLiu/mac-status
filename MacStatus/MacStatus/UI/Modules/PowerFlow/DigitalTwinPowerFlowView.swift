@@ -1,5 +1,5 @@
 import SwiftUI
-
+import Combine
 struct DigitalTwinPowerFlowView: View {
     var powerFlow: PowerFlowData
     var batteryData: BatteryData?

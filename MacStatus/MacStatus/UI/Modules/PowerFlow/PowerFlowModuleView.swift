@@ -200,7 +200,7 @@ struct PowerFlowConfigView: View {
                         }
                         .padding(.vertical, 2)
                         
-                        Toggle("展开系统耗电拆解 (三段式)", isOn: $isThreeStage)
+                        Toggle("三段视图", isOn: $isThreeStage)
                         Toggle("播放流动动画", isOn: $isAnimated)
                         Toggle("在管道上显示具体瓦数", isOn: $showValues)
                     }
