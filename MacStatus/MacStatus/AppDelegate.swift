@@ -9,7 +9,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var eventMonitor: Any?
     
     var viewModel: StatusViewModel = StatusViewModel()
-    var timer: Timer?
     
     var menuBarIsDark: Bool {
         if let button = statusItem?.button {
@@ -82,13 +81,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             self?.updateStatusItemImage()
         }.store(in: &cancellables)
         
-        // Start a timer to redraw the image periodically based on the view model
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateStatusItemImage()
-        }
-        if let timer = timer {
-            RunLoop.main.add(timer, forMode: .common)
-        }
+        // Render only when data changes, skipping unnecessary bitmap generations
+        viewModel.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                // Need to dispatch after to guarantee values have propagated
+                DispatchQueue.main.async {
+                    self?.updateStatusItemImage()
+                }
+            }
+            .store(in: &cancellables)
         
         // Initial draw
         Task { @MainActor in

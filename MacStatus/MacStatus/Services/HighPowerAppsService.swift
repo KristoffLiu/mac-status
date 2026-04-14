@@ -63,8 +63,18 @@ class HighPowerAppsService: ObservableObject {
         }
     }
     
-    private func downsampleIcon(_ icon: NSImage?) -> NSImage? {
-        guard let icon = icon else { return nil }
+    private var downsampledIconCache: [String: NSImage] = [:]
+    
+    private func downsampleIcon(for app: NSRunningApplication) -> NSImage? {
+        guard let bundleId = app.bundleIdentifier else {
+            return nil
+        }
+        
+        if let cached = downsampledIconCache[bundleId] {
+            return cached
+        }
+        
+        guard let icon = app.icon else { return nil }
         
         let targetSize = NSSize(width: 32, height: 32)
         let newImage = NSImage(size: targetSize)
@@ -79,6 +89,7 @@ class HighPowerAppsService: ObservableObject {
         )
         newImage.unlockFocus()
         
+        downsampledIconCache[bundleId] = newImage
         return newImage
     }
     
@@ -114,9 +125,10 @@ class HighPowerAppsService: ObservableObject {
                     if let powerValue = Double(powerStr), powerValue > 1.0, let pidValue = Int32(pidStr) {
                         // Filter out system processes that are often high but expected
                         if !isSystemProcess(name) {
-                            let app = NSRunningApplication(processIdentifier: pidValue)
-                            let icon = self.downsampleIcon(app?.icon)
-                            results.append(AppEnergyImpact(pid: pidValue, name: name, power: powerValue, icon: icon))
+                            if let app = NSRunningApplication(processIdentifier: pidValue) {
+                                let icon = self.downsampleIcon(for: app)
+                                results.append(AppEnergyImpact(pid: pidValue, name: name, power: powerValue, icon: icon))
+                            }
                         }
                     }
                 }
