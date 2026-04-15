@@ -50,7 +50,7 @@ struct BatteryManView: View {
     /// Inset from canvas edge so the stroke isn't clipped.
     private var inset: CGFloat { strokeWidth / 2 + 0.5 }
 
-    /// Extra space above body for accessory (lightning / sweat).
+    /// Extra space above body for accessory.
     private var topExtra: CGFloat { showAccessory ? accessoryHeight : 0 }
 
     /// Extra width on each side for arms.
@@ -128,19 +128,17 @@ struct BatteryManView: View {
             // ===== Face =====
             if showFace {
                 drawFace(ctx: ctx, bodyOrigin: CGPoint(x: bodyOriginX, y: bodyOriginY),
-                         capacity: capacity, isCharging: isCharging, color: strokeColor)
+                         capacity: capacity, isCharging: isCharging, strokeColor: strokeColor)
             }
 
             // ===== Arms =====
             if showArms {
                 let armY = bodyOriginY + bodyHeight * 0.45
-                // Left arm
                 drawArm(ctx: ctx,
                         shoulder: CGPoint(x: bodyOriginX, y: armY),
                         direction: -1,
                         isRaised: isCharging,
                         color: strokeColor)
-                // Right arm (past terminal)
                 drawArm(ctx: ctx,
                         shoulder: CGPoint(x: bodyOriginX + bodyWidth, y: armY),
                         direction: 1,
@@ -157,7 +155,6 @@ struct BatteryManView: View {
             let rightLegX = bodyOriginX + bodyWidth - legInset
 
             if isTired {
-                // Bent legs (tired/crouching)
                 drawBentLeg(ctx: ctx, hipTop: CGPoint(x: leftLegX, y: legTopY),
                             legH: legHeight, direction: -1, color: strokeColor)
                 drawBentLeg(ctx: ctx, hipTop: CGPoint(x: rightLegX, y: legTopY),
@@ -208,7 +205,6 @@ struct BatteryManView: View {
         path.addLine(to: CGPoint(x: footX, y: footY))
         ctx.stroke(path, with: .color(color), lineWidth: legStroke)
 
-        // Foot
         let footRect = CGRect(x: footX - footWidth / 2,
                               y: footY,
                               width: footWidth,
@@ -224,9 +220,9 @@ struct BatteryManView: View {
         let handX = shoulder.x + direction * armLength
         let handY: CGFloat
         if isRaised {
-            handY = shoulder.y - armLength * 0.7 // Arms up!
+            handY = shoulder.y - armLength * 0.7
         } else {
-            handY = shoulder.y + armLength * 0.5 // Arms relaxed down
+            handY = shoulder.y + armLength * 0.5
         }
 
         var path = Path()
@@ -234,7 +230,6 @@ struct BatteryManView: View {
         path.addLine(to: CGPoint(x: handX, y: handY))
         ctx.stroke(path, with: .color(color), lineWidth: armStroke)
 
-        // Hand dot
         let handR: CGFloat = 1.0
         let handRect = CGRect(x: handX - handR, y: handY - handR,
                               width: handR * 2, height: handR * 2)
@@ -242,28 +237,35 @@ struct BatteryManView: View {
     }
 
     // ── Face ──
+    // Two-pass approach so face is visible at any battery level:
+    // 1) .clear punch knocks out fill behind each feature (needed when fill covers the face)
+    // 2) Normal .primary draw on top (visible whether fill was present or not)
     private func drawFace(ctx: GraphicsContext, bodyOrigin: CGPoint,
-                          capacity: Int, isCharging: Bool, color: Color) {
+                          capacity: Int, isCharging: Bool, strokeColor: Color) {
         let eyeY = bodyOrigin.y + bodyHeight * 0.4
         let leftEyeX = bodyOrigin.x + bodyWidth * 0.32
         let rightEyeX = bodyOrigin.x + bodyWidth * 0.68
         let eyeR: CGFloat = 1.1
+        let haloR: CGFloat = eyeR + 0.8  // slightly larger for the knockout halo
 
-        // Eyes (always dots)
         let leftEye = CGRect(x: leftEyeX - eyeR, y: eyeY - eyeR,
                              width: eyeR * 2, height: eyeR * 2)
         let rightEye = CGRect(x: rightEyeX - eyeR, y: eyeY - eyeR,
                               width: eyeR * 2, height: eyeR * 2)
+        let leftHalo = CGRect(x: leftEyeX - haloR, y: eyeY - haloR,
+                              width: haloR * 2, height: haloR * 2)
+        let rightHalo = CGRect(x: rightEyeX - haloR, y: eyeY - haloR,
+                               width: haloR * 2, height: haloR * 2)
 
-        // Use destinationOut blend so eyes are "cut out" from the fill
-        var eyeCtx = ctx
-        eyeCtx.blendMode = .destinationOut
-        eyeCtx.fill(Path(ellipseIn: leftEye), with: .color(.black))
-        eyeCtx.fill(Path(ellipseIn: rightEye), with: .color(.black))
+        // Pass 1: punch halos to ensure contrast against fill
+        var clearCtx = ctx
+        clearCtx.blendMode = .clear
+        clearCtx.fill(Path(ellipseIn: leftHalo), with: .color(.white))
+        clearCtx.fill(Path(ellipseIn: rightHalo), with: .color(.white))
 
-        // Then draw the eyes with normal blend in stroke color
-        ctx.fill(Path(ellipseIn: leftEye), with: .color(color))
-        ctx.fill(Path(ellipseIn: rightEye), with: .color(color))
+        // Pass 2: draw actual eyes on top
+        ctx.fill(Path(ellipseIn: leftEye), with: .color(strokeColor))
+        ctx.fill(Path(ellipseIn: rightEye), with: .color(strokeColor))
 
         // Mouth
         let mouthY = bodyOrigin.y + bodyHeight * 0.72
@@ -272,21 +274,21 @@ struct BatteryManView: View {
 
         var mouthPath = Path()
         if isCharging || capacity > 60 {
-            // Happy smile (arc going down)
             mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY))
             mouthPath.addQuadCurve(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY),
                                    control: CGPoint(x: mouthCenterX, y: mouthY + 2.5))
         } else if capacity <= 20 {
-            // Sad frown (arc going up)
             mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY + 1))
             mouthPath.addQuadCurve(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY + 1),
                                    control: CGPoint(x: mouthCenterX, y: mouthY - 1.5))
         } else {
-            // Neutral straight line
             mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY))
             mouthPath.addLine(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY))
         }
-        ctx.stroke(mouthPath, with: .color(color), lineWidth: 0.8)
+        // Pass 1: punch mouth halo
+        clearCtx.stroke(mouthPath, with: .color(.white), lineWidth: 2.4)
+        // Pass 2: draw mouth
+        ctx.stroke(mouthPath, with: .color(strokeColor), lineWidth: 0.8)
     }
 
     // ── Hat bolt (charging accessory) ──
@@ -298,7 +300,6 @@ struct BatteryManView: View {
     // ── Sweat drop (low battery accessory) ──
     private func drawSweatDrop(ctx: GraphicsContext, origin: CGPoint, color: Color) {
         var path = Path()
-        // Teardrop shape
         let tipX = origin.x
         let tipY = origin.y
         let bottomY = tipY + 4

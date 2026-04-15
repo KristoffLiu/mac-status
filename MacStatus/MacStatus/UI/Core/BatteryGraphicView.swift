@@ -22,10 +22,17 @@ struct BatteryGraphicView: View {
         
         let isCritical = capacity <= 20
         let showLowPowerColor = isCritical && iconLowPowerColor
-        
-        let fillColor: Color = isCharging 
-            ? (isColored ? .green : .primary) 
-            : (showLowPowerColor ? .red : .primary)
+
+        let fillColor: Color = {
+            if isColored {
+                // Capacity-based coloring: green > 50%, yellow 20–50%, red ≤ 20%
+                if capacity > 50 { return .green }
+                else if capacity > 20 { return .yellow }
+                else { return .red }
+            } else {
+                return showLowPowerColor ? .red : .primary
+            }
+        }()
             
         // Border color must be absolutely identical in colored and monochrome modes!
         // We use a solid primary color to eliminate any "transparency" feeling the user pointed out.
@@ -61,40 +68,57 @@ struct BatteryGraphicView: View {
                     .padding(.leading, insets)
                     .animation(.easeInOut, value: percentage)
                 
-                // Numbers and Charging Icon
-                HStack(spacing: 2) {
-                    if showNumber {
-                        Text("\(capacity)")
-                            .font(.system(size: 8, weight: .heavy, design: .rounded))
-                    }
-                    if (isCharging || isPowered) && chargingStyle != "none" {
-                        switch chargingStyle {
-                        case "classic":
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 10, weight: .black))
-                        case "plug":
-                            Image(systemName: "powerplug.fill")
-                                .font(.system(size: 9, weight: .black))
-                                .rotationEffect(.degrees(-90))
-                                .offset(x: 2)
-                        default: // "bolt"
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 7, weight: .black))
-                        }
+                // Inner Content: number OR charging indicator (mutually exclusive)
+                if showNumber {
+                    Text("\(capacity)")
+                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                        .foregroundColor(isColored ? (capacity > 50 || capacity <= 20 ? .white : .black) : .black)
+                        .blendMode(isColored ? .normal : .destinationOut)
+                        .frame(width: width, alignment: .center)
+                } else if (isCharging || isPowered) && chargingStyle != "none" {
+                    switch chargingStyle {
+                    case "classic":
+                        // Uniform knockout border via shadow spread
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.black)
+                            .shadow(color: .black, radius: 0.8)
+                            .shadow(color: .black, radius: 0.8)
+                            .shadow(color: .black, radius: 0.8)
+                            .blendMode(.destinationOut)
+                            .frame(width: width, alignment: .center)
+                        // Solid bolt fill (same size, drawn on top)
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: width, alignment: .center)
+                    case "plug":
+                        // Uniform knockout border via shadow spread
+                        Image(systemName: "powerplug.fill")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .rotationEffect(.degrees(-90))
+                            .offset(x: 4)
+                            .foregroundColor(.black)
+                            .shadow(color: .black, radius: 0.8)
+                            .shadow(color: .black, radius: 0.8)
+                            .shadow(color: .black, radius: 0.8)
+                            .blendMode(.destinationOut)
+                            .frame(width: width, alignment: .center)
+                        // Solid plug fill (same size, drawn on top)
+                        Image(systemName: "powerplug.fill")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .rotationEffect(.degrees(-90))
+                            .offset(x: 4)
+                            .foregroundColor(.white)
+                            .frame(width: width, alignment: .center)
+                    default: // "bolt"
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 7, weight: .black))
+                            .foregroundColor(isColored ? (capacity > 50 || capacity <= 20 ? .white : .black) : .black)
+                            .blendMode(isColored ? .normal : .destinationOut)
+                            .frame(width: width, alignment: .center)
                     }
                 }
-                .foregroundColor(
-                    chargingStyle == "classic"
-                        ? .black
-                        : (isColored ? (percentage > 0.4 || isCharging ? .white : .primary) : .black)
-                )
-                .blendMode(
-                    chargingStyle == "classic"
-                        ? .destinationOut
-                        : (isColored ? .normal : .destinationOut)
-                )
-                .frame(width: width, alignment: .center)
-                .padding(.trailing, 0)
             }
             .compositingGroup()
             

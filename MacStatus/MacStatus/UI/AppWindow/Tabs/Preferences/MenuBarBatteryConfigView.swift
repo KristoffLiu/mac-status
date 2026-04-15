@@ -117,7 +117,7 @@ struct MenuBarBatteryConfigView: View {
 
                 // Battery Man Appearance Options
                 if menuBarPowerStyle == .batteryMan {
-                    Section("电池小人外观") {
+                    Section("小人设定") {
                         HStack(alignment: .top) {
                             Text("腿长")
                                 .padding(.top, 6)
@@ -131,39 +131,30 @@ struct MenuBarBatteryConfigView: View {
                         }
                         .padding(.vertical, 2)
 
-                        Toggle("表情", isOn: $batteryManShowFace)
-                        if batteryManShowFace {
-                            Text("满电开心 · 中等平静 · 低电沮丧")
-                                .font(.caption)
+                        HStack {
+                            Text("图标间距")
+                            Spacer()
+                            Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
+                                .frame(width: 100)
+                            Text("\(Int(mainIconGroupSpacing))")
+                                .monospacedDigit()
                                 .foregroundColor(.secondary)
+                                .frame(width: 24, alignment: .trailing)
                         }
+                    }
 
-                        Toggle("手臂", isOn: $batteryManShowArms)
-                        if batteryManShowArms {
-                            Text("充电时举手欢呼")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Toggle("状态姿势", isOn: $batteryManShowPosture)
-                        if batteryManShowPosture {
-                            Text("低电量时弯腿蹲下")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Toggle("头饰", isOn: $batteryManShowAccessory)
-                        if batteryManShowAccessory {
-                            Text("充电时头顶闪电 · 低电量冒汗")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                    Section("表现力") {
+                        Toggle("表情 — 随电量变化喜怒", isOn: $batteryManShowFace)
+                        Toggle("手臂 — 充电时举手欢呼", isOn: $batteryManShowArms)
+                        Toggle("姿势 — 低电量弯腿疲惫", isOn: $batteryManShowPosture)
+                        Toggle("头饰 — 充电闪电 · 低电冒汗", isOn: $batteryManShowAccessory)
                     }
                 }
 
                 // Battery Appearance Options
                 if menuBarPowerStyle == .graphic {
-                    Section("电池外观") {
+                    // Section 1: Shell & Color
+                    Section("外观") {
                         HStack(alignment: .top) {
                             Text("电池外形")
                                 .padding(.top, 6)
@@ -187,11 +178,32 @@ struct MenuBarBatteryConfigView: View {
 
                                 HStack(spacing: 12) {
                                     OptionSelectButton(title: "系统单色", value: "monochrome", currentSelection: $batteryFillStyle) { ColorSwatch(c1: .primary.opacity(0.8), c2: .primary.opacity(0.5)) }
-                                    OptionSelectButton(title: "彩色生命条", value: "status_color", currentSelection: $batteryFillStyle) { ColorSwatch(c1: .green, c2: .green.opacity(0.6)) }
+                                    OptionSelectButton(title: "电量彩色", value: "status_color", currentSelection: $batteryFillStyle) { ColorSwatch(c1: .green, c2: .yellow) }
                                 }
                             }
                             .padding(.vertical, 2)
 
+                            // Low power warning: styled as a labeled row with color indicator
+                            HStack {
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(iconLowPowerColor ? .red : Color.primary.opacity(0.15))
+                                        .frame(width: 8, height: 8)
+                                    Text("低电量变红")
+                                    Text("≤20%")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Toggle("", isOn: $iconLowPowerColor)
+                                    .labelsHidden()
+                            }
+                        }
+                    }
+
+                    // Section 2: Content Display
+                    if batteryShellStyle != "hidden" {
+                        Section("显示内容") {
                             HStack(alignment: .top) {
                                 Text("电量信息")
                                     .padding(.top, 6)
@@ -200,41 +212,42 @@ struct MenuBarBatteryConfigView: View {
 
                                 HStack(spacing: 12) {
                                     OptionSelectButton(title: "无", value: "none", currentSelection: $batteryInnerContent) { InfoSkeletonNone() }
-                                    OptionSelectButton(title: "电量在外面", value: "outside", currentSelection: $batteryInnerContent) { InfoSkeletonOutside() }
-                                    OptionSelectButton(title: "电量在里面", value: "inside", currentSelection: $batteryInnerContent) { InfoSkeletonInside() }
+                                    OptionSelectButton(title: "外显", value: "outside", currentSelection: $batteryInnerContent) { InfoSkeletonOutside() }
+                                    OptionSelectButton(title: "内嵌", value: "inside", currentSelection: $batteryInnerContent) { InfoSkeletonInside() }
                                 }
                             }
                             .padding(.vertical, 2)
 
-                            HStack(alignment: .top) {
-                                Text("充电状态")
-                                    .padding(.top, 6)
+                            if batteryInnerContent != "inside" {
+                                HStack(alignment: .top) {
+                                    Text("充电状态")
+                                        .padding(.top, 6)
 
-                                Spacer()
+                                    Spacer()
 
-                                HStack(spacing: 12) {
-                                    OptionSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryChargingIndicator) { ChargingSkeletonBolt() }
-                                    OptionSelectButton(title: "经典闪电", value: "classic", currentSelection: $batteryChargingIndicator) { ChargingSkeletonClassic() }
-                                    OptionSelectButton(title: "适配器", value: "plug", currentSelection: $batteryChargingIndicator) { ChargingSkeletonPlug() }
-                                    OptionSelectButton(title: "无", value: "none", currentSelection: $batteryChargingIndicator) { ChargingSkeletonNone() }
+                                    HStack(spacing: 12) {
+                                        OptionSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryChargingIndicator) { ChargingSkeletonBolt() }
+                                        OptionSelectButton(title: "经典闪电", value: "classic", currentSelection: $batteryChargingIndicator) { ChargingSkeletonClassic() }
+                                        OptionSelectButton(title: "适配器", value: "plug", currentSelection: $batteryChargingIndicator) { ChargingSkeletonPlug() }
+                                        OptionSelectButton(title: "无", value: "none", currentSelection: $batteryChargingIndicator) { ChargingSkeletonNone() }
+                                    }
                                 }
+                                .padding(.vertical, 2)
                             }
-                            .padding(.vertical, 2)
                         }
-                    }
 
-                    Section("其他") {
-                        Toggle("低电量红色警告", isOn: $iconLowPowerColor)
-
-                        HStack {
-                            Text("图标间距")
-                            Spacer()
-                            Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
-                                .frame(width: 100)
-                            Text("\(Int(mainIconGroupSpacing))")
-                                .monospacedDigit()
-                                .foregroundColor(.secondary)
-                                .frame(width: 24, alignment: .trailing)
+                        // Section 3: Spacing
+                        Section("间距") {
+                            HStack {
+                                Text("图标间距")
+                                Spacer()
+                                Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
+                                    .frame(width: 100)
+                                Text("\(Int(mainIconGroupSpacing))")
+                                    .monospacedDigit()
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 24, alignment: .trailing)
+                            }
                         }
                     }
                 }
@@ -273,6 +286,11 @@ struct MenuBarBatteryConfigView: View {
                     }
                 }
                 UserDefaults.standard.set(true, forKey: "batteryInnerContentV2Migrated")
+            }
+        }
+        .onChange(of: batteryInnerContent) { _, newValue in
+            if newValue == "inside" {
+                batteryChargingIndicator = "none"
             }
         }
     }
@@ -368,12 +386,14 @@ struct InfoSkeletonOutside: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            HStack(spacing: 2) {
+            HStack(spacing: 1) {
                 BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
-                    .scaleEffect(0.65)
+                    .scaleEffect(0.55)
+                    .frame(width: 18, height: 10)
                 Text("75%")
                     .font(.system(size: 7, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
+                    .fixedSize()
             }
         }
     }
@@ -393,8 +413,13 @@ struct ChargingSkeletonBolt: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "bolt", showNumber: false, isIOSStyle: false)
-                .scaleEffect(0.8)
+            ZStack {
+                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 5.5, weight: .black))
+                    .foregroundColor(.primary)
+            }
+            .scaleEffect(0.8)
         }
     }
 }
@@ -403,8 +428,13 @@ struct ChargingSkeletonClassic: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "classic", showNumber: false, isIOSStyle: false)
-                .scaleEffect(0.8)
+            ZStack {
+                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 8.5, weight: .bold))
+                    .foregroundColor(.primary)
+            }
+            .scaleEffect(0.8)
         }
     }
 }
@@ -413,8 +443,15 @@ struct ChargingSkeletonPlug: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "plug", showNumber: false, isIOSStyle: false)
-                .scaleEffect(0.8)
+            ZStack {
+                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
+                Image(systemName: "powerplug.fill")
+                    .font(.system(size: 7.5, weight: .bold))
+                    .rotationEffect(.degrees(-90))
+                    .offset(x: 3)
+                    .foregroundColor(.primary)
+            }
+            .scaleEffect(0.8)
         }
     }
 }
