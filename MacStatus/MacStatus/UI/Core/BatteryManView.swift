@@ -16,6 +16,7 @@ struct BatteryManView: View {
     var showArms: Bool = false
     var showPosture: Bool = false
     var showAccessory: Bool = false
+    var faceStyle: BatteryManFaceStyle = .outline
 
     // --- Dimensions ---
     // Body (the battery)
@@ -234,106 +235,99 @@ struct BatteryManView: View {
     }
 
     // ── Face ──
-    // Two-pass approach so face is visible at any battery level:
-    // 1) .clear punch knocks out fill behind each feature (needed when fill covers the face)
-    // 2) Normal .primary draw on top (visible whether fill was present or not)
     private func drawFace(ctx: GraphicsContext, bodyOrigin: CGPoint,
                           capacity: Int, isCharging: Bool, strokeColor: Color) {
         let eyeY = bodyOrigin.y + bodyHeight * 0.4
         let leftEyeX = bodyOrigin.x + bodyWidth * 0.32
         let rightEyeX = bodyOrigin.x + bodyWidth * 0.68
         let eyeR: CGFloat = 1.1
-        let haloR: CGFloat = eyeR + 0.8  // slightly larger for the knockout halo
 
         let leftEye = CGRect(x: leftEyeX - eyeR, y: eyeY - eyeR,
                              width: eyeR * 2, height: eyeR * 2)
         let rightEye = CGRect(x: rightEyeX - eyeR, y: eyeY - eyeR,
                               width: eyeR * 2, height: eyeR * 2)
-        let leftHalo = CGRect(x: leftEyeX - haloR, y: eyeY - haloR,
-                              width: haloR * 2, height: haloR * 2)
-        let rightHalo = CGRect(x: rightEyeX - haloR, y: eyeY - haloR,
-                               width: haloR * 2, height: haloR * 2)
 
-        // Pass 1: punch halos to ensure contrast against fill
-        var clearCtx = ctx
-        clearCtx.blendMode = .clear
-        clearCtx.fill(Path(ellipseIn: leftHalo), with: .color(.white))
-        clearCtx.fill(Path(ellipseIn: rightHalo), with: .color(.white))
-
-        // Pass 2: draw actual eyes on top
-        ctx.fill(Path(ellipseIn: leftEye), with: .color(strokeColor))
-        ctx.fill(Path(ellipseIn: rightEye), with: .color(strokeColor))
-
-        // Mouth — use a filled strip (not a stroke) as the knockout halo,
-        // so there are no stroke-cap artifacts and no "sausage" look.
-        let mouthStrip = makeMouthStripPath(bodyOrigin: bodyOrigin,
-                                            capacity: capacity,
-                                            isCharging: isCharging,
-                                            thickness: 2.0)
-        clearCtx.fill(mouthStrip, with: .color(.white))
-
-        // Actual mouth line
-        let mouthLine = makeMouthLinePath(bodyOrigin: bodyOrigin,
-                                          capacity: capacity,
-                                          isCharging: isCharging)
-        ctx.stroke(mouthLine, with: .color(strokeColor), lineWidth: 0.8)
-    }
-
-    private func makeMouthStripPath(bodyOrigin: CGPoint, capacity: Int,
-                                    isCharging: Bool, thickness: CGFloat) -> Path {
+        // Mouth path (shared)
         let mouthY = bodyOrigin.y + bodyHeight * 0.72
         let cx = bodyOrigin.x + bodyWidth * 0.5
         let w: CGFloat = 5
-        var p = Path()
 
+        var mouthPath = Path()
         if isCharging || capacity > 60 {
-            let h: CGFloat = 2.0
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY))
-            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY),
-                           control: CGPoint(x: cx, y: mouthY + h))
-            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - thickness))
-            p.addQuadCurve(to: CGPoint(x: cx - w / 2, y: mouthY - thickness),
-                           control: CGPoint(x: cx, y: mouthY + h - thickness))
-            p.closeSubpath()
+            mouthPath.move(to: CGPoint(x: cx - w / 2, y: mouthY - 1))
+            mouthPath.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY - 1),
+                                   control: CGPoint(x: cx, y: mouthY + 1))
         } else if capacity <= 20 {
-            let h: CGFloat = -1.2
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY + 1))
-            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY + 1),
-                           control: CGPoint(x: cx, y: mouthY + 1 + h))
-            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY + 1 - thickness))
-            p.addQuadCurve(to: CGPoint(x: cx - w / 2, y: mouthY + 1 - thickness),
-                           control: CGPoint(x: cx, y: mouthY + 1 + h - thickness))
-            p.closeSubpath()
+            mouthPath.move(to: CGPoint(x: cx - w / 2, y: mouthY))
+            mouthPath.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY),
+                                   control: CGPoint(x: cx, y: mouthY - 2.2))
         } else {
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY))
-            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY))
-            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - thickness))
-            p.addLine(to: CGPoint(x: cx - w / 2, y: mouthY - thickness))
-            p.closeSubpath()
+            mouthPath.move(to: CGPoint(x: cx - w / 2, y: mouthY - 1))
+            mouthPath.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - 1))
         }
-        return p
-    }
 
-    private func makeMouthLinePath(bodyOrigin: CGPoint, capacity: Int,
-                                   isCharging: Bool) -> Path {
-        let mouthY = bodyOrigin.y + bodyHeight * 0.72
-        let cx = bodyOrigin.x + bodyWidth * 0.5
-        let w: CGFloat = 5
-        let halfThick: CGFloat = 1.0  // thickness / 2
-        var p = Path()
-        if isCharging || capacity > 60 {
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY - halfThick))
-            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY - halfThick),
-                           control: CGPoint(x: cx, y: mouthY + 2 - halfThick))
-        } else if capacity <= 20 {
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY + 1 - halfThick))
-            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY + 1 - halfThick),
-                           control: CGPoint(x: cx, y: mouthY - 1.2))
-        } else {
-            p.move(to: CGPoint(x: cx - w / 2, y: mouthY - halfThick))
-            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - halfThick))
+        switch faceStyle {
+        case .solid:
+            // Build the battery fill path so we can clip the face features against it.
+            let percentage = Double(capacity) / 100.0
+            let fillInset: CGFloat = 1.5
+            let maxFillW = bodyWidth - fillInset * 2
+            let fillW = maxFillW * percentage
+            let fillRect = CGRect(x: bodyOrigin.x + fillInset,
+                                  y: bodyOrigin.y + fillInset,
+                                  width: fillW,
+                                  height: bodyHeight - fillInset * 2)
+            let fillPath = RoundedRectangle(cornerRadius: 1.2, style: .continuous).path(in: fillRect)
+
+            let leftEyePath = Path(ellipseIn: leftEye)
+            let rightEyePath = Path(ellipseIn: rightEye)
+
+            // Eyes: black on fill, white on background
+            ctx.fill(leftEyePath.intersection(fillPath), with: .color(.black))
+            ctx.fill(leftEyePath.subtracting(fillPath), with: .color(.white))
+            ctx.fill(rightEyePath.intersection(fillPath), with: .color(.black))
+            ctx.fill(rightEyePath.subtracting(fillPath), with: .color(.white))
+
+            // Mouth as a filled "sausage" shape, clipped against the battery fill.
+            let mouthSausage: Path = {
+                if isCharging || capacity > 60 {
+                    let p0 = CGPoint(x: cx - w / 2, y: mouthY - 1)
+                    let p1 = CGPoint(x: cx, y: mouthY + 1)
+                    let p2 = CGPoint(x: cx + w / 2, y: mouthY - 1)
+                    return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5)
+                } else if capacity <= 20 {
+                    let p0 = CGPoint(x: cx - w / 2, y: mouthY)
+                    let p1 = CGPoint(x: cx, y: mouthY - 2.2)
+                    let p2 = CGPoint(x: cx + w / 2, y: mouthY)
+                    return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5)
+                } else {
+                    let rect = CGRect(x: cx - w / 2, y: mouthY - 1 - 0.75, width: w, height: 1.5)
+                    return RoundedRectangle(cornerRadius: 0.75, style: .continuous).path(in: rect)
+                }
+            }()
+            ctx.fill(mouthSausage.intersection(fillPath), with: .color(.black))
+            ctx.fill(mouthSausage.subtracting(fillPath), with: .color(.white))
+
+        case .outline:
+            // Transparent outline (knockout halo + stroke on top)
+            let haloR = eyeR + 0.8
+            let leftHalo = CGRect(x: leftEyeX - haloR, y: eyeY - haloR,
+                                  width: haloR * 2, height: haloR * 2)
+            let rightHalo = CGRect(x: rightEyeX - haloR, y: eyeY - haloR,
+                                   width: haloR * 2, height: haloR * 2)
+
+            var clearCtx = ctx
+            clearCtx.blendMode = .clear
+            clearCtx.fill(Path(ellipseIn: leftHalo), with: .color(.white))
+            clearCtx.fill(Path(ellipseIn: rightHalo), with: .color(.white))
+
+            ctx.fill(Path(ellipseIn: leftEye), with: .color(strokeColor))
+            ctx.fill(Path(ellipseIn: rightEye), with: .color(strokeColor))
+
+            let strip = mouthPath.strokedPath(StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+            clearCtx.fill(strip, with: .color(.white))
+            ctx.stroke(mouthPath, with: .color(strokeColor), lineWidth: 0.8)
         }
-        return p
     }
 
     // ── Hat bolt (charging accessory) ──
@@ -357,6 +351,39 @@ struct BatteryManView: View {
                           control: CGPoint(x: tipX + w, y: tipY + 3))
         path.closeSubpath()
         ctx.fill(path, with: .color(color))
+    }
+
+    /// Turn a quadratic Bézier curve into a closed filled "sausage" path.
+    private func makeSausageFromQuadCurve(p0: CGPoint, p1: CGPoint, p2: CGPoint, lineWidth: CGFloat) -> Path {
+        let steps = 24
+        let r = lineWidth / 2
+        var upper: [CGPoint] = []
+        var lower: [CGPoint] = []
+
+        for i in 0...steps {
+            let t = CGFloat(i) / CGFloat(steps)
+            let x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x
+            let y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y
+
+            let dx = 2 * (1 - t) * (p1.x - p0.x) + 2 * t * (p2.x - p1.x)
+            let dy = 2 * (1 - t) * (p1.y - p0.y) + 2 * t * (p2.y - p1.y)
+            let len = hypot(dx, dy)
+            guard len > 0 else { continue }
+            let nx = -dy / len * r
+            let ny =  dx / len * r
+
+            upper.append(CGPoint(x: x + nx, y: y + ny))
+            lower.append(CGPoint(x: x - nx, y: y - ny))
+        }
+
+        var path = Path()
+        if let first = upper.first {
+            path.move(to: first)
+            for pt in upper.dropFirst() { path.addLine(to: pt) }
+            for pt in lower.reversed()  { path.addLine(to: pt) }
+            path.closeSubpath()
+        }
+        return path
     }
 
     /// Tiny lightning-bolt path centered at `center`.
@@ -393,6 +420,20 @@ enum BatteryManLegLength: String, CaseIterable, Identifiable {
     }
 }
 
+enum BatteryManFaceStyle: String, CaseIterable, Identifiable {
+    case solid = "solid"
+    case outline = "outline"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .solid:   return "实心"
+        case .outline: return "透明描边"
+        }
+    }
+}
+
 // MARK: - Isolated renderer
 
 struct IsolatedBatteryManRenderer: View {
@@ -404,6 +445,7 @@ struct IsolatedBatteryManRenderer: View {
     @AppStorage("batteryManShowArms") private var showArms = false
     @AppStorage("batteryManShowPosture") private var showPosture = false
     @AppStorage("batteryManShowAccessory") private var showAccessory = false
+    @AppStorage("batteryManFaceStyle") private var faceStyle: BatteryManFaceStyle = .outline
 
     var body: some View {
         BatteryManView(
@@ -415,7 +457,8 @@ struct IsolatedBatteryManRenderer: View {
             showFace: showFace,
             showArms: showArms,
             showPosture: showPosture,
-            showAccessory: showAccessory
+            showAccessory: showAccessory,
+            faceStyle: faceStyle
         )
         .fixedSize()
     }

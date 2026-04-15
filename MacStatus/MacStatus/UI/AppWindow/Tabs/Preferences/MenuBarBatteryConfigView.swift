@@ -16,6 +16,7 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryManShowArms") private var batteryManShowArms = false
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
+    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
 
     // 主图标选项
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -145,6 +146,18 @@ struct MenuBarBatteryConfigView: View {
 
                     Section {
                         Toggle("表情", isOn: $batteryManShowFace)
+                        if batteryManShowFace {
+                            HStack(alignment: .top) {
+                                Text("表情样式")
+                                    .padding(.top, 6)
+                                Spacer()
+                                HStack(spacing: 12) {
+                                    FaceStyleSelectButton(title: "实心", value: .solid, currentSelection: $batteryManFaceStyle)
+                                    FaceStyleSelectButton(title: "透明描边", value: .outline, currentSelection: $batteryManFaceStyle)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
                         Toggle("手臂", isOn: $batteryManShowArms)
                         Toggle("姿态", isOn: $batteryManShowPosture)
                         Toggle("头饰", isOn: $batteryManShowAccessory)
@@ -441,6 +454,41 @@ struct ChargingSkeletonClassic: View {
             }
             .scaleEffect(0.8)
         }
+    }
+}
+
+// MARK: - Face Style Select Button
+
+struct FaceStyleSelectButton: View {
+    let title: String
+    let value: BatteryManFaceStyle
+    @Binding var currentSelection: BatteryManFaceStyle
+
+    var isSelected: Bool { currentSelection == value }
+
+    var body: some View {
+        Button {
+            currentSelection = value
+        } label: {
+            VStack(spacing: 4) {
+                BatteryManView(capacity: 75, isCharging: false, isColored: false, showBolt: false, showFace: true, faceStyle: value)
+                    .scaleEffect(0.9)
+                    .frame(height: 20)
+
+                Text(title)
+                    .font(.caption2)
+            }
+            .frame(width: 56, height: 48)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

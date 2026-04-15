@@ -205,6 +205,7 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("batteryManShowArms") private var batteryManShowArms = false
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
+    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
 
     var body: some View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
@@ -228,7 +229,8 @@ struct MenuBarLabelRendererView: View {
                             showFace: batteryManShowFace,
                             showArms: batteryManShowArms,
                             showPosture: batteryManShowPosture,
-                            showAccessory: batteryManShowAccessory
+                            showAccessory: batteryManShowAccessory,
+                            faceStyle: batteryManFaceStyle
                         )
                     }
                     if showPercentage { Text("\(viewModel.currentCapacity)%") }
@@ -243,7 +245,8 @@ struct MenuBarLabelRendererView: View {
                             showFace: batteryManShowFace,
                             showArms: batteryManShowArms,
                             showPosture: batteryManShowPosture,
-                            showAccessory: batteryManShowAccessory
+                            showAccessory: batteryManShowAccessory,
+                            faceStyle: batteryManFaceStyle
                         )
                     }
                 } else if menuBarPowerStyle == .symbolic {
