@@ -4,7 +4,8 @@ struct MenuBarSettingsView: View {
     // 主图标原子选项 (Atomic Options)
     @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
+    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
     @AppStorage("batteryLayout") private var batteryLayout = "left"
     
     @AppStorage("showPercentage") private var showPercentage = true
@@ -144,7 +145,8 @@ struct MenuBarSettingsView: View {
                         menuUpdateInterval = 2
                         batteryShellStyle = "native"
                         batteryFillStyle = "monochrome"
-                        batteryInnerContent = "bolt"
+                        batteryInnerContent = "outside"
+                        batteryChargingIndicator = "bolt"
                         batteryLayout = "left"
                         showPercentage = true
                         showChargingStatus = false
@@ -214,8 +216,9 @@ struct UnifiedPreviewRow: View {
     @AppStorage("previewIsDark") private var previewIsDark = true
     @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
-    
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
+    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
+
     // We use actual data from the shared service or a static mock for the main page
     @StateObject private var viewModel = StatusViewModel()
 
@@ -223,9 +226,10 @@ struct UnifiedPreviewRow: View {
         let batteryView = BatteryGraphicView(
             capacity: viewModel.currentCapacity,
             isCharging: viewModel.isCharging,
+            isPowered: viewModel.batteryData.adapter != nil,
             isColored: batteryFillStyle == "status_color",
-            showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
-            showNumber: batteryInnerContent == "number",
+            chargingStyle: batteryChargingIndicator,
+            showNumber: batteryInnerContent == "inside",
             isIOSStyle: batteryShellStyle == "ios"
         )
         

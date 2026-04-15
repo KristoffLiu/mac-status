@@ -2,7 +2,7 @@ import Foundation
 
 enum MenuBarPowerStyle: String, CaseIterable, Identifiable {
     case graphic = "graphic"       // 电池
-    case batteryMan = "batteryMan" // 电池人（占位）
+    case batteryMan = "batteryMan" // 电池小人
     case symbolic = "symbolic"     // 简约图标 (Simple icon) — 保留兼容
     case textOnly = "textOnly"     // 纯电量数字 (Pure data) — 保留兼容
 
@@ -11,7 +11,7 @@ enum MenuBarPowerStyle: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .graphic: return "电池"
-        case .batteryMan: return "电池人"
+        case .batteryMan: return "电池小人"
         case .symbolic: return "简约图标"
         case .textOnly: return "纯电量数字"
         }

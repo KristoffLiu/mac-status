@@ -3,12 +3,13 @@ import SwiftUI
 struct BatteryGraphicView: View {
     var capacity: Int
     var isCharging: Bool
-    
+    var isPowered: Bool = false  // adapter connected (covers bypass/passthrough)
+
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
-    
+
     // Configurable styles
     var isColored: Bool = false
-    var showBolt: Bool = true
+    var chargingStyle: String = "bolt"  // "none", "bolt", "classic", "plug"
     var showNumber: Bool = false
     var isIOSStyle: Bool = false
     
@@ -66,13 +67,32 @@ struct BatteryGraphicView: View {
                         Text("\(capacity)")
                             .font(.system(size: 8, weight: .heavy, design: .rounded))
                     }
-                    if isCharging && showBolt {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 7, weight: .black))
+                    if (isCharging || isPowered) && chargingStyle != "none" {
+                        switch chargingStyle {
+                        case "classic":
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10, weight: .black))
+                        case "plug":
+                            Image(systemName: "powerplug.fill")
+                                .font(.system(size: 9, weight: .black))
+                                .rotationEffect(.degrees(-90))
+                                .offset(x: 2)
+                        default: // "bolt"
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 7, weight: .black))
+                        }
                     }
                 }
-                .foregroundColor(isColored ? (percentage > 0.4 || isCharging ? .white : .primary) : .black)
-                .blendMode(isColored ? .normal : .destinationOut)
+                .foregroundColor(
+                    chargingStyle == "classic"
+                        ? .black
+                        : (isColored ? (percentage > 0.4 || isCharging ? .white : .primary) : .black)
+                )
+                .blendMode(
+                    chargingStyle == "classic"
+                        ? .destinationOut
+                        : (isColored ? .normal : .destinationOut)
+                )
                 .frame(width: width, alignment: .center)
                 .padding(.trailing, 0)
             }
@@ -84,6 +104,7 @@ struct BatteryGraphicView: View {
                 .frame(width: 2.0, height: 3.5)
                 .padding(.leading, 1) // Ensures terminal and body do not touch
         }
+        .padding(.leading, 1)
         .padding(.trailing, 2)
         .padding(.vertical, 2)
     }
@@ -95,7 +116,8 @@ struct IsolatedBatteryGraphicRenderer: View {
     
     @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
+    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
 
     var body: some View {
         Group {
@@ -103,9 +125,10 @@ struct IsolatedBatteryGraphicRenderer: View {
                 BatteryGraphicView(
                     capacity: viewModel.currentCapacity,
                     isCharging: viewModel.isCharging,
+                    isPowered: viewModel.batteryData.adapter != nil,
                     isColored: batteryFillStyle == "status_color",
-                    showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
-                    showNumber: batteryInnerContent == "number",
+                    chargingStyle: batteryChargingIndicator,
+                    showNumber: batteryInnerContent == "inside",
                     isIOSStyle: batteryShellStyle == "ios"
                 )
             }
@@ -125,6 +148,7 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("showPercentage") private var showPercentage = true
     @AppStorage("showChargingStatus") private var showChargingStatus = false
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
     
     @AppStorage("showMaxCapacity") private var showMaxCapacity = false
     @AppStorage("showMacOSCapacity") private var showMacOSCapacity = false
@@ -150,18 +174,54 @@ struct MenuBarLabelRendererView: View {
     // Spacing
     @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
     @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
-    
+
+    // Battery Man
+    @AppStorage("batteryManLegLength") private var batteryManLegLength: BatteryManLegLength = .normal
+    @AppStorage("batteryManShowFace") private var batteryManShowFace = false
+    @AppStorage("batteryManShowArms") private var batteryManShowArms = false
+    @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
+    @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
+
     var body: some View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
             // Main Icon Group
             HStack(spacing: CGFloat(mainIconGroupSpacing)) {
                 if menuBarPowerStyle == .graphic {
                     if batteryLayout == "left", let image = generatedMenuImage { Image(nsImage: image) }
-                    
+
+                    if batteryInnerContent == "outside" { Text("\(viewModel.currentCapacity)%") }
+                    if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
+
+                    if batteryLayout == "right", let image = generatedMenuImage { Image(nsImage: image) }
+                } else if menuBarPowerStyle == .batteryMan {
+                    if batteryLayout == "left" {
+                        BatteryManView(
+                            capacity: viewModel.currentCapacity,
+                            isCharging: viewModel.isCharging,
+                            isColored: false,
+                            showBolt: true,
+                            legLength: batteryManLegLength,
+                            showFace: batteryManShowFace,
+                            showArms: batteryManShowArms,
+                            showPosture: batteryManShowPosture,
+                            showAccessory: batteryManShowAccessory
+                        )
+                    }
                     if showPercentage { Text("\(viewModel.currentCapacity)%") }
                     if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
-                    
-                    if batteryLayout == "right", let image = generatedMenuImage { Image(nsImage: image) }
+                    if batteryLayout == "right" {
+                        BatteryManView(
+                            capacity: viewModel.currentCapacity,
+                            isCharging: viewModel.isCharging,
+                            isColored: false,
+                            showBolt: true,
+                            legLength: batteryManLegLength,
+                            showFace: batteryManShowFace,
+                            showArms: batteryManShowArms,
+                            showPosture: batteryManShowPosture,
+                            showAccessory: batteryManShowAccessory
+                        )
+                    }
                 } else if menuBarPowerStyle == .symbolic {
                     Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
                         .symbolRenderingMode(.hierarchical)

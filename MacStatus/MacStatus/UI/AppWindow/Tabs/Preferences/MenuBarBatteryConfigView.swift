@@ -7,7 +7,15 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
     @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
+    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
+
+    // 电池小人选项
+    @AppStorage("batteryManLegLength") private var batteryManLegLength: BatteryManLegLength = .normal
+    @AppStorage("batteryManShowFace") private var batteryManShowFace = false
+    @AppStorage("batteryManShowArms") private var batteryManShowArms = false
+    @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
+    @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
 
     // 主图标选项
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -19,6 +27,7 @@ struct MenuBarBatteryConfigView: View {
     // 模拟器状态
     @State private var simCapacity: Int = 75
     @State private var simIsCharging: Bool = true
+    @State private var simAdapterConnected: Bool = true
     @State private var isSimulatorExpanded: Bool = false
 
     var body: some View {
@@ -26,9 +35,11 @@ struct MenuBarBatteryConfigView: View {
             Form {
                 // Preview Section
                 Section {
+                    let mockVM = PreviewStatusViewModel(capacity: simCapacity, isCharging: simIsCharging, hasAdapter: simAdapterConnected)
+
                     if menuBarPowerStyle == .batteryMan {
-                        Text("🔋 电池人 (Coming Soon)")
-                            .font(.headline)
+                        MenuBarLabelRendererView(viewModel: mockVM, generatedMenuImage: nil)
+                            .environment(\.colorScheme, previewIsDark ? .dark : .light)
                             .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
                             .background(previewIsDark ? Color.black : Color.white)
@@ -36,13 +47,13 @@ struct MenuBarBatteryConfigView: View {
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .center)
                     } else {
-                        let mockVM = PreviewStatusViewModel(capacity: simCapacity, isCharging: simIsCharging)
                         let batteryView = BatteryGraphicView(
                             capacity: simCapacity,
                             isCharging: simIsCharging,
+                            isPowered: simAdapterConnected,
                             isColored: batteryFillStyle == "status_color",
-                            showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
-                            showNumber: batteryInnerContent == "number",
+                            chargingStyle: batteryChargingIndicator,
+                            showNumber: batteryInnerContent == "inside",
                             isIOSStyle: batteryShellStyle == "ios"
                         )
 
@@ -95,21 +106,66 @@ struct MenuBarBatteryConfigView: View {
                                     .foregroundColor(.accentColor)
                             }
 
-                            StyleSelectButton(title: "电池人", value: .batteryMan, currentSelection: $menuBarPowerStyle) {
-                                Image(systemName: "figure.walk")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.secondary)
+                            StyleSelectButton(title: "电池小人", value: .batteryMan, currentSelection: $menuBarPowerStyle) {
+                                BatteryManView(capacity: 75, isCharging: false, isColored: false, showBolt: false)
+                                    .scaleEffect(0.9)
                             }
                         }
                     }
                     .padding(.vertical, 2)
                 }
 
+                // Battery Man Appearance Options
+                if menuBarPowerStyle == .batteryMan {
+                    Section("电池小人外观") {
+                        HStack(alignment: .top) {
+                            Text("腿长")
+                                .padding(.top, 6)
+
+                            Spacer()
+
+                            HStack(spacing: 12) {
+                                LegLengthSelectButton(title: "短腿", value: .short, currentSelection: $batteryManLegLength)
+                                LegLengthSelectButton(title: "长腿", value: .normal, currentSelection: $batteryManLegLength)
+                            }
+                        }
+                        .padding(.vertical, 2)
+
+                        Toggle("表情", isOn: $batteryManShowFace)
+                        if batteryManShowFace {
+                            Text("满电开心 · 中等平静 · 低电沮丧")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Toggle("手臂", isOn: $batteryManShowArms)
+                        if batteryManShowArms {
+                            Text("充电时举手欢呼")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Toggle("状态姿势", isOn: $batteryManShowPosture)
+                        if batteryManShowPosture {
+                            Text("低电量时弯腿蹲下")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Toggle("头饰", isOn: $batteryManShowAccessory)
+                        if batteryManShowAccessory {
+                            Text("充电时头顶闪电 · 低电量冒汗")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 // Battery Appearance Options
                 if menuBarPowerStyle == .graphic {
-                    Section {
+                    Section("电池外观") {
                         HStack(alignment: .top) {
-                            Text("外形")
+                            Text("电池外形")
                                 .padding(.top, 6)
 
                             Spacer()
@@ -124,7 +180,7 @@ struct MenuBarBatteryConfigView: View {
 
                         if batteryShellStyle != "hidden" {
                             HStack(alignment: .top) {
-                                Text("颜色")
+                                Text("色彩")
                                     .padding(.top, 6)
 
                                 Spacer()
@@ -137,15 +193,30 @@ struct MenuBarBatteryConfigView: View {
                             .padding(.vertical, 2)
 
                             HStack(alignment: .top) {
-                                Text("内部显示")
+                                Text("电量信息")
                                     .padding(.top, 6)
 
                                 Spacer()
 
                                 HStack(spacing: 12) {
-                                    OptionSelectButton(title: "无内容", value: "none", currentSelection: $batteryInnerContent) { InnerSkeletonNone() }
-                                    OptionSelectButton(title: "充电闪电", value: "bolt", currentSelection: $batteryInnerContent) { InnerSkeletonBolt() }
-                                    OptionSelectButton(title: "电量数字", value: "number", currentSelection: $batteryInnerContent) { InnerSkeletonNumber() }
+                                    OptionSelectButton(title: "无", value: "none", currentSelection: $batteryInnerContent) { InfoSkeletonNone() }
+                                    OptionSelectButton(title: "电量在外面", value: "outside", currentSelection: $batteryInnerContent) { InfoSkeletonOutside() }
+                                    OptionSelectButton(title: "电量在里面", value: "inside", currentSelection: $batteryInnerContent) { InfoSkeletonInside() }
+                                }
+                            }
+                            .padding(.vertical, 2)
+
+                            HStack(alignment: .top) {
+                                Text("充电状态")
+                                    .padding(.top, 6)
+
+                                Spacer()
+
+                                HStack(spacing: 12) {
+                                    OptionSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryChargingIndicator) { ChargingSkeletonBolt() }
+                                    OptionSelectButton(title: "经典闪电", value: "classic", currentSelection: $batteryChargingIndicator) { ChargingSkeletonClassic() }
+                                    OptionSelectButton(title: "适配器", value: "plug", currentSelection: $batteryChargingIndicator) { ChargingSkeletonPlug() }
+                                    OptionSelectButton(title: "无", value: "none", currentSelection: $batteryChargingIndicator) { ChargingSkeletonNone() }
                                 }
                             }
                             .padding(.vertical, 2)
@@ -180,6 +251,30 @@ struct MenuBarBatteryConfigView: View {
             .padding()
         }
         .frame(minWidth: 360, minHeight: 320)
+        .onAppear {
+            // v1: split old batteryInnerContent "bolt" into separate charging indicator
+            if !UserDefaults.standard.bool(forKey: "batteryChargingIndicatorMigrated") {
+                if batteryInnerContent == "none" {
+                    batteryChargingIndicator = "none"
+                }
+                if batteryInnerContent == "bolt" {
+                    batteryInnerContent = "none"
+                }
+                UserDefaults.standard.set(true, forKey: "batteryChargingIndicatorMigrated")
+            }
+            // v2: rename "number" → "inside", migrate showPercentage → "outside"
+            if !UserDefaults.standard.bool(forKey: "batteryInnerContentV2Migrated") {
+                if batteryInnerContent == "number" {
+                    batteryInnerContent = "inside"
+                } else if batteryInnerContent == "none" {
+                    let wasShowingPercentage = UserDefaults.standard.object(forKey: "showPercentage") as? Bool ?? true
+                    if wasShowingPercentage {
+                        batteryInnerContent = "outside"
+                    }
+                }
+                UserDefaults.standard.set(true, forKey: "batteryInnerContentV2Migrated")
+            }
+        }
     }
 
     @ViewBuilder
@@ -193,17 +288,25 @@ struct MenuBarBatteryConfigView: View {
                     .frame(width: 35, alignment: .trailing)
                     .monospacedDigit()
             }
+            Toggle("接着适配器", isOn: $simAdapterConnected)
             Toggle("正在充电", isOn: $simIsCharging)
+                .disabled(!simAdapterConnected)
         }
         .padding()
         .frame(width: 220)
+        .onChange(of: simIsCharging) { _, newValue in
+            if newValue { simAdapterConnected = true }
+        }
+        .onChange(of: simAdapterConnected) { _, newValue in
+            if !newValue { simIsCharging = false }
+        }
     }
 }
 
 // MARK: - Skeletons & Mock VM
 
 class PreviewStatusViewModel: StatusViewModel {
-    init(capacity: Int, isCharging: Bool) {
+    init(capacity: Int, isCharging: Bool, hasAdapter: Bool = true) {
         super.init()
         self.batteryData.currentCapacity = capacity
         self.batteryData.isCharging = isCharging
@@ -214,7 +317,9 @@ class PreviewStatusViewModel: StatusViewModel {
         self.batteryData.temperature = 32.5
         self.batteryData.appleRawMaxCapacity = 100
         self.batteryData.appleMaxCapacity = 100
-        self.batteryData.adapter = AdapterInfo(id: 1, familyCode: 1, name: "61W USB-C", designWatts: 61, realTimeWatts: isCharging ? 45 : 0, activeProfileIndex: 1, profiles: [], current: 2.25, voltage: 20.0, watts: isCharging ? 45 : 0)
+        self.batteryData.adapter = hasAdapter
+            ? AdapterInfo(id: 1, familyCode: 1, name: "61W USB-C", designWatts: 61, realTimeWatts: hasAdapter ? 45 : 0, activeProfileIndex: 1, profiles: [], current: 2.25, voltage: 20.0, watts: hasAdapter ? 45 : 0)
+            : nil
     }
 }
 
@@ -222,7 +327,7 @@ struct ShellSkeletonNative: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 80, isCharging: false, isColored: false, showBolt: false, showNumber: false, isIOSStyle: false)
+            BatteryGraphicView(capacity: 80, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
                 .scaleEffect(0.8)
         }
     }
@@ -232,7 +337,7 @@ struct ShellSkeletonIOS: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 80, isCharging: false, isColored: false, showBolt: false, showNumber: false, isIOSStyle: true)
+            BatteryGraphicView(capacity: 80, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: true)
                 .scaleEffect(0.8)
         }
     }
@@ -249,31 +354,110 @@ struct ShellSkeletonHidden: View {
     }
 }
 
-struct InnerSkeletonNone: View {
+struct InfoSkeletonNone: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, showBolt: false, showNumber: false, isIOSStyle: false)
+            BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
                 .scaleEffect(0.8)
         }
     }
 }
 
-struct InnerSkeletonBolt: View {
+struct InfoSkeletonOutside: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, showBolt: true, showNumber: false, isIOSStyle: false)
+            HStack(spacing: 2) {
+                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
+                    .scaleEffect(0.65)
+                Text("75%")
+                    .font(.system(size: 7, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+        }
+    }
+}
+
+struct InfoSkeletonInside: View {
+    var body: some View {
+        ZStack {
+            Color.primary.opacity(0.05)
+            BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: true, isIOSStyle: false)
                 .scaleEffect(0.8)
         }
     }
 }
 
-struct InnerSkeletonNumber: View {
+struct ChargingSkeletonBolt: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, showBolt: true, showNumber: true, isIOSStyle: false)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "bolt", showNumber: false, isIOSStyle: false)
+                .scaleEffect(0.8)
+        }
+    }
+}
+
+struct ChargingSkeletonClassic: View {
+    var body: some View {
+        ZStack {
+            Color.primary.opacity(0.05)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "classic", showNumber: false, isIOSStyle: false)
+                .scaleEffect(0.8)
+        }
+    }
+}
+
+struct ChargingSkeletonPlug: View {
+    var body: some View {
+        ZStack {
+            Color.primary.opacity(0.05)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "plug", showNumber: false, isIOSStyle: false)
+                .scaleEffect(0.8)
+        }
+    }
+}
+
+// MARK: - Leg Length Select Button
+
+struct LegLengthSelectButton: View {
+    let title: String
+    let value: BatteryManLegLength
+    @Binding var currentSelection: BatteryManLegLength
+
+    var isSelected: Bool { currentSelection == value }
+
+    var body: some View {
+        Button {
+            currentSelection = value
+        } label: {
+            VStack(spacing: 4) {
+                BatteryManView(capacity: 75, isCharging: false, isColored: false, showBolt: false, legLength: value)
+                    .scaleEffect(0.85)
+                    .frame(height: 24)
+
+                Text(title)
+                    .font(.caption2)
+            }
+            .frame(width: 56, height: 48)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+struct ChargingSkeletonNone: View {
+    var body: some View {
+        ZStack {
+            Color.primary.opacity(0.05)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
                 .scaleEffect(0.8)
         }
     }
