@@ -134,7 +134,7 @@ struct MenuBarBatteryConfigView: View {
                         HStack {
                             Text("图标间距")
                             Spacer()
-                            Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
+                            Slider(value: $mainIconGroupSpacing, in: 0...10, step: 2)
                                 .frame(width: 100)
                             Text("\(Int(mainIconGroupSpacing))")
                                 .monospacedDigit()
@@ -143,11 +143,16 @@ struct MenuBarBatteryConfigView: View {
                         }
                     }
 
-                    Section("表现力") {
-                        Toggle("表情 — 随电量变化喜怒", isOn: $batteryManShowFace)
-                        Toggle("手臂 — 充电时举手欢呼", isOn: $batteryManShowArms)
-                        Toggle("姿势 — 低电量弯腿疲惫", isOn: $batteryManShowPosture)
-                        Toggle("头饰 — 充电闪电 · 低电冒汗", isOn: $batteryManShowAccessory)
+                    Section {
+                        Toggle("表情", isOn: $batteryManShowFace)
+                        Toggle("手臂", isOn: $batteryManShowArms)
+                        Toggle("姿态", isOn: $batteryManShowPosture)
+                        Toggle("头饰", isOn: $batteryManShowAccessory)
+                    } header: {
+                        Text("个性")
+                    } footer: {
+                        Text("表情随电量变化，充电时手臂举起，低电量时姿态疲惫，头饰反映当前状态")
+                            .font(.caption)
                     }
                 }
 

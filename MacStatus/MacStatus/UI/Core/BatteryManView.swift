@@ -50,9 +50,6 @@ struct BatteryManView: View {
     /// Inset from canvas edge so the stroke isn't clipped.
     private var inset: CGFloat { strokeWidth / 2 + 0.5 }
 
-    /// Extra space above body for accessory.
-    private var topExtra: CGFloat { showAccessory ? accessoryHeight : 0 }
-
     /// Extra width on each side for arms.
     private var sideExtra: CGFloat { showArms ? armLength + 2 : 0 }
 
@@ -73,19 +70,19 @@ struct BatteryManView: View {
         Canvas { ctx, size in
             // ── Origins ──
             let bodyOriginX = (size.width - batteryTotalW) / 2
-            let bodyOriginY = inset + topExtra
+            let bodyOriginY = inset
 
-            // ===== Accessory (above body) =====
+            // ===== Accessory (drawn above frame top, Canvas doesn't clip by default) =====
             if showAccessory {
                 if isCharging {
                     drawHatBolt(ctx: ctx,
                                 center: CGPoint(x: bodyOriginX + bodyWidth / 2,
-                                                y: bodyOriginY - 1),
+                                                y: bodyOriginY - 2),
                                 color: strokeColor)
                 } else if isCritical {
                     drawSweatDrop(ctx: ctx,
                                   origin: CGPoint(x: bodyOriginX + bodyWidth - 2,
-                                                  y: bodyOriginY - accessoryHeight + 1),
+                                                  y: bodyOriginY - accessoryHeight),
                                   color: strokeColor)
                 }
             }
@@ -167,7 +164,7 @@ struct BatteryManView: View {
             }
         }
         .frame(width: batteryTotalW + sideExtra * 2 + 4,
-               height: inset + topExtra + bodyHeight + legHeight + footHeight + 1)
+               height: inset + bodyHeight + legHeight + footHeight + 1)
         .compositingGroup()
     }
 
@@ -267,28 +264,76 @@ struct BatteryManView: View {
         ctx.fill(Path(ellipseIn: leftEye), with: .color(strokeColor))
         ctx.fill(Path(ellipseIn: rightEye), with: .color(strokeColor))
 
-        // Mouth
-        let mouthY = bodyOrigin.y + bodyHeight * 0.72
-        let mouthCenterX = bodyOrigin.x + bodyWidth * 0.5
-        let mouthW: CGFloat = 5
+        // Mouth — use a filled strip (not a stroke) as the knockout halo,
+        // so there are no stroke-cap artifacts and no "sausage" look.
+        let mouthStrip = makeMouthStripPath(bodyOrigin: bodyOrigin,
+                                            capacity: capacity,
+                                            isCharging: isCharging,
+                                            thickness: 2.0)
+        clearCtx.fill(mouthStrip, with: .color(.white))
 
-        var mouthPath = Path()
+        // Actual mouth line
+        let mouthLine = makeMouthLinePath(bodyOrigin: bodyOrigin,
+                                          capacity: capacity,
+                                          isCharging: isCharging)
+        ctx.stroke(mouthLine, with: .color(strokeColor), lineWidth: 0.8)
+    }
+
+    private func makeMouthStripPath(bodyOrigin: CGPoint, capacity: Int,
+                                    isCharging: Bool, thickness: CGFloat) -> Path {
+        let mouthY = bodyOrigin.y + bodyHeight * 0.72
+        let cx = bodyOrigin.x + bodyWidth * 0.5
+        let w: CGFloat = 5
+        var p = Path()
+
         if isCharging || capacity > 60 {
-            mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY))
-            mouthPath.addQuadCurve(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY),
-                                   control: CGPoint(x: mouthCenterX, y: mouthY + 2.5))
+            let h: CGFloat = 2.0
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY))
+            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY),
+                           control: CGPoint(x: cx, y: mouthY + h))
+            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - thickness))
+            p.addQuadCurve(to: CGPoint(x: cx - w / 2, y: mouthY - thickness),
+                           control: CGPoint(x: cx, y: mouthY + h - thickness))
+            p.closeSubpath()
         } else if capacity <= 20 {
-            mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY + 1))
-            mouthPath.addQuadCurve(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY + 1),
-                                   control: CGPoint(x: mouthCenterX, y: mouthY - 1.5))
+            let h: CGFloat = -1.2
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY + 1))
+            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY + 1),
+                           control: CGPoint(x: cx, y: mouthY + 1 + h))
+            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY + 1 - thickness))
+            p.addQuadCurve(to: CGPoint(x: cx - w / 2, y: mouthY + 1 - thickness),
+                           control: CGPoint(x: cx, y: mouthY + 1 + h - thickness))
+            p.closeSubpath()
         } else {
-            mouthPath.move(to: CGPoint(x: mouthCenterX - mouthW / 2, y: mouthY))
-            mouthPath.addLine(to: CGPoint(x: mouthCenterX + mouthW / 2, y: mouthY))
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY))
+            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY))
+            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - thickness))
+            p.addLine(to: CGPoint(x: cx - w / 2, y: mouthY - thickness))
+            p.closeSubpath()
         }
-        // Pass 1: punch mouth halo
-        clearCtx.stroke(mouthPath, with: .color(.white), lineWidth: 2.4)
-        // Pass 2: draw mouth
-        ctx.stroke(mouthPath, with: .color(strokeColor), lineWidth: 0.8)
+        return p
+    }
+
+    private func makeMouthLinePath(bodyOrigin: CGPoint, capacity: Int,
+                                   isCharging: Bool) -> Path {
+        let mouthY = bodyOrigin.y + bodyHeight * 0.72
+        let cx = bodyOrigin.x + bodyWidth * 0.5
+        let w: CGFloat = 5
+        let halfThick: CGFloat = 1.0  // thickness / 2
+        var p = Path()
+        if isCharging || capacity > 60 {
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY - halfThick))
+            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY - halfThick),
+                           control: CGPoint(x: cx, y: mouthY + 2 - halfThick))
+        } else if capacity <= 20 {
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY + 1 - halfThick))
+            p.addQuadCurve(to: CGPoint(x: cx + w / 2, y: mouthY + 1 - halfThick),
+                           control: CGPoint(x: cx, y: mouthY - 1.2))
+        } else {
+            p.move(to: CGPoint(x: cx - w / 2, y: mouthY - halfThick))
+            p.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - halfThick))
+        }
+        return p
     }
 
     // ── Hat bolt (charging accessory) ──
