@@ -56,22 +56,18 @@ struct MenuBarSettingsView: View {
             previewSection
             
             Section {
-                Button(action: { isShowingBatteryConfig = true }) {
-                    HStack {
-                        Label("电池图标", systemImage: "battery.100")
-                        Spacer()
-                        Text(batteryShellStyle == "native" ? "经典原生" : (batteryShellStyle == "ios" ? "紧凑填充" : "隐藏"))
-                            .foregroundColor(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.secondary.opacity(0.5))
+                HStack {
+                    Label("电池图标", systemImage: "battery.100")
+                    Spacer()
+                    Button("电池图标 选项...") {
+                        isShowingBatteryConfig = true
                     }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.plain)
             } header: {
                 Text("图形定制")
             } footer: {
-                Text("进入配置详细的电能演示风格与电池图标外观。")
+                Text("配置电池图标外观与显示风格。")
             }
             .sheet(isPresented: $isShowingBatteryConfig) {
                 MenuBarBatteryConfigView()
