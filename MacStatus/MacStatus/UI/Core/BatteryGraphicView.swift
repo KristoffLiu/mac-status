@@ -119,6 +119,7 @@ struct MenuBarLabelRendererView: View {
     @ObservedObject var viewModel: StatusViewModel
     var generatedMenuImage: NSImage?
     
+    @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
     @AppStorage("batteryLayout") private var batteryLayout = "left"
     
     @AppStorage("showPercentage") private var showPercentage = true
@@ -154,32 +155,41 @@ struct MenuBarLabelRendererView: View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
             // Main Icon Group
             HStack(spacing: CGFloat(mainIconGroupSpacing)) {
-                if batteryLayout == "left", let image = generatedMenuImage { Image(nsImage: image) }
-                
-                if showPercentage { Text("\(viewModel.currentCapacity)%") }
-                if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
-                
-                if batteryLayout == "right", let image = generatedMenuImage { Image(nsImage: image) }
+                if menuBarPowerStyle == .graphic {
+                    if batteryLayout == "left", let image = generatedMenuImage { Image(nsImage: image) }
+                    
+                    if showPercentage { Text("\(viewModel.currentCapacity)%") }
+                    if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
+                    
+                    if batteryLayout == "right", let image = generatedMenuImage { Image(nsImage: image) }
+                } else if menuBarPowerStyle == .symbolic {
+                    Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
+                        .symbolRenderingMode(.hierarchical)
+                    if showPercentage { Text("\(viewModel.currentCapacity)%") }
+                } else if menuBarPowerStyle == .textOnly {
+                    Text("\(viewModel.currentCapacity)%")
+                        .fontWeight(.bold)
+                }
             }
             
             // Health
-            if showMaxCapacity { Text("H:\(viewModel.batteryData.appleRawMaxCapacity ?? 0)%") }
-            if showMacOSCapacity { Text("S:\(viewModel.batteryData.appleMaxCapacity ?? 0)%") }
-            if showMacOSCondition { Text("正常") }
-            if showCycles { Image(systemName: "arrow.3.path"); Text("\(viewModel.batteryData.cycleCount ?? 0)") }
+            if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("H:\(viewModel.batteryData.appleRawMaxCapacity ?? 0)%") } }
+            if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text("S:\(viewModel.batteryData.appleMaxCapacity ?? 0)%") } }
+            if showMacOSCondition { HStack(spacing: 2) { Image(systemName: "cross.case"); Text("正常") } }
+            if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text("\(viewModel.batteryData.cycleCount ?? 0)") } }
             
             // Specs
-            if showTemperature { Image(systemName: "thermometer"); Text(String(format: "%.0f°C", viewModel.temperature)) }
-            if showTimeRemaining { Image(systemName: "clock"); Text("\(viewModel.batteryData.timeRemaining ?? 0)m") }
-            if showAmperage { Text(String(format: "%.2fA", Double(viewModel.batteryData.amperage) / 1000.0)) }
-            if showVoltage { Text(String(format: "%.2fV", Double(viewModel.batteryData.voltage) / 1000.0)) }
-            if showWattage { Text(String(format: "%.1fW", viewModel.batteryData.adapter?.realTimeWatts ?? 0.0)) }
-            if showSystemLoad { Text("15.0W") }
+            if showTemperature { HStack(spacing: 2) { Image(systemName: "thermometer"); Text(String(format: "%.0f°C", viewModel.temperature)) } }
+            if showTimeRemaining { HStack(spacing: 2) { Image(systemName: "clock"); Text("\(viewModel.batteryData.timeRemaining ?? 0)m") } }
+            if showAmperage { HStack(spacing: 2) { Image(systemName: "a.square"); Text(String(format: "%.2fA", Double(viewModel.batteryData.amperage) / 1000.0)) } }
+            if showVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(String(format: "%.2fV", Double(viewModel.batteryData.voltage) / 1000.0)) } }
+            if showWattage { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(String(format: "%.1fW", viewModel.batteryData.adapter?.realTimeWatts ?? 0.0)) } }
+            if showSystemLoad { HStack(spacing: 2) { Image(systemName: "laptopcomputer"); Text("15.0W") } }
             
             // Adapter
-            if showAdapterCurrent { Text(String(format: "%.1fA", viewModel.batteryData.adapter?.current ?? 0)) }
-            if showAdapterVoltage { Text(String(format: "%.1fV", viewModel.batteryData.adapter?.voltage ?? 0)) }
-            if showAdapterPower { Text(String(format: "%.0fW", viewModel.batteryData.adapter?.watts ?? 0)) }
+            if showAdapterCurrent { HStack(spacing: 2) { Image(systemName: "powerplug"); Text(String(format: "%.1fA", viewModel.batteryData.adapter?.current ?? 0)) } }
+            if showAdapterVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(String(format: "%.1fV", viewModel.batteryData.adapter?.voltage ?? 0)) } }
+            if showAdapterPower { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(String(format: "%.0fW", viewModel.batteryData.adapter?.watts ?? 0)) } }
             
             // AlDente
             if showAlDenteCalibration { Image(systemName: "slider.vertical.3") }

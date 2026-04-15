@@ -48,49 +48,42 @@ struct MenuBarSettingsView: View {
 
     @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
 
+    // 弹出状态
+    @State private var isShowingBatteryConfig = false
+    
     var body: some View {
         Form {
-            Section("电池图形定制") {
-                Picker("外壳形状", selection: $batteryShellStyle) {
-                    Text("经典原生").tag("native")
-                    Text("紧凑填充").tag("ios")
-                    Text("隐藏不显示").tag("hidden")
+            previewSection
+            
+            Section {
+                Button(action: { isShowingBatteryConfig = true }) {
+                    HStack {
+                        Label("电池图标", systemImage: "battery.100")
+                        Spacer()
+                        Text(batteryShellStyle == "native" ? "经典原生" : (batteryShellStyle == "ios" ? "紧凑填充" : "隐藏"))
+                            .foregroundColor(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.secondary.opacity(0.5))
+                    }
                 }
-                .pickerStyle(.segmented)
-                
-                Picker("色彩基调", selection: $batteryFillStyle) {
-                    Text("系统单色").tag("monochrome")
-                    Text("彩色生命条").tag("status_color")
-                }
-                .pickerStyle(.segmented)
-
-                Picker("内部显示物", selection: $batteryInnerContent) {
-                    Text("空").tag("none")
-                    Text("充电闪电").tag("bolt")
-                    Text("电量数字").tag("number")
-                }
-                .pickerStyle(.segmented)
+                .buttonStyle(.plain)
+            } header: {
+                Text("图形定制")
+            } footer: {
+                Text("进入配置详细的电能演示风格与电池图标外观。")
+            }
+            .sheet(isPresented: $isShowingBatteryConfig) {
+                MenuBarBatteryConfigView()
             }
             
-            Section("图形与附加文字布局") {
-                Picker("图形所在位置", selection: $batteryLayout) {
-                    Text("组件最左").tag("left")
-                    Text("组件最右").tag("right")
-                }
-                .pickerStyle(.segmented)
-            }
-
             Section("附加显示 (图标组外部)") {
                 Toggle("外置显式百分比", isOn: $showPercentage)
-                Toggle("极低电量变色提醒", isOn: $iconLowPowerColor)
                 Toggle("外置显式充电状态", isOn: $showChargingStatus)
                 
-                HStack {
-                    Text("图标组内间距")
-                    Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
-                    Text("\(Int(mainIconGroupSpacing))")
-                        .monospacedDigit()
-                        .frame(width: 24, alignment: .trailing)
+                Picker("图形所在位置", selection: $batteryLayout) {
+                    Text("左侧").tag("left")
+                    Text("右侧").tag("right")
                 }
             }
             
@@ -149,21 +142,21 @@ struct MenuBarSettingsView: View {
             Section {
                 HStack {
                     Spacer()
-                    Button("重置") {
+                    Button("重置所有设置") {
                         menuItemSpacing = 4
                         mainIconGroupSpacing = 4
                         menuUpdateInterval = 2
+                        batteryShellStyle = "native"
+                        batteryFillStyle = "monochrome"
+                        batteryInnerContent = "bolt"
+                        batteryLayout = "left"
+                        showPercentage = true
+                        showChargingStatus = false
+                        iconLowPowerColor = false
                     }
                     .buttonStyle(.borderless)
                     
-                    Button("全部清除") {
-                        batteryShellStyle = "hidden"
-                        batteryFillStyle = "monochrome"
-                        batteryInnerContent = "none"
-                        batteryLayout = "left"
-                        showPercentage = false
-                        showChargingStatus = false
-                        iconLowPowerColor = false
+                    Button("清空显示项") {
                         showMaxCapacity = false
                         showMacOSCapacity = false
                         showMacOSCondition = false
@@ -189,17 +182,20 @@ struct MenuBarSettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("菜单栏属性")
-        .safeAreaInset(edge: .top) {
-            // --- 沉浸式浮动预览卡片 ---
+    }
+
+    private var previewSection: some View {
+        Section {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "menubar.rectangle")
                         .foregroundColor(.blue)
-                    Text("实时体验预览")
+                    Text("实时显示效果")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(previewIsDark ? .white : .primary)
                     Spacer()
+                    
                     Button(action: { previewIsDark.toggle() }) {
                         Image(systemName: previewIsDark ? "moon.fill" : "sun.max.fill")
                             .foregroundColor(previewIsDark ? .yellow : .orange)
@@ -208,68 +204,53 @@ struct MenuBarSettingsView: View {
                     .buttonStyle(.plain)
                 }
                 
-                HStack(spacing: CGFloat(menuItemSpacing)) {
-                    HStack(spacing: CGFloat(mainIconGroupSpacing)) {
-                        let isPreviewLowPower = iconLowPowerColor
-                        let previewCapacity = isPreviewLowPower ? 15 : 75
-                        
-                        let innerPreview = Group {
-                            BatteryGraphicView(
-                                capacity: previewCapacity,
-                                isCharging: !isPreviewLowPower, // Don't show charging if we want to preview low power red color
-                                isColored: batteryFillStyle == "status_color",
-                                showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
-                                showNumber: batteryInnerContent == "number",
-                                isIOSStyle: batteryShellStyle == "ios"
-                            )
-                        }
-                        
-                        if batteryLayout == "left" { innerPreview }
-                        
-                        if showPercentage { Text("\(previewCapacity)%") }
-                        if showChargingStatus && !isPreviewLowPower { Image(systemName: "bolt.fill") }
-                        
-                        if batteryLayout == "right" { innerPreview }
-                    }
-                    
-                    if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("100%") } }
-                    if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text("100%") } }
-                    if showMacOSCondition { HStack(spacing: 2) { Image(systemName: "cross.case"); Text("正常") } }
-                    if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text("120") } }
-                    
-                    if showTemperature { HStack(spacing: 2) { Image(systemName: "thermometer"); Text("32°C") } }
-                    if showTimeRemaining { HStack(spacing: 2) { Image(systemName: "clock"); Text("2:30") } }
-                    if showAmperage { HStack(spacing: 2) { Image(systemName: "a.square"); Text("1.2A") } }
-                    if showVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text("12.4V") } }
-                    if showWattage { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text("15.2W") } }
-                    if showSystemLoad { HStack(spacing: 2) { Image(systemName: "laptopcomputer"); Text("15.0W") } }
-                    
-                    if showAdapterCurrent { HStack(spacing: 2) { Image(systemName: "powerplug"); Text("2.0A") } }
-                    if showAdapterVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text("20.0V") } }
-                    if showAdapterPower { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text("40W") } }
-                    
-                    if showAlDenteCalibration { Image(systemName: "slider.vertical.3") }
-                    if showAlDenteOverheat { Image(systemName: "flame") }
-                    if showAlDenteSailing { Image(systemName: "paperplane") }
-                    if showAlDenteFull { Image(systemName: "plus.circle") }
-                }
-                .font(.system(.body, design: .rounded).monospacedDigit())
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 16)
-                .background(previewIsDark ? Color.black : Color.white)
-                .foregroundColor(previewIsDark ? .white : .primary)
-                .environment(\.colorScheme, previewIsDark ? .dark : .light)
-                .cornerRadius(8)
-                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
+                // Using a light-weight preview with real current storage values
+                UnifiedPreviewRow()
             }
-            .padding(16)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 8)
+            .padding(.vertical, 8)
         }
+    }
+}
+
+// Simplified Preview for the main settings page
+struct UnifiedPreviewRow: View {
+    @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
+    @AppStorage("previewIsDark") private var previewIsDark = true
+    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
+    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
+    @AppStorage("batteryInnerContent") private var batteryInnerContent = "bolt"
+    
+    // We use actual data from the shared service or a static mock for the main page
+    @StateObject private var viewModel = StatusViewModel()
+
+    var body: some View {
+        let batteryView = BatteryGraphicView(
+            capacity: viewModel.currentCapacity,
+            isCharging: viewModel.isCharging,
+            isColored: batteryFillStyle == "status_color",
+            showBolt: batteryInnerContent == "bolt" || batteryInnerContent == "number",
+            showNumber: batteryInnerContent == "number",
+            isIOSStyle: batteryShellStyle == "ios"
+        )
+        
+        let batteryImage: NSImage? = {
+            if menuBarPowerStyle != .graphic || batteryShellStyle == "hidden" { return nil }
+            let renderer = ImageRenderer(content: batteryView.environment(\.colorScheme, previewIsDark ? .dark : .light))
+            renderer.scale = 2.0
+            if let img = renderer.nsImage {
+                img.isTemplate = batteryFillStyle == "monochrome"
+                return img
+            }
+            return nil
+        }()
+        
+        MenuBarLabelRendererView(viewModel: viewModel, generatedMenuImage: batteryImage)
+            .environment(\.colorScheme, previewIsDark ? .dark : .light)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .background(previewIsDark ? Color.black : Color.white)
+            .cornerRadius(8)
+            .shadow(color: Color.black.opacity(0.1), radius: 3)
     }
 }

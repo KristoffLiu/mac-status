@@ -169,16 +169,16 @@ struct PowerFlowConfigView: View {
                         Spacer()
                         
                         HStack(spacing: 12) {
-                            StyleSelectButton(title: "数字孪生", style: .twin, currentSelection: $style) {
+                            StyleSelectButton(title: "数字孪生", value: .twin, currentSelection: $style) {
                                 TwinSkeleton()
                             }
-                            StyleSelectButton(title: "桑基图", style: .sankey, currentSelection: $style) {
+                            StyleSelectButton(title: "桑基图", value: .sankey, currentSelection: $style) {
                                 SankeySkeleton()
                             }
-                            StyleSelectButton(title: "数据块", style: .blocks, currentSelection: $style) {
+                            StyleSelectButton(title: "数据块", value: .blocks, currentSelection: $style) {
                                 BlocksSkeleton()
                             }
-                            StyleSelectButton(title: "卡片", style: .cards, currentSelection: $style) {
+                            StyleSelectButton(title: "卡片", value: .cards, currentSelection: $style) {
                                 CardsSkeleton()
                             }
                         }
@@ -354,89 +354,7 @@ struct PowerFlowConfigView: View {
     }
 }
 
-struct StyleSelectButton<Content: View>: View {
-    let title: String
-    let style: PowerFlowStyle
-    @Binding var currentSelection: PowerFlowStyle
-    @ViewBuilder let content: Content
-    
-    var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                currentSelection = style
-            }
-        }) {
-            VStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color(NSColor.controlBackgroundColor))
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
-                    
-                    content
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                }
-                .frame(width: 72, height: 48)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
-                )
-                .padding(3) // 留白：给选中框和图标之间的间距
-                .overlay(
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .stroke(currentSelection == style ? Color.accentColor : Color.clear, lineWidth: 3)
-                )
-                
-                Text(title)
-                    .font(.system(size: 11, weight: currentSelection == style ? .semibold : .medium))
-                    .foregroundColor(currentSelection == style ? .primary : .secondary)
-            }
-            .frame(width: 72)
-        }
-        .buttonStyle(.plain)
-    }
-}
 
-struct OptionSelectButton<T: Equatable, Content: View>: View {
-    let title: String
-    let value: T
-    @Binding var currentSelection: T
-    @ViewBuilder let content: Content
-    
-    var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                currentSelection = value
-            }
-        }) {
-            VStack(spacing: 4) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color(NSColor.controlBackgroundColor))
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
-                    
-                    content
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                }
-                .frame(width: 44, height: 32)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
-                )
-                .padding(2)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(currentSelection == value ? Color.accentColor : Color.clear, lineWidth: 2)
-                )
-                
-                Text(title)
-                    .font(.system(size: 9, weight: currentSelection == value ? .semibold : .medium))
-                    .foregroundColor(currentSelection == value ? .primary : .secondary)
-            }
-            .frame(width: 48)
-        }
-        .buttonStyle(.plain)
-    }
-}
 
 // MARK: - Skeleton Drawings
 struct TwinSkeleton: View {
@@ -550,13 +468,7 @@ struct CardsSkeleton: View {
 
 // MARK: - Option Visualizations
 
-struct ColorSwatch: View {
-    var c1: Color
-    var c2: Color
-    var body: some View {
-        LinearGradient(colors: [c1, c2], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-}
+
 
 struct LiveWirePreview: View {
     var style: String
@@ -671,47 +583,7 @@ struct TwinSkeletoniMac: View {
         }
     }
 }
-struct WideOptionSelectButton<T: Equatable, Content: View>: View {
-    let title: String
-    let value: T
-    @Binding var currentSelection: T
-    @ViewBuilder let content: Content
-    
-    var body: some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                currentSelection = value
-            }
-        }) {
-            VStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color(NSColor.controlBackgroundColor))
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
-                    
-                    content
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                }
-                .frame(width: 80, height: 44)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
-                )
-                .padding(3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .stroke(currentSelection == value ? Color.accentColor : Color.clear, lineWidth: 3)
-                )
-                
-                Text(title)
-                    .font(.system(size: 10, weight: currentSelection == value ? .semibold : .medium))
-                    .foregroundColor(currentSelection == value ? .primary : .secondary)
-            }
-            .frame(width: 90)
-        }
-        .buttonStyle(.plain)
-    }
-}
+
 
 struct SankeyStyleSkeletonStandard: View {
     var body: some View {

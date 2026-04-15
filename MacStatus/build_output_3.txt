@@ -1,0 +1,599 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project MacStatus.xcodeproj -scheme MacStatus clean build
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006050-001D10483489401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001D10483489401C, name:My Mac }
+{ platform:macOS, name:Any Mac }
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+** CLEAN SUCCEEDED **
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006050-001D10483489401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001D10483489401C, name:My Mac }
+{ platform:macOS, name:Any Mac }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'MacStatus' in project 'MacStatus' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/xcstringstool compile --dry-run --output-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Localizable.xcstrings
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 0ec00dca9df4f94bd96fac09c1e67803
+Build description path: /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/XCBuildData/0ec00dca9df4f94bd96fac09c1e67803.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk /Users/kristoff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.0-25A352-28806144b0707e398aac92880fa50324.sdkstatcache
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -o /Users/kristoff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.0-25A352-28806144b0707e398aac92880fa50324.sdkstatcache
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+
+CreateBuildDirectory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    builtin-create-build-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus-02c7fc4519ed4f5d26b1ae3b75b63633-VFS/all-product-headers.yaml
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus.xcodeproj
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus-02c7fc4519ed4f5d26b1ae3b75b63633-VFS/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-target-headers.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/empty-MacStatus.plist (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/empty-MacStatus.plist
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-non-framework-target-headers.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-own-target-headers.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibPath-normal-arm64.txt (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibInstallName-normal-arm64.txt (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-project-headers.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-project-headers.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-generated-files.hmap (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-generated-files.hmap
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftConstValuesFileList (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/Entitlements.plist (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/Entitlements.plist
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_const_extract_protocols.json (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-OutputFileMap.json (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.LinkFileList (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.LinkFileList
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyStaticMetadataFileList (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyMetadataFileList (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    write-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyMetadataFileList
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app
+
+ProcessProductPackaging "" /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+    Entitlements:
+    
+    {
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.get-task-allow" = 1;
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent
+
+ProcessProductPackagingDER /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent.der (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /usr/bin/derq query -f xml -i /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent.der --raw
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/thinned (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/thinned
+
+MkDir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/unthinned (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /bin/mkdir -p /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/unthinned
+
+Ld /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/__preview.dylib normal (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -O0 -L/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -install_name @rpath/MacStatus.debug.dylib -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_dependency_info.dat -Xlinker -no_adhoc_codesign -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/__preview.dylib
+
+GenerateStringSymbols /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedStringSymbols_Localizable.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Localizable.xcstrings (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcstringstool generate-symbols --language swift --output-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Localizable.xcstrings
+
+GenerateAssetSymbols /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Assets.xcassets (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Assets.xcassets --compile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_dependencies --output-partial-info-plist /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.0 --platform macosx --bundle-identifier com.zzz.com.MacStatus --generate-swift-asset-symbols /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CpResource /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources/AppearanceSettingsView.swift.orig /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift.orig (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift.orig /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources
+
+CompileXCStrings /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/ /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Localizable.xcstrings (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcstringstool compile --output-directory /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Localizable.xcstrings
+
+CompileAssetCatalogVariant thinned /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Assets.xcassets (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Assets.xcassets --compile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.0 --platform macosx
+/* com.apple.actool.compilation-results */
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist_thinned
+
+
+LinkAssetCatalog /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Assets.xcassets (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-linkAssetCatalog --thinned /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/thinned --thinned-dependencies /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist_unthinned --output /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources --plist-output /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist
+
+ProcessInfoPlistFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Info.plist /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/empty-MacStatus.plist (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-infoPlistUtility /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/empty-MacStatus.plist -producttype com.apple.product-type.application -genpkginfo /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/assetcatalog_generated_info.plist -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Info.plist
+
+CopyStringsFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources/zh-Hans.lproj/Localizable.strings /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/zh-Hans.lproj/Localizable.strings (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copyStrings --validate --outputencoding UTF-16 --outfilename Localizable.strings --outdir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources/zh-Hans.lproj -- /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/zh-Hans.lproj/Localizable.strings
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/zh-Hans.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'MacStatus' from project 'MacStatus')
+
+CopyStringsFile /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources/en.lproj/Localizable.strings /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/en.lproj/Localizable.strings (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copyStrings --validate --outputencoding UTF-16 --outfilename Localizable.strings --outdir /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources/en.lproj -- /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/en.lproj/Localizable.strings
+/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/en.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriver MacStatus normal arm64 com.apple.xcode.tools.swift.compiler (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name MacStatus -Onone -enforce-exclusivity\=checked @/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -target arm64-apple-macos26.0 -g -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64 -c -j15 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.0-25A352-28806144b0707e398aac92880fa50324.sdkstatcache -output-file-map /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-generated-files.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-own-target-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-target-headers.hmap -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-project-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/include -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources-normal/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-Swift.h -working-directory /Users/kristoff/Documents/GitHub/mac-status/MacStatus -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ DashboardCards.swift,\ DashboardView.swift,\ AboutSettingsView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Dashboard/Components/DashboardCards.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Dashboard/DashboardView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AboutSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Dashboard/Components/DashboardCards.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Dashboard/DashboardView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AboutSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ PowerTopology.swift,\ AppEnergyMonitor.swift,\ BatteryService.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Models/PowerTopology.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/AppEnergyMonitor.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/BatteryService.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Models/PowerTopology.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/AppEnergyMonitor.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/BatteryService.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ BatteryGraphicView.swift,\ PanelContainerView.swift,\ SettingsSelectButtons.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/BatteryGraphicView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/PanelContainerView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/SettingsSelectButtons.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/BatteryGraphicView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/BatteryGraphicView.swift:169:126: warning: left side of nil coalescing operator '??' has non-optional type 'Int', so the right side is never used
+            if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text("\(viewModel.batteryData.cycleCount ?? 0)") } }
+                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~
+                                                                                                                            
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/PanelContainerView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/SettingsSelectButtons.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ SMCService.swift,\ SystemMonitorService.swift,\ XPCCoordinator.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/SMCService.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/SystemMonitorService.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/XPCCoordinator.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/SMCService.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/SystemMonitorService.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/XPCCoordinator.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ HighPowerAppsModule.swift,\ BatteryHealthModule.swift,\ BatterySpecsModule.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/AppMonitor/HighPowerAppsModule.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/Battery/BatteryHealthModule.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/Battery/BatterySpecsModule.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/AppMonitor/HighPowerAppsModule.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/Battery/BatteryHealthModule.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/Battery/BatterySpecsModule.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ EnergyEfficiencyManager.swift,\ HighPowerAppsService.swift,\ PowerCalculationService.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/EnergyEfficiencyManager.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/HighPowerAppsService.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/PowerCalculationService.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/EnergyEfficiencyManager.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/HighPowerAppsService.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/Services/PowerCalculationService.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ BlockPowerFlowView.swift,\ CardsPowerFlowView.swift,\ DigitalTwinPowerFlowView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/BlockPowerFlowView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/CardsPowerFlowView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/DigitalTwinPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/BlockPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/CardsPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/CardsPowerFlowView.swift:237:14: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead.
+            .onChange(of: powerFlow.adapterPower) { newValue in
+             ^
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/DigitalTwinPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ AppearanceSettingsView.swift,\ GeneralSettingsView.swift,\ MenuBarBatteryConfigView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/GeneralSettingsView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/MenuBarBatteryConfigView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/AppearanceSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/GeneralSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/MenuBarBatteryConfigView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ VisualEffectBackground.swift,\ WidgetContainerView.swift,\ WidgetRegistry.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/VisualEffectBackground.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/WidgetContainerView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/WidgetRegistry.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/VisualEffectBackground.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/WidgetContainerView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/WidgetRegistry.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ PowerFlowModuleView.swift,\ SankeyPowerFlowView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/PowerFlowModuleView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/PowerFlowModuleView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:412:22: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        if mergeMode == .rightTopMerge || mergeMode == .rightBottomMerge {
+                     ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:412:53: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        if mergeMode == .rightTopMerge || mergeMode == .rightBottomMerge {
+                                                    ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:415:29: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .topMerge || mergeMode == .bottomMerge {
+                            ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:415:55: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .topMerge || mergeMode == .bottomMerge {
+                                                      ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:437:29: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .topMerge, let convergence = localConvergenceY {
+                            ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:440:29: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .bottomMerge, let convergence = localConvergenceY {
+                            ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:449:29: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .rightTopMerge, let convergence = localConvergenceY {
+                            ^
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/PowerFlow/SankeyPowerFlowView.swift:452:29: warning: main actor-isolated conformance of 'FlowMergeMode' to 'Equatable' cannot be used in nonisolated context; this is an error in the Swift 6 language mode
+        } else if mergeMode == .rightBottomMerge, let convergence = localConvergenceY {
+                            ^
+
+SwiftCompile normal arm64 Compiling\ MainPanelView.swift,\ AppDelegate.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/MainPanelView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/AppDelegate.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/MainPanelView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/AppDelegate.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ MacStatusApp.swift,\ StatusViewModel.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/MacStatusApp.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/StatusViewModel.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/MacStatusApp.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/MacStatusApp.swift:17:18: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead.
+                .onChange(of: appDelegate.viewModel.isCharging) { _ in settingsUpdateTrigger = UUID() }
+                 ^
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/StatusViewModel.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ MacStatus (in target 'MacStatus' from project 'MacStatus')
+
+EmitSwiftModule normal arm64 (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ GeneratedAssetSymbols.swift,\ GeneratedStringSymbols_Localizable.swift /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.swift /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedStringSymbols_Localizable.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/GeneratedStringSymbols_Localizable.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 Compiling\ SystemMonitorModule.swift,\ WidgetManager.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/SystemMonitor/SystemMonitorModule.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/WidgetManager.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/SystemMonitor/SystemMonitorModule.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/WidgetManager.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+/Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Modules/WidgetManager.swift:58:21: warning: variable 'insertions' was never mutated; consider changing to 'let' constant
+                var insertions: [String] = ["batterySpecs", "batteryHealth"]
+                ~~~ ^
+                let
+
+SwiftCompile normal arm64 Compiling\ MenuBarSettingsView.swift,\ AppWindowView.swift,\ AppWidgetPlugin.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/MenuBarSettingsView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/AppWindowView.swift /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/AppWidgetPlugin.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/Tabs/Preferences/MenuBarSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/AppWindow/AppWindowView.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftCompile normal arm64 /Users/kristoff/Documents/GitHub/mac-status/MacStatus/MacStatus/UI/Core/AppWidgetPlugin.swift (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling MacStatusApp.swift, StatusViewModel.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling GeneratedAssetSymbols.swift, GeneratedStringSymbols_Localizable.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling VisualEffectBackground.swift, WidgetContainerView.swift, WidgetRegistry.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling PowerTopology.swift, AppEnergyMonitor.swift, BatteryService.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling HighPowerAppsModule.swift, BatteryHealthModule.swift, BatterySpecsModule.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling EnergyEfficiencyManager.swift, HighPowerAppsService.swift, PowerCalculationService.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for MacStatus (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriver\ Compilation\ Requirements MacStatus normal arm64 com.apple.xcode.tools.swift.compiler (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name MacStatus -Onone -enforce-exclusivity\=checked @/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -target arm64-apple-macos26.0 -g -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64 -c -j15 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.0-25A352-28806144b0707e398aac92880fa50324.sdkstatcache -output-file-map /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-generated-files.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-own-target-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-target-headers.hmap -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-project-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/include -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources-normal/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-Swift.h -working-directory /Users/kristoff/Documents/GitHub/mac-status/MacStatus -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/MacStatus-Swift.h /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-Swift.h (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-swiftHeaderTool -arch arm64 /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-Swift.h -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/MacStatus-Swift.h
+
+Copy /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.swiftmodule /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.swiftmodule
+
+Copy /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.abi.json /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.abi.json (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.abi.json /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.swiftdoc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftdoc (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftdoc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftsourceinfo (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftsourceinfo /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling SMCService.swift, SystemMonitorService.swift, XPCCoordinator.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppearanceSettingsView.swift, GeneralSettingsView.swift, MenuBarBatteryConfigView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling BatteryGraphicView.swift, PanelContainerView.swift, SettingsSelectButtons.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MenuBarSettingsView.swift, AppWindowView.swift, AppWidgetPlugin.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MainPanelView.swift, AppDelegate.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling DashboardCards.swift, DashboardView.swift, AboutSettingsView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SystemMonitorModule.swift, WidgetManager.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling PowerFlowModuleView.swift, SankeyPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriverJobDiscovery normal arm64 Compiling BlockPowerFlowView.swift, CardsPowerFlowView.swift, DigitalTwinPowerFlowView.swift (in target 'MacStatus' from project 'MacStatus')
+
+SwiftDriver\ Compilation MacStatus normal arm64 com.apple.xcode.tools.swift.compiler (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name MacStatus -Onone -enforce-exclusivity\=checked @/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -target arm64-apple-macos26.0 -g -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64 -c -j15 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.0-25A352-28806144b0707e398aac92880fa50324.sdkstatcache -output-file-map /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kristoff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-generated-files.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-own-target-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-all-target-headers.hmap -Xcc -iquote -Xcc /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-project-headers.hmap -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/include -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources-normal/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources/arm64 -Xcc -I/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-Swift.h -working-directory /Users/kristoff/Documents/GitHub/mac-status/MacStatus -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib normal (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.0 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -O0 -L/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -filelist /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.LinkFileList -install_name @rpath/MacStatus.debug.dylib -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.swiftmodule @/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-ExecutorLinkFileList-normal-arm64.txt (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    construct-stub-executor-link-file-list /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'MacStatus' from project 'MacStatus')
+
+Ld /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus normal (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk -O0 -L/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -F/Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/../Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus-ExecutorLinkFileList-normal-arm64.txt /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib -Xlinker -no_adhoc_codesign -o /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus
+
+CopySwiftLibs /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib --scan-folder /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Frameworks --scan-folder /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/PlugIns --scan-folder /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Library/SystemExtensions --scan-folder /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name MacStatus --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk --xcode-version 17A400 --platform-family macOS --deployment-target 26.0 --bundle-identifier com.zzz.com.MacStatus --output /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/Resources --target-triple arm64-apple-macos26.0 --binary-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus --dependency-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus_dependency_info.dat --stringsdata-file /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftFileList --metadata-file-list /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyMetadataFileList --static-metadata-file-list /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.DependencyStaticMetadataFileList --swift-const-vals-list /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/Objects-normal/arm64/MacStatus.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-04-15 04:54:19.613 appintentsmetadataprocessor[23908:8833720] Starting appintentsmetadataprocessor export
+2026-04-15 04:54:19.613 appintentsmetadataprocessor[23908:8833720] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CodeSign /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/MacStatus.debug.dylib
+
+CodeSign /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/__preview.dylib (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app/Contents/MacOS/__preview.dylib
+
+CodeSign /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Intermediates.noindex/MacStatus.build/Debug/MacStatus.build/MacStatus.app.xcent --timestamp\=none --generate-entitlement-der /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app
+
+RegisterExecutionPolicyException /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-RegisterExecutionPolicyException /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app
+
+Validate /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    builtin-validationUtility /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+Touch /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /usr/bin/touch -c /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app
+
+RegisterWithLaunchServices /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app (in target 'MacStatus' from project 'MacStatus')
+    cd /Users/kristoff/Documents/GitHub/mac-status/MacStatus
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /Users/kristoff/Library/Developer/Xcode/DerivedData/MacStatus-gcxwdkqncqfsbuhlhbcdcobiwjiu/Build/Products/Debug/MacStatus.app
+
+** BUILD SUCCEEDED **
+

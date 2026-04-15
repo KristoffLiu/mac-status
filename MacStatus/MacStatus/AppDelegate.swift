@@ -66,11 +66,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // Listen for open panel notifications
         NotificationCenter.default.addObserver(self, selector: #selector(showPopoverForEditing), name: NSNotification.Name("OpenMenuBarPopover"), object: nil)
         
-        // Listen for UserDefaults changes for panel theme
+        // Listen for UserDefaults changes
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
             .sink { [weak self] _ in
                 let theme = UserDefaults.standard.string(forKey: "panelTheme") ?? "system"
                 self?.applyPanelTheme(theme)
+                // Force a render update when settings change to eliminate any delay
+                DispatchQueue.main.async {
+                    self?.updateStatusItemImage(force: true)
+                }
             }.store(in: &cancellables)
         
         // Initial Theme
@@ -181,7 +185,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var lastRenderedThemeDark: Bool?
     
     @MainActor
-    private func updateStatusItemImage() {
+    private func updateStatusItemImage(force: Bool = false) {
         let isDark = menuBarIsDark
         
         let currentLevel = viewModel.batteryData.currentCapacity
@@ -190,7 +194,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let currentText = adapterW > 1.0 ? String(format: "%.0fW", adapterW) : ""
         
         // Critical Render Deduplication (Saves 5-10% CPU usage)
-        if lastRenderedBatteryLevel == currentLevel && 
+        if !force &&
+           lastRenderedBatteryLevel == currentLevel && 
            lastRenderedIsCharging == currentCharging && 
            lastRenderedStatusText == currentText &&
            lastRenderedThemeDark == isDark {
