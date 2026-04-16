@@ -7,6 +7,7 @@ struct BatteryManView: View {
     var isCharging: Bool
     var isPowered: Bool = false  // adapter connected (covers bypass/passthrough)
 
+    @Environment(\.colorScheme) private var colorScheme
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
 
     // Configurable styles
@@ -75,7 +76,7 @@ struct BatteryManView: View {
             ? (isColored ? .green : .primary)
             : (showLowPowerColor ? .red : .primary)
 
-        let strokeColor: Color = .primary
+        let strokeColor: Color = colorScheme == .dark ? .white : .black
 
         Canvas { ctx, size in
             // ── Origins ──
@@ -247,7 +248,7 @@ struct BatteryManView: View {
         case "bolt":
             drawSymbol(in: ctx, name: "bolt.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: 0)
         case "adapter":
-            drawSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: 0)
+            drawSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: 90)
         default:
             let handR: CGFloat = 1.0
             let handRect = CGRect(x: handX - handR, y: handY - handR,
@@ -262,6 +263,7 @@ struct BatteryManView: View {
             .font(.system(size: size, weight: .bold))
             .rotationEffect(.degrees(Double(rotation)))
             .foregroundColor(color)
+            .environment(\.colorScheme, colorScheme)
 
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2.0
