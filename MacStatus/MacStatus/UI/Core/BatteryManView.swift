@@ -288,20 +288,28 @@ struct BatteryManView: View {
     // ── Face ──
     private func drawFace(ctx: GraphicsContext, bodyOrigin: CGPoint,
                           capacity: Int, isCharging: Bool, strokeColor: Color) {
-        let isChibi = faceStyle == .outline
-        let scale: CGFloat = isChibi ? 1.6 : 1.0
+        let scale: CGFloat
+        let eyeY: CGFloat
+        let leftEyeX: CGFloat
+        let rightEyeX: CGFloat
+        let mouthY: CGFloat
 
-        let eyeY = bodyOrigin.y + bodyHeight * (isChibi ? 0.30 : 0.40)
-        let leftEyeX = bodyOrigin.x + bodyWidth * (isChibi ? 0.25 : 0.32)
-        let rightEyeX = bodyOrigin.x + bodyWidth * (isChibi ? 0.75 : 0.68)
+        switch faceStyle {
+        case .outline:
+            scale = 1.6
+            eyeY = bodyOrigin.y + bodyHeight * 0.30
+            leftEyeX = bodyOrigin.x + bodyWidth * 0.25
+            rightEyeX = bodyOrigin.x + bodyWidth * 0.75
+            mouthY = bodyOrigin.y + bodyHeight * 0.85
+        case .solid, .hollow:
+            scale = 1.0
+            eyeY = bodyOrigin.y + bodyHeight * 0.40
+            leftEyeX = bodyOrigin.x + bodyWidth * 0.32
+            rightEyeX = bodyOrigin.x + bodyWidth * 0.68
+            mouthY = bodyOrigin.y + bodyHeight * 0.72
+        }
+
         let eyeR: CGFloat = 1.1 * scale
-
-        let leftEye = CGRect(x: leftEyeX - eyeR, y: eyeY - eyeR,
-                             width: eyeR * 2, height: eyeR * 2)
-        let rightEye = CGRect(x: rightEyeX - eyeR, y: eyeY - eyeR,
-                              width: eyeR * 2, height: eyeR * 2)
-
-        let mouthY = bodyOrigin.y + bodyHeight * (isChibi ? 0.85 : 0.72)
         let cx = bodyOrigin.x + bodyWidth * 0.5
         let w: CGFloat = 5 * scale
 
@@ -329,6 +337,11 @@ struct BatteryManView: View {
                               width: fillW,
                               height: bodyHeight - fillInset * 2)
         let fillPath = RoundedRectangle(cornerRadius: 1.2, style: .continuous).path(in: fillRect)
+
+        let leftEye = CGRect(x: leftEyeX - eyeR, y: eyeY - eyeR,
+                             width: eyeR * 2, height: eyeR * 2)
+        let rightEye = CGRect(x: rightEyeX - eyeR, y: eyeY - eyeR,
+                              width: eyeR * 2, height: eyeR * 2)
 
         let leftEyePath = Path(ellipseIn: leftEye)
         let rightEyePath = Path(ellipseIn: rightEye)
@@ -365,8 +378,8 @@ struct BatteryManView: View {
             ctx.fill(mouthSausage.intersection(fillPath), with: .color(faceOnFillColor))
             ctx.fill(mouthSausage.subtracting(fillPath), with: .color(faceOnEmptyColor))
 
-        case .outline, .hollow:
-            // Solid outline + transparent fill (hollow features)
+        case .outline:
+            // Solid outline + transparent fill (Q版大头), features can spill outside
             let haloR = eyeR + 0.8 * scale
             let leftHalo = CGRect(x: leftEyeX - haloR, y: eyeY - haloR,
                                   width: haloR * 2, height: haloR * 2)
@@ -379,14 +392,24 @@ struct BatteryManView: View {
 
             var clearCtx = ctx
             clearCtx.blendMode = .clear
-            clearCtx.fill(Path(ellipseIn: leftEye), with: .color(.white))
-            clearCtx.fill(Path(ellipseIn: rightEye), with: .color(.white))
+            clearCtx.fill(leftEyePath, with: .color(.white))
+            clearCtx.fill(rightEyePath, with: .color(.white))
 
             // Mouth: solid outline tube, hollow inside
             let outerMouth = mouthPath.strokedPath(StrokeStyle(lineWidth: 3.5 * scale, lineCap: .round, lineJoin: .round))
             let innerMouth = mouthPath.strokedPath(StrokeStyle(lineWidth: 1.5 * scale, lineCap: .round, lineJoin: .round))
             ctx.fill(outerMouth, with: .color(strokeColor))
             clearCtx.fill(innerMouth, with: .color(.white))
+
+        case .hollow:
+            // Transparent holes only, no thick outline
+            var clearCtx = ctx
+            clearCtx.blendMode = .clear
+            clearCtx.fill(leftEyePath, with: .color(.white))
+            clearCtx.fill(rightEyePath, with: .color(.white))
+
+            let mouthStroke = mouthPath.strokedPath(StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            clearCtx.fill(mouthStroke, with: .color(.white))
         }
     }
 
