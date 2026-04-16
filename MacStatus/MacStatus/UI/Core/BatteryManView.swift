@@ -64,6 +64,9 @@ struct BatteryManView: View {
     private var faceExtraTop: CGFloat { showFace && faceStyle == .outline ? 5 : 0 }
     private var faceExtraSide: CGFloat { showFace && faceStyle == .outline ? 3 : 0 }
 
+    /// Extra top space for raised arms (charging) so hand items aren't clipped.
+    private var armExtraTop: CGFloat { showArms && isCharging ? 6 : 0 }
+
     /// Total battery+terminal width.
     private var batteryTotalW: CGFloat { bodyWidth + terminalGap + terminalWidth }
 
@@ -81,7 +84,7 @@ struct BatteryManView: View {
         Canvas { ctx, size in
             // ── Origins ──
             let bodyOriginX = (size.width - batteryTotalW) / 2
-            let bodyOriginY = inset + faceExtraTop
+            let bodyOriginY = inset + faceExtraTop + armExtraTop
 
             // ===== Accessory (drawn above frame top, Canvas doesn't clip by default) =====
             if showAccessory {
@@ -180,7 +183,7 @@ struct BatteryManView: View {
             }
         }
         .frame(width: batteryTotalW + sideExtra * 2 + 4 + faceExtraSide * 2,
-               height: inset + bodyHeight + legHeight + footHeight + 1 + faceExtraTop)
+               height: inset + bodyHeight + legHeight + footHeight + 1 + faceExtraTop + armExtraTop)
         .compositingGroup()
     }
 
@@ -246,7 +249,8 @@ struct BatteryManView: View {
 
         switch handItem {
         case "bolt":
-            drawSystemSymbol(in: ctx, name: "bolt.horizontal.fill", at: CGPoint(x: handX, y: handY), size: 9, color: color, rotation: 90)
+            let boltPath = makeHandBoltPath(center: CGPoint(x: handX, y: handY), scale: 1.3)
+            ctx.fill(boltPath, with: .color(color))
         case "adapter":
             drawSystemSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: -90)
         default:
@@ -332,11 +336,15 @@ struct BatteryManView: View {
 
         switch faceStyle {
         case .solid:
-            // Eyes: black on fill, white on background
-            ctx.fill(leftEyePath.intersection(fillPath), with: .color(.black))
-            ctx.fill(leftEyePath.subtracting(fillPath), with: .color(.white))
-            ctx.fill(rightEyePath.intersection(fillPath), with: .color(.black))
-            ctx.fill(rightEyePath.subtracting(fillPath), with: .color(.white))
+            // Ensure solid face stays visible regardless of fill/background colour.
+            let faceOnFillColor: Color = colorScheme == .dark ? .black : .white
+            let faceOnEmptyColor: Color = strokeColor
+
+            // Eyes
+            ctx.fill(leftEyePath.intersection(fillPath), with: .color(faceOnFillColor))
+            ctx.fill(leftEyePath.subtracting(fillPath), with: .color(faceOnEmptyColor))
+            ctx.fill(rightEyePath.intersection(fillPath), with: .color(faceOnFillColor))
+            ctx.fill(rightEyePath.subtracting(fillPath), with: .color(faceOnEmptyColor))
 
             // Mouth as a filled "sausage" shape, clipped against the battery fill.
             let mouthSausage: Path = {
@@ -355,8 +363,8 @@ struct BatteryManView: View {
                     return RoundedRectangle(cornerRadius: 0.75 * scale, style: .continuous).path(in: rect)
                 }
             }()
-            ctx.fill(mouthSausage.intersection(fillPath), with: .color(.black))
-            ctx.fill(mouthSausage.subtracting(fillPath), with: .color(.white))
+            ctx.fill(mouthSausage.intersection(fillPath), with: .color(faceOnFillColor))
+            ctx.fill(mouthSausage.subtracting(fillPath), with: .color(faceOnEmptyColor))
 
         case .outline, .hollow:
             // Solid outline + transparent fill (hollow features)
@@ -456,7 +464,27 @@ struct BatteryManView: View {
         return p
     }
 
-    /// A proper filled lightning-bolt shape for the hand item.
+    /// Hand-held lightning bolt — sharper, more stylised classic shape.
+    private func makeHandBoltPath(center: CGPoint, scale: CGFloat) -> Path {
+        var p = Path()
+        let pts: [(CGFloat, CGFloat)] = [
+            (0, -5),        // top
+            (2.2, -1.5),    // upper right
+            (0.5, -1.5),    // upper inner notch
+            (1.8, 5),       // bottom
+            (-2.2, 1.5),    // lower left
+            (-0.5, 1.5),    // lower inner notch
+            (0, -5)         // back to top
+        ]
+        for (i, pt) in pts.enumerated() {
+            let x = center.x + pt.0 * scale
+            let y = center.y + pt.1 * scale
+            if i == 0 { p.move(to: CGPoint(x: x, y: y)) }
+            else { p.addLine(to: CGPoint(x: x, y: y)) }
+        }
+        p.closeSubpath()
+        return p
+    }
 }
 
 // MARK: - Settings enums
