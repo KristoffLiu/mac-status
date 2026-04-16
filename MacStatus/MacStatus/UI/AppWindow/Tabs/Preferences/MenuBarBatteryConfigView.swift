@@ -122,37 +122,11 @@ struct MenuBarBatteryConfigView: View {
 
                 // Battery Man Appearance Options
                 if menuBarPowerStyle == .batteryMan {
-                    Section("小人设定") {
-                        HStack(alignment: .top) {
-                            Text("腿长")
-                                .padding(.top, 6)
-
-                            Spacer()
-
-                            HStack(spacing: 12) {
-                                LegLengthSelectButton(title: "短腿", value: .short, currentSelection: $batteryManLegLength)
-                                LegLengthSelectButton(title: "长腿", value: .normal, currentSelection: $batteryManLegLength)
-                            }
-                        }
-                        .padding(.vertical, 2)
-
-                        HStack {
-                            Text("图标间距")
-                            Spacer()
-                            Slider(value: $mainIconGroupSpacing, in: 0...10, step: 2)
-                                .frame(width: 100)
-                            Text("\(Int(mainIconGroupSpacing))")
-                                .monospacedDigit()
-                                .foregroundColor(.secondary)
-                                .frame(width: 24, alignment: .trailing)
-                        }
-                    }
-
                     Section {
                         Toggle("表情", isOn: $batteryManShowFace)
                         if batteryManShowFace {
                             HStack(alignment: .top) {
-                                Text("表情样式")
+                                Text("样式")
                                     .padding(.top, 6)
                                 Spacer()
                                 HStack(spacing: 12) {
@@ -163,6 +137,15 @@ struct MenuBarBatteryConfigView: View {
                             }
                             .padding(.vertical, 2)
                         }
+                        Toggle("头饰", isOn: $batteryManShowAccessory)
+                    } header: {
+                        Text("头部")
+                    } footer: {
+                        Text("表情随电量变化，头饰反映充电或低电量状态")
+                            .font(.caption)
+                    }
+
+                    Section {
                         Toggle("手臂", isOn: $batteryManShowArms)
                         if batteryManShowArms {
                             HStack(alignment: .top) {
@@ -188,12 +171,36 @@ struct MenuBarBatteryConfigView: View {
                             }
                             .padding(.vertical, 2)
                         }
-                        Toggle("姿态", isOn: $batteryManShowPosture)
-                        Toggle("头饰", isOn: $batteryManShowAccessory)
                     } header: {
-                        Text("个性")
+                        Text("手臂")
                     } footer: {
-                        Text("表情随电量变化，充电时手臂举起，低电量时姿态疲惫，头饰反映当前状态")
+                        Text("充电时手臂自动举起")
+                            .font(.caption)
+                    }
+
+                    Section {
+                        HStack(alignment: .top) {
+                            Text("腿长")
+                                .padding(.top, 6)
+
+                            Spacer()
+
+                            HStack(spacing: 12) {
+                                LegLengthSelectButton(title: "短腿", value: .short, currentSelection: $batteryManLegLength)
+                                LegLengthSelectButton(title: "长腿", value: .normal, currentSelection: $batteryManLegLength)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    } header: {
+                        Text("腿部")
+                    }
+
+                    Section {
+                        Toggle("疲惫姿态", isOn: $batteryManShowPosture)
+                    } header: {
+                        Text("姿态")
+                    } footer: {
+                        Text("低电量时显示疲惫姿态")
                             .font(.caption)
                     }
                 }
@@ -298,19 +305,19 @@ struct MenuBarBatteryConfigView: View {
                             }
                         }
 
-                        // Section 3: Spacing
-                        Section("间距") {
-                            HStack {
-                                Text("图标间距")
-                                Spacer()
-                                Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
-                                    .frame(width: 100)
-                                Text("\(Int(mainIconGroupSpacing))")
-                                    .monospacedDigit()
-                                    .foregroundColor(.secondary)
-                                    .frame(width: 24, alignment: .trailing)
-                            }
-                        }
+                    }
+                }
+
+                Section("间距") {
+                    HStack {
+                        Text("图标间距")
+                        Spacer()
+                        Slider(value: $mainIconGroupSpacing, in: 0...10, step: 1)
+                            .frame(width: 100)
+                        Text("\(Int(mainIconGroupSpacing))")
+                            .monospacedDigit()
+                            .foregroundColor(.secondary)
+                            .frame(width: 24, alignment: .trailing)
                     }
                 }
             }
