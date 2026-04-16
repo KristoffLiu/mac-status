@@ -249,8 +249,7 @@ struct BatteryManView: View {
 
         switch handItem {
         case "bolt":
-            let boltPath = makeHandBoltPath(center: CGPoint(x: handX, y: handY), scale: 1.3)
-            ctx.fill(boltPath, with: .color(color))
+            drawSystemSymbol(in: ctx, name: "bolt.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color)
         case "adapter":
             drawSystemSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: -90)
         default:
@@ -464,27 +463,6 @@ struct BatteryManView: View {
         return p
     }
 
-    /// Hand-held lightning bolt — sharper, more stylised classic shape.
-    private func makeHandBoltPath(center: CGPoint, scale: CGFloat) -> Path {
-        var p = Path()
-        let pts: [(CGFloat, CGFloat)] = [
-            (0, -5),        // top
-            (2.2, -1.5),    // upper right
-            (0.5, -1.5),    // upper inner notch
-            (1.8, 5),       // bottom
-            (-2.2, 1.5),    // lower left
-            (-0.5, 1.5),    // lower inner notch
-            (0, -5)         // back to top
-        ]
-        for (i, pt) in pts.enumerated() {
-            let x = center.x + pt.0 * scale
-            let y = center.y + pt.1 * scale
-            if i == 0 { p.move(to: CGPoint(x: x, y: y)) }
-            else { p.addLine(to: CGPoint(x: x, y: y)) }
-        }
-        p.closeSubpath()
-        return p
-    }
 }
 
 // MARK: - Settings enums
