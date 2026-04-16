@@ -6,17 +6,19 @@ struct BatteryGraphicView: View {
     var isPowered: Bool = false  // adapter connected (covers bypass/passthrough)
 
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    @Environment(\.colorScheme) private var colorScheme
 
     // Configurable styles
     var isColored: Bool = false
     var chargingStyle: String = "bolt"  // "none", "bolt", "classic", "plug"
     var showNumber: Bool = false
     var isIOSStyle: Bool = false
-    
+    var borderStyle: String = "sharp"   // "sharp", "soft"
+
     // Unified Battery Size
     var width: CGFloat = 23.5   // Exact native shell body width (excluding terminal)
     var height: CGFloat = 11.5  // Increased height slightly
-    
+
     var body: some View {
         let percentage = Double(capacity) / 100.0
         
@@ -78,38 +80,75 @@ struct BatteryGraphicView: View {
                 } else if (isCharging || isPowered) && chargingStyle != "none" {
                     switch chargingStyle {
                     case "classic":
-                        // Uniform knockout border via shadow spread
+                        if borderStyle == "soft" {
+                            // Soft (feathered) knockout border via shadow spread
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.black)
+                                .shadow(color: .black, radius: 0.8)
+                                .shadow(color: .black, radius: 0.8)
+                                .shadow(color: .black, radius: 0.8)
+                                .blendMode(.destinationOut)
+                                .frame(width: width, alignment: .center)
+                        } else {
+                            // Sharp knockout border using multi-offset copies (no scaleEffect clipping)
+                            let boltKnockout = Image(systemName: "bolt.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.black)
+                                .blendMode(.destinationOut)
+                                .frame(width: width, alignment: .center)
+                            boltKnockout.offset(x: 0, y: -1)
+                            boltKnockout.offset(x: 0, y: 1)
+                            boltKnockout.offset(x: -1, y: 0)
+                            boltKnockout.offset(x: 1, y: 0)
+                            boltKnockout.offset(x: -1, y: -1)
+                            boltKnockout.offset(x: -1, y: 1)
+                            boltKnockout.offset(x: 1, y: -1)
+                            boltKnockout.offset(x: 1, y: 1)
+                            boltKnockout
+                        }
+                        // Solid bolt fill (same color as battery, drawn on top)
                         Image(systemName: "bolt.fill")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black)
-                            .shadow(color: .black, radius: 0.8)
-                            .shadow(color: .black, radius: 0.8)
-                            .shadow(color: .black, radius: 0.8)
-                            .blendMode(.destinationOut)
-                            .frame(width: width, alignment: .center)
-                        // Solid bolt fill (same size, drawn on top)
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(fillColor)
                             .frame(width: width, alignment: .center)
                     case "plug":
-                        // Uniform knockout border via shadow spread
+                        if borderStyle == "soft" {
+                            // Soft (feathered) knockout border via shadow spread
+                            Image(systemName: "powerplug.fill")
+                                .font(.system(size: 8, weight: .bold))
+                                .rotationEffect(.degrees(-90))
+                                .offset(x: 4)
+                                .foregroundColor(.black)
+                                .shadow(color: .black, radius: 0.8)
+                                .shadow(color: .black, radius: 0.8)
+                                .shadow(color: .black, radius: 0.8)
+                                .blendMode(.destinationOut)
+                                .frame(width: width, alignment: .center)
+                        } else {
+                            // Sharp knockout border using multi-offset copies (no scaleEffect clipping)
+                            let plugKnockout = Image(systemName: "powerplug.fill")
+                                .font(.system(size: 8, weight: .bold))
+                                .rotationEffect(.degrees(-90))
+                                .foregroundColor(.black)
+                                .blendMode(.destinationOut)
+                                .frame(width: width, alignment: .center)
+                            plugKnockout.offset(x: 4, y: -1)
+                            plugKnockout.offset(x: 4, y: 1)
+                            plugKnockout.offset(x: 4 - 1, y: 0)
+                            plugKnockout.offset(x: 4 + 1, y: 0)
+                            plugKnockout.offset(x: 4 - 1, y: -1)
+                            plugKnockout.offset(x: 4 - 1, y: 1)
+                            plugKnockout.offset(x: 4 + 1, y: -1)
+                            plugKnockout.offset(x: 4 + 1, y: 1)
+                            plugKnockout.offset(x: 4)
+                        }
+                        // Solid plug fill (same color as battery, drawn on top)
                         Image(systemName: "powerplug.fill")
-                            .font(.system(size: 9.5, weight: .bold))
+                            .font(.system(size: 8, weight: .bold))
                             .rotationEffect(.degrees(-90))
                             .offset(x: 4)
-                            .foregroundColor(.black)
-                            .shadow(color: .black, radius: 0.8)
-                            .shadow(color: .black, radius: 0.8)
-                            .shadow(color: .black, radius: 0.8)
-                            .blendMode(.destinationOut)
-                            .frame(width: width, alignment: .center)
-                        // Solid plug fill (same size, drawn on top)
-                        Image(systemName: "powerplug.fill")
-                            .font(.system(size: 9.5, weight: .bold))
-                            .rotationEffect(.degrees(-90))
-                            .offset(x: 4)
-                            .foregroundColor(.white)
+                            .foregroundColor(fillColor)
                             .frame(width: width, alignment: .center)
                     default: // "bolt"
                         Image(systemName: "bolt.fill")
@@ -121,7 +160,7 @@ struct BatteryGraphicView: View {
                 }
             }
             .compositingGroup()
-            
+
             // Terminal Edge (Battery Tip)
             Capsule(style: .continuous)
                 .fill(isIOSStyle ? iosBackgroundColor : strokeColor)
@@ -142,6 +181,7 @@ struct IsolatedBatteryGraphicRenderer: View {
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
     @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
     @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
+    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
 
     var body: some View {
         Group {
@@ -153,7 +193,8 @@ struct IsolatedBatteryGraphicRenderer: View {
                     isColored: batteryFillStyle == "status_color",
                     chargingStyle: batteryChargingIndicator,
                     showNumber: batteryInnerContent == "inside",
-                    isIOSStyle: batteryShellStyle == "ios"
+                    isIOSStyle: batteryShellStyle == "ios",
+                    borderStyle: batteryChargingBorderStyle
                 )
             }
         }
@@ -206,6 +247,8 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
     @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
+    @AppStorage("batteryManHandItemStyle") private var batteryManHandItemStyle = "none"
+    @AppStorage("batteryManHandItemSide") private var batteryManHandItemSide = "right"
 
     var body: some View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
@@ -223,6 +266,7 @@ struct MenuBarLabelRendererView: View {
                         BatteryManView(
                             capacity: viewModel.currentCapacity,
                             isCharging: viewModel.isCharging,
+                            isPowered: viewModel.batteryData.adapter != nil,
                             isColored: false,
                             showBolt: true,
                             legLength: batteryManLegLength,
@@ -230,7 +274,9 @@ struct MenuBarLabelRendererView: View {
                             showArms: batteryManShowArms,
                             showPosture: batteryManShowPosture,
                             showAccessory: batteryManShowAccessory,
-                            faceStyle: batteryManFaceStyle
+                            faceStyle: batteryManFaceStyle,
+                            handItemStyle: batteryManHandItemStyle,
+                            handItemSide: batteryManHandItemSide
                         )
                     }
                     if showPercentage { Text("\(viewModel.currentCapacity)%") }
@@ -239,6 +285,7 @@ struct MenuBarLabelRendererView: View {
                         BatteryManView(
                             capacity: viewModel.currentCapacity,
                             isCharging: viewModel.isCharging,
+                            isPowered: viewModel.batteryData.adapter != nil,
                             isColored: false,
                             showBolt: true,
                             legLength: batteryManLegLength,
@@ -246,7 +293,9 @@ struct MenuBarLabelRendererView: View {
                             showArms: batteryManShowArms,
                             showPosture: batteryManShowPosture,
                             showAccessory: batteryManShowAccessory,
-                            faceStyle: batteryManFaceStyle
+                            faceStyle: batteryManFaceStyle,
+                            handItemStyle: batteryManHandItemStyle,
+                            handItemSide: batteryManHandItemSide
                         )
                     }
                 } else if menuBarPowerStyle == .symbolic {

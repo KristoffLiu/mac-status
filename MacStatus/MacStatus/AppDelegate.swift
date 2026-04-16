@@ -210,8 +210,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // Create the isolated battery graphic
         let batteryView = IsolatedBatteryGraphicRenderer(viewModel: viewModel)
             .environment(\.colorScheme, isDark ? .dark : .light)
-            
-        let batteryRenderer = ImageRenderer(content: batteryView)
+
+        let batteryRenderer = ImageRenderer(content: batteryView.padding(1))
         batteryRenderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
         batteryRenderer.isOpaque = false // Transparent background
         

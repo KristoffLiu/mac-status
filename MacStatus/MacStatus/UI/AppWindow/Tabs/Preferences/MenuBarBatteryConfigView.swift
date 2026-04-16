@@ -9,6 +9,7 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
     @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
     @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
+    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
 
     // 电池小人选项
     @AppStorage("batteryManLegLength") private var batteryManLegLength: BatteryManLegLength = .normal
@@ -17,6 +18,8 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
     @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
+    @AppStorage("batteryManHandItemStyle") private var batteryManHandItemStyle = "none"
+    @AppStorage("batteryManHandItemSide") private var batteryManHandItemSide = "right"
 
     // 主图标选项
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -55,12 +58,13 @@ struct MenuBarBatteryConfigView: View {
                             isColored: batteryFillStyle == "status_color",
                             chargingStyle: batteryChargingIndicator,
                             showNumber: batteryInnerContent == "inside",
-                            isIOSStyle: batteryShellStyle == "ios"
+                            isIOSStyle: batteryShellStyle == "ios",
+                            borderStyle: batteryChargingBorderStyle
                         )
 
                         let batteryImage: NSImage? = {
                             if batteryShellStyle == "hidden" { return nil }
-                            let renderer = ImageRenderer(content: batteryView.environment(\.colorScheme, previewIsDark ? .dark : .light))
+                            let renderer = ImageRenderer(content: batteryView.environment(\.colorScheme, previewIsDark ? .dark : .light).padding(1))
                             renderer.scale = 2.0
                             if let img = renderer.nsImage {
                                 img.isTemplate = batteryFillStyle == "monochrome"
@@ -102,9 +106,9 @@ struct MenuBarBatteryConfigView: View {
 
                         HStack(spacing: 12) {
                             StyleSelectButton(title: "电池", value: .graphic, currentSelection: $menuBarPowerStyle) {
-                                Image(systemName: "battery.100")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.accentColor)
+                                BatteryGraphicView(capacity: 80, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
+                                    .scaleEffect(0.85)
+                                    .padding(3)
                             }
 
                             StyleSelectButton(title: "电池小人", value: .batteryMan, currentSelection: $menuBarPowerStyle) {
@@ -153,12 +157,37 @@ struct MenuBarBatteryConfigView: View {
                                 Spacer()
                                 HStack(spacing: 12) {
                                     FaceStyleSelectButton(title: "实心", value: .solid, currentSelection: $batteryManFaceStyle)
-                                    FaceStyleSelectButton(title: "透明描边", value: .outline, currentSelection: $batteryManFaceStyle)
+                                    FaceStyleSelectButton(title: "空心", value: .hollow, currentSelection: $batteryManFaceStyle)
+                                    FaceStyleSelectButton(title: "Q版大头", value: .outline, currentSelection: $batteryManFaceStyle)
                                 }
                             }
                             .padding(.vertical, 2)
                         }
                         Toggle("手臂", isOn: $batteryManShowArms)
+                        if batteryManShowArms {
+                            HStack(alignment: .top) {
+                                Text("手持物品")
+                                    .padding(.top, 6)
+                                Spacer()
+                                HStack(spacing: 12) {
+                                    HandItemSelectButton(title: "无", value: "none", currentSelection: $batteryManHandItemStyle)
+                                    HandItemSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryManHandItemStyle)
+                                    HandItemSelectButton(title: "适配器", value: "adapter", currentSelection: $batteryManHandItemStyle)
+                                }
+                            }
+                            .padding(.vertical, 2)
+
+                            HStack(alignment: .top) {
+                                Text("持物手")
+                                    .padding(.top, 6)
+                                Spacer()
+                                HStack(spacing: 12) {
+                                    HandSideSelectButton(title: "左手", value: "left", currentSelection: $batteryManHandItemSide)
+                                    HandSideSelectButton(title: "右手", value: "right", currentSelection: $batteryManHandItemSide)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
                         Toggle("姿态", isOn: $batteryManShowPosture)
                         Toggle("头饰", isOn: $batteryManShowAccessory)
                     } header: {
@@ -251,6 +280,21 @@ struct MenuBarBatteryConfigView: View {
                                     }
                                 }
                                 .padding(.vertical, 2)
+
+                                if batteryChargingIndicator == "classic" || batteryChargingIndicator == "plug" {
+                                    HStack {
+                                        Text("描边风格")
+                                            .padding(.top, 2)
+                                        Spacer()
+                                        Picker("", selection: $batteryChargingBorderStyle) {
+                                            Text("标准").tag("sharp")
+                                            Text("柔和").tag("soft")
+                                        }
+                                        .pickerStyle(.segmented)
+                                        .frame(width: 120)
+                                    }
+                                    .padding(.vertical, 2)
+                                }
                             }
                         }
 
@@ -431,28 +475,20 @@ struct ChargingSkeletonBolt: View {
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            ZStack {
-                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 5.5, weight: .black))
-                    .foregroundColor(.primary)
-            }
-            .scaleEffect(0.8)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "bolt", showNumber: false, isIOSStyle: false)
+                .scaleEffect(0.85)
         }
     }
 }
 
 struct ChargingSkeletonClassic: View {
+    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            ZStack {
-                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 8.5, weight: .bold))
-                    .foregroundColor(.primary)
-            }
-            .scaleEffect(0.8)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "classic", showNumber: false, isIOSStyle: false, borderStyle: batteryChargingBorderStyle)
+                .scaleEffect(0.85)
         }
     }
 }
@@ -493,18 +529,13 @@ struct FaceStyleSelectButton: View {
 }
 
 struct ChargingSkeletonPlug: View {
+    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+
     var body: some View {
         ZStack {
             Color.primary.opacity(0.05)
-            ZStack {
-                BatteryGraphicView(capacity: 75, isCharging: false, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
-                Image(systemName: "powerplug.fill")
-                    .font(.system(size: 7.5, weight: .bold))
-                    .rotationEffect(.degrees(-90))
-                    .offset(x: 3)
-                    .foregroundColor(.primary)
-            }
-            .scaleEffect(0.8)
+            BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "plug", showNumber: false, isIOSStyle: false, borderStyle: batteryChargingBorderStyle)
+                .scaleEffect(0.85)
         }
     }
 }
@@ -548,7 +579,65 @@ struct ChargingSkeletonNone: View {
         ZStack {
             Color.primary.opacity(0.05)
             BatteryGraphicView(capacity: 75, isCharging: true, isColored: false, chargingStyle: "none", showNumber: false, isIOSStyle: false)
-                .scaleEffect(0.8)
+                .scaleEffect(0.85)
         }
+    }
+}
+
+// MARK: - Hand Item Select Button
+
+struct HandItemSelectButton: View {
+    let title: String
+    let value: String
+    @Binding var currentSelection: String
+
+    var isSelected: Bool { currentSelection == value }
+
+    var body: some View {
+        Button {
+            currentSelection = value
+        } label: {
+            Text(title)
+                .font(.caption2)
+                .frame(width: 40, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Hand Side Select Button
+
+struct HandSideSelectButton: View {
+    let title: String
+    let value: String
+    @Binding var currentSelection: String
+
+    var isSelected: Bool { currentSelection == value }
+
+    var body: some View {
+        Button {
+            currentSelection = value
+        } label: {
+            Text(title)
+                .font(.caption2)
+                .frame(width: 40, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                )
+        }
+        .buttonStyle(.plain)
     }
 }

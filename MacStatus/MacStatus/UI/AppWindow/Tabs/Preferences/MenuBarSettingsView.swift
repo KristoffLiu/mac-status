@@ -218,6 +218,7 @@ struct UnifiedPreviewRow: View {
     @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
     @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
     @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
+    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
 
     // We use actual data from the shared service or a static mock for the main page
     @StateObject private var viewModel = StatusViewModel()
@@ -230,12 +231,13 @@ struct UnifiedPreviewRow: View {
             isColored: batteryFillStyle == "status_color",
             chargingStyle: batteryChargingIndicator,
             showNumber: batteryInnerContent == "inside",
-            isIOSStyle: batteryShellStyle == "ios"
+            isIOSStyle: batteryShellStyle == "ios",
+            borderStyle: batteryChargingBorderStyle
         )
         
         let batteryImage: NSImage? = {
             if menuBarPowerStyle != .graphic || batteryShellStyle == "hidden" { return nil }
-            let renderer = ImageRenderer(content: batteryView.environment(\.colorScheme, previewIsDark ? .dark : .light))
+            let renderer = ImageRenderer(content: batteryView.environment(\.colorScheme, previewIsDark ? .dark : .light).padding(1))
             renderer.scale = 2.0
             if let img = renderer.nsImage {
                 img.isTemplate = batteryFillStyle == "monochrome"
