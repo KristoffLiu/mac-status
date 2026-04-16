@@ -246,9 +246,9 @@ struct BatteryManView: View {
 
         switch handItem {
         case "bolt":
-            drawSymbol(in: ctx, name: "bolt.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: 0)
+            drawSystemSymbol(in: ctx, name: "bolt.horizontal.fill", at: CGPoint(x: handX, y: handY), size: 9, color: color, rotation: 90)
         case "adapter":
-            drawSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: 90)
+            drawSystemSymbol(in: ctx, name: "powerplug.fill", at: CGPoint(x: handX, y: handY), size: 10, color: color, rotation: -90)
         default:
             let handR: CGFloat = 1.0
             let handRect = CGRect(x: handX - handR, y: handY - handR,
@@ -257,26 +257,27 @@ struct BatteryManView: View {
         }
     }
 
-    /// Draws a system symbol into the Canvas via CoreGraphics (macOS-safe).
-    private func drawSymbol(in ctx: GraphicsContext, name: String, at: CGPoint, size: CGFloat, color: Color, rotation: CGFloat = 0) {
-        let view = Image(systemName: name)
-            .font(.system(size: size, weight: .bold))
-            .rotationEffect(.degrees(Double(rotation)))
-            .foregroundColor(color)
-            .environment(\.colorScheme, colorScheme)
+    /// Draws a system symbol via NSImage -> CGImage with proper tinting and rotation.
+    private func drawSystemSymbol(in ctx: GraphicsContext, name: String, at: CGPoint, size: CGFloat, color: Color, rotation: CGFloat = 0) {
+        guard let nsImage = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return }
 
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2.0
-        guard let nsImage = renderer.nsImage else { return }
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .bold)
+        let configured = nsImage.withSymbolConfiguration(config) ?? nsImage
+        configured.isTemplate = true
 
-        var rect = CGRect(origin: .zero, size: nsImage.size)
-        guard let cgImage = nsImage.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return }
+        var rect = CGRect(origin: .zero, size: configured.size)
+        guard let cgImage = configured.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return }
 
         ctx.withCGContext { cgCtx in
             cgCtx.saveGState()
             cgCtx.translateBy(x: at.x, y: at.y)
+            cgCtx.rotate(by: CGFloat(rotation) * .pi / 180)
             let drawRect = CGRect(x: -rect.width / 2, y: -rect.height / 2, width: rect.width, height: rect.height)
             cgCtx.draw(cgImage, in: drawRect)
+            cgCtx.setBlendMode(.sourceIn)
+            let nsColor: NSColor = (color == .white) ? .white : (color == .black) ? .black : NSColor(color)
+            cgCtx.setFillColor(nsColor.cgColor)
+            cgCtx.fill(drawRect)
             cgCtx.restoreGState()
         }
     }
@@ -439,11 +440,11 @@ struct BatteryManView: View {
     }
 
     /// Tiny lightning-bolt path centered at `center`.
-    private func makeBoltPath(center: CGPoint, scale: CGFloat) -> Path {
+    private func makeBoltPath(center: CGPoint, scale: CGFloat, widthMultiplier: CGFloat = 1.0) -> Path {
         var p = Path()
         let pts: [(CGFloat, CGFloat)] = [
-            (-1.5, -4), (0.5, -0.5), (-0.5, -0.5),
-            (1.5, 4), (-0.5, 0.5), (0.5, 0.5), (-1.5, -4)
+            (-1.5 * widthMultiplier, -4), (0.5 * widthMultiplier, -0.5), (-0.5 * widthMultiplier, -0.5),
+            (1.5 * widthMultiplier, 4), (-0.5 * widthMultiplier, 0.5), (0.5 * widthMultiplier, 0.5), (-1.5 * widthMultiplier, -4)
         ]
         for (i, pt) in pts.enumerated() {
             let x = center.x + pt.0 * scale
@@ -454,6 +455,8 @@ struct BatteryManView: View {
         p.closeSubpath()
         return p
     }
+
+    /// A proper filled lightning-bolt shape for the hand item.
 }
 
 // MARK: - Settings enums

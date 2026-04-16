@@ -62,14 +62,14 @@ struct BatteryGraphicView: View {
                         .stroke(strokeColor, lineWidth: strokeWidth)
                         .frame(width: width, height: height)
                 }
-                
+
                 // Inner Fill
                 RoundedRectangle(cornerRadius: fillCornerRadius, style: .continuous)
                     .fill(fillColor)
                     .frame(width: fillWidth, height: height - (insets * 2))
                     .padding(.leading, insets)
                     .animation(.easeInOut, value: percentage)
-                
+
                 // Inner Content: number OR charging indicator (mutually exclusive)
                 if showNumber {
                     Text("\(capacity)")
@@ -130,18 +130,19 @@ struct BatteryGraphicView: View {
                             let plugKnockout = Image(systemName: "powerplug.fill")
                                 .font(.system(size: 8, weight: .bold))
                                 .rotationEffect(.degrees(-90))
+                                .offset(x: 4)
                                 .foregroundColor(.black)
                                 .blendMode(.destinationOut)
                                 .frame(width: width, alignment: .center)
-                            plugKnockout.offset(x: 4, y: -1)
-                            plugKnockout.offset(x: 4, y: 1)
-                            plugKnockout.offset(x: 4 - 1, y: 0)
-                            plugKnockout.offset(x: 4 + 1, y: 0)
-                            plugKnockout.offset(x: 4 - 1, y: -1)
-                            plugKnockout.offset(x: 4 - 1, y: 1)
-                            plugKnockout.offset(x: 4 + 1, y: -1)
-                            plugKnockout.offset(x: 4 + 1, y: 1)
-                            plugKnockout.offset(x: 4)
+                            plugKnockout.offset(x: 0, y: -1)
+                            plugKnockout.offset(x: 0, y: 1)
+                            plugKnockout.offset(x: -1, y: 0)
+                            plugKnockout.offset(x: 1, y: 0)
+                            plugKnockout.offset(x: -1, y: -1)
+                            plugKnockout.offset(x: -1, y: 1)
+                            plugKnockout.offset(x: 1, y: -1)
+                            plugKnockout.offset(x: 1, y: 1)
+                            plugKnockout
                         }
                         // Solid plug fill (same color as battery, drawn on top)
                         Image(systemName: "powerplug.fill")
