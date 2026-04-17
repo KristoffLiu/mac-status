@@ -20,6 +20,8 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
     @AppStorage("batteryManHandItemStyle") private var batteryManHandItemStyle = "none"
     @AppStorage("batteryManHandItemSide") private var batteryManHandItemSide = "right"
+    @AppStorage("batteryManScratchingHead") private var batteryManScratchingHead = false
+    @AppStorage("batteryManScratchingHeadSide") private var batteryManScratchingHeadSide = "right"
 
     // 主图标选项
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -170,6 +172,20 @@ struct MenuBarBatteryConfigView: View {
                                 }
                             }
                             .padding(.vertical, 2)
+
+                            Toggle("挠头", isOn: $batteryManScratchingHead)
+                            if batteryManScratchingHead {
+                                HStack(alignment: .top) {
+                                    Text("挠头手")
+                                        .padding(.top, 6)
+                                    Spacer()
+                                    HStack(spacing: 12) {
+                                        HandSideSelectButton(title: "左手", value: "left", currentSelection: $batteryManScratchingHeadSide)
+                                        HandSideSelectButton(title: "右手", value: "right", currentSelection: $batteryManScratchingHeadSide)
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
                         }
                     } header: {
                         Text("手臂")
