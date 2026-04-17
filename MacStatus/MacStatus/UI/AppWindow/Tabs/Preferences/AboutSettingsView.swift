@@ -48,6 +48,6 @@ struct AboutSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("About")
+        .navigationTitle("关于")
     }
 }

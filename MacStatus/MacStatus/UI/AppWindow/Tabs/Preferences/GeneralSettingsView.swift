@@ -20,6 +20,6 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("General Settings")
+        .navigationTitle("通用")
     }
 }

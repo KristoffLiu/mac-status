@@ -83,7 +83,7 @@ struct BatteryGraphicView: View {
                         if borderStyle == "soft" {
                             // Soft (feathered) knockout border via shadow spread
                             Image(systemName: "bolt.fill")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.black)
                                 .shadow(color: .black, radius: 0.8)
                                 .shadow(color: .black, radius: 0.8)
@@ -93,7 +93,7 @@ struct BatteryGraphicView: View {
                         } else {
                             // Sharp knockout border using multi-offset copies (no scaleEffect clipping)
                             let boltKnockout = Image(systemName: "bolt.fill")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.black)
                                 .blendMode(.destinationOut)
                                 .frame(width: width, alignment: .center)
@@ -109,14 +109,14 @@ struct BatteryGraphicView: View {
                         }
                         // Solid bolt fill (same color as battery, drawn on top)
                         Image(systemName: "bolt.fill")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(fillColor)
                             .frame(width: width, alignment: .center)
                     case "plug":
                         if borderStyle == "soft" {
                             // Soft (feathered) knockout border via shadow spread
                             Image(systemName: "powerplug.fill")
-                                .font(.system(size: 8, weight: .bold))
+                                .font(.system(size: 9, weight: .bold))
                                 .rotationEffect(.degrees(-90))
                                 .offset(x: 4)
                                 .foregroundColor(.black)
@@ -128,7 +128,7 @@ struct BatteryGraphicView: View {
                         } else {
                             // Sharp knockout border using multi-offset copies (no scaleEffect clipping)
                             let plugKnockout = Image(systemName: "powerplug.fill")
-                                .font(.system(size: 8, weight: .bold))
+                                .font(.system(size: 9, weight: .bold))
                                 .rotationEffect(.degrees(-90))
                                 .offset(x: 4)
                                 .foregroundColor(.black)
@@ -146,7 +146,7 @@ struct BatteryGraphicView: View {
                         }
                         // Solid plug fill (same color as battery, drawn on top)
                         Image(systemName: "powerplug.fill")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.system(size: 9, weight: .bold))
                             .rotationEffect(.degrees(-90))
                             .offset(x: 4)
                             .foregroundColor(fillColor)

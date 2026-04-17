@@ -332,7 +332,8 @@ struct MenuBarBatteryConfigView: View {
             }
             .padding()
         }
-        .frame(minWidth: 360, minHeight: 320)
+        .frame(minWidth: 360, minHeight: 320, maxHeight: 500)
+        .contentMargins(.top, 16, for: .scrollIndicators)
         .onAppear {
             // v1: split old batteryInnerContent "bolt" into separate charging indicator
             if !UserDefaults.standard.bool(forKey: "batteryChargingIndicatorMigrated") {

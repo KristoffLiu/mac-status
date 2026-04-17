@@ -179,7 +179,7 @@ struct MenuBarSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("菜单栏属性")
+        .navigationTitle("菜单栏")
     }
 
     private var previewSection: some View {

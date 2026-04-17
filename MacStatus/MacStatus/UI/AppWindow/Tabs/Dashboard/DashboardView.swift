@@ -78,7 +78,7 @@ struct DashboardView: View {
             }
             .padding(32)
         }
-        .navigationTitle("仪表盘")
+        .navigationTitle("状态看板")
         // In macOS 14+, using clear background with control opacity replicates the typical System Settings feel
         .background(VisualEffectBackground(material: .contentBackground, blendingMode: .withinWindow))
         .onAppear {

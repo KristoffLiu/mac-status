@@ -46,7 +46,7 @@ struct AppearanceSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("菜单栏与面板")
+        .navigationTitle("悬浮面板")
     }
     
     private func openMenuBarPanel() {
