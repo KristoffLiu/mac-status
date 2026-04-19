@@ -248,10 +248,8 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
     @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
-    @AppStorage("batteryManHandItemStyle") private var batteryManHandItemStyle = "none"
-    @AppStorage("batteryManHandItemSide") private var batteryManHandItemSide = "right"
-    @AppStorage("batteryManScratchingHead") private var batteryManScratchingHead = false
-    @AppStorage("batteryManScratchingHeadSide") private var batteryManScratchingHeadSide = "right"
+    @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
+    @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
 
     var body: some View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
@@ -278,10 +276,8 @@ struct MenuBarLabelRendererView: View {
                             showPosture: batteryManShowPosture,
                             showAccessory: batteryManShowAccessory,
                             faceStyle: batteryManFaceStyle,
-                            handItemStyle: batteryManHandItemStyle,
-                            handItemSide: batteryManHandItemSide,
-                            scratchingHead: batteryManScratchingHead,
-                            scratchingHeadSide: batteryManScratchingHeadSide
+                            handAction: batteryManHandAction,
+                            handActionSide: batteryManHandActionSide
                         )
                     }
                     if showPercentage { Text("\(viewModel.currentCapacity)%") }
@@ -299,10 +295,8 @@ struct MenuBarLabelRendererView: View {
                             showPosture: batteryManShowPosture,
                             showAccessory: batteryManShowAccessory,
                             faceStyle: batteryManFaceStyle,
-                            handItemStyle: batteryManHandItemStyle,
-                            handItemSide: batteryManHandItemSide,
-                            scratchingHead: batteryManScratchingHead,
-                            scratchingHeadSide: batteryManScratchingHeadSide
+                            handAction: batteryManHandAction,
+                            handActionSide: batteryManHandActionSide
                         )
                     }
                 } else if menuBarPowerStyle == .symbolic {

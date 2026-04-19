@@ -20,13 +20,9 @@ struct BatteryManView: View {
     var showAccessory: Bool = false
     var faceStyle: BatteryManFaceStyle = .outline
 
-    // Hand item (when charging + arms enabled)
-    var handItemStyle: String = "none"   // "none", "bolt", "adapter"
-    var handItemSide: String = "right"   // "left", "right"
-
-    // Scratching head
-    var scratchingHead: Bool = false
-    var scratchingHeadSide: String = "right" // "left", "right"
+    // Hand action (when arms enabled)
+    var handAction: String = "none"      // "none", "bolt", "adapter", "scratch"
+    var handActionSide: String = "right" // "left", "right"
 
     // --- Dimensions ---
     // Body (the battery)
@@ -85,10 +81,14 @@ struct BatteryManView: View {
 
         let strokeColor: Color = colorScheme == .dark ? .white : .black
 
+        let baseHeight = inset + bodyHeight + legHeight + footHeight + 1 + faceExtraTop + armExtraTop
+        let canvasWidth = batteryTotalW + sideExtra * 2 + 4 + faceExtraSide * 2
+        let scratchShift: CGFloat = handAction == "scratch" && showArms ? 10 : 0
+
         Canvas { ctx, size in
             // ── Origins ──
             let bodyOriginX = (size.width - batteryTotalW) / 2
-            let bodyOriginY = inset + faceExtraTop + armExtraTop
+            let bodyOriginY = inset + faceExtraTop + armExtraTop + scratchShift
 
             // ===== Accessory (drawn above frame top, Canvas doesn't clip by default) =====
             if showAccessory {
@@ -149,11 +149,12 @@ struct BatteryManView: View {
             // ===== Arms =====
             if showArms {
                 let armY = bodyOriginY + bodyHeight * 0.45
-                let showHandItem = (isCharging || isPowered) && handItemStyle != "none" && !scratchingHead
-                let leftHandItem = handItemSide == "left" && showHandItem ? handItemStyle : "none"
-                let rightHandItem = handItemSide == "right" && showHandItem ? handItemStyle : "none"
-                let leftScratching = scratchingHead && scratchingHeadSide == "left"
-                let rightScratching = scratchingHead && scratchingHeadSide == "right"
+                let isScratching = handAction == "scratch"
+                let showHandItem = (isCharging || isPowered) && handAction != "none" && !isScratching
+                let leftHandItem = handActionSide == "left" && showHandItem ? handAction : "none"
+                let rightHandItem = handActionSide == "right" && showHandItem ? handAction : "none"
+                let leftScratching = isScratching && handActionSide == "left"
+                let rightScratching = isScratching && handActionSide == "right"
                 let scratchTarget = CGPoint(x: bodyOriginX + bodyWidth - 2, y: bodyOriginY - 0.5)
                 drawArm(ctx: ctx,
                         shoulder: CGPoint(x: bodyOriginX, y: armY),
@@ -193,9 +194,10 @@ struct BatteryManView: View {
                         bottomY: legBottomY, color: strokeColor)
             }
         }
-        .frame(width: batteryTotalW + sideExtra * 2 + 4 + faceExtraSide * 2,
-               height: inset + bodyHeight + legHeight + footHeight + 1 + faceExtraTop + armExtraTop)
+        .frame(width: canvasWidth, height: baseHeight + scratchShift)
         .compositingGroup()
+        .offset(y: -scratchShift)
+        .frame(width: canvasWidth, height: baseHeight, alignment: .top)
     }
 
     // MARK: – Drawing Helpers
@@ -252,11 +254,10 @@ struct BatteryManView: View {
         let handY: CGFloat
 
         if isScratching, let target = scratchTarget {
-            let bodyOriginY = shoulder.y - bodyHeight * 0.45
-            let cp1 = CGPoint(x: shoulder.x + direction * armLength * 2.8,
-                              y: bodyOriginY - 0.5)
-            let cp2 = CGPoint(x: target.x - direction * armLength * 1.0,
-                              y: bodyOriginY + 0.5)
+            let cp1 = CGPoint(x: shoulder.x + direction * armLength * 3.0,
+                              y: shoulder.y - armLength * 2.8)
+            let cp2 = CGPoint(x: target.x - direction * armLength * 0.4,
+                              y: target.y - armLength * 0.6)
 
             var path = Path()
             path.move(to: shoulder)
@@ -567,10 +568,8 @@ struct IsolatedBatteryManRenderer: View {
     @AppStorage("batteryManShowPosture") private var showPosture = false
     @AppStorage("batteryManShowAccessory") private var showAccessory = false
     @AppStorage("batteryManFaceStyle") private var faceStyle: BatteryManFaceStyle = .outline
-    @AppStorage("batteryManHandItemStyle") private var handItemStyle = "none"
-    @AppStorage("batteryManHandItemSide") private var handItemSide = "right"
-    @AppStorage("batteryManScratchingHead") private var scratchingHead = false
-    @AppStorage("batteryManScratchingHeadSide") private var scratchingHeadSide = "right"
+    @AppStorage("batteryManHandAction") private var handAction = "none"
+    @AppStorage("batteryManHandActionSide") private var handActionSide = "right"
 
     var body: some View {
         BatteryManView(
@@ -585,10 +584,8 @@ struct IsolatedBatteryManRenderer: View {
             showPosture: showPosture,
             showAccessory: showAccessory,
             faceStyle: faceStyle,
-            handItemStyle: handItemStyle,
-            handItemSide: handItemSide,
-            scratchingHead: scratchingHead,
-            scratchingHeadSide: scratchingHeadSide
+            handAction: handAction,
+            handActionSide: handActionSide
         )
         .fixedSize()
     }

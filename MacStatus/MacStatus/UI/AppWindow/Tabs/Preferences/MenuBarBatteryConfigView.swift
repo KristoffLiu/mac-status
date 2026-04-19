@@ -18,10 +18,8 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
     @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
-    @AppStorage("batteryManHandItemStyle") private var batteryManHandItemStyle = "none"
-    @AppStorage("batteryManHandItemSide") private var batteryManHandItemSide = "right"
-    @AppStorage("batteryManScratchingHead") private var batteryManScratchingHead = false
-    @AppStorage("batteryManScratchingHeadSide") private var batteryManScratchingHeadSide = "right"
+    @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
+    @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
 
     // 主图标选项
     @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
@@ -151,37 +149,26 @@ struct MenuBarBatteryConfigView: View {
                         Toggle("手臂", isOn: $batteryManShowArms)
                         if batteryManShowArms {
                             HStack(alignment: .top) {
-                                Text("手持物品")
+                                Text("手部动作")
                                     .padding(.top, 6)
                                 Spacer()
                                 HStack(spacing: 12) {
-                                    HandItemSelectButton(title: "无", value: "none", currentSelection: $batteryManHandItemStyle)
-                                    HandItemSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryManHandItemStyle)
-                                    HandItemSelectButton(title: "适配器", value: "adapter", currentSelection: $batteryManHandItemStyle)
+                                    HandItemSelectButton(title: "无", value: "none", currentSelection: $batteryManHandAction)
+                                    HandItemSelectButton(title: "闪电", value: "bolt", currentSelection: $batteryManHandAction)
+                                    HandItemSelectButton(title: "适配器", value: "adapter", currentSelection: $batteryManHandAction)
+                                    HandItemSelectButton(title: "挠头", value: "scratch", currentSelection: $batteryManHandAction)
                                 }
                             }
                             .padding(.vertical, 2)
 
-                            HStack(alignment: .top) {
-                                Text("持物手")
-                                    .padding(.top, 6)
-                                Spacer()
-                                HStack(spacing: 12) {
-                                    HandSideSelectButton(title: "左手", value: "left", currentSelection: $batteryManHandItemSide)
-                                    HandSideSelectButton(title: "右手", value: "right", currentSelection: $batteryManHandItemSide)
-                                }
-                            }
-                            .padding(.vertical, 2)
-
-                            Toggle("挠头", isOn: $batteryManScratchingHead)
-                            if batteryManScratchingHead {
+                            if batteryManHandAction != "none" {
                                 HStack(alignment: .top) {
-                                    Text("挠头手")
+                                    Text("动作手")
                                         .padding(.top, 6)
                                     Spacer()
                                     HStack(spacing: 12) {
-                                        HandSideSelectButton(title: "左手", value: "left", currentSelection: $batteryManScratchingHeadSide)
-                                        HandSideSelectButton(title: "右手", value: "right", currentSelection: $batteryManScratchingHeadSide)
+                                        HandSideSelectButton(title: "左手", value: "left", currentSelection: $batteryManHandActionSide)
+                                        HandSideSelectButton(title: "右手", value: "right", currentSelection: $batteryManHandActionSide)
                                     }
                                 }
                                 .padding(.vertical, 2)
