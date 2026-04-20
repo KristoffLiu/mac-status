@@ -11,10 +11,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var viewModel: StatusViewModel = StatusViewModel()
     
     var menuBarIsDark: Bool {
-        if let button = statusItem?.button {
-            return button.effectiveAppearance.name == .darkAqua || button.effectiveAppearance.name == .vibrantDark
-        }
-        return NSApp.effectiveAppearance.name == .darkAqua || NSApp.effectiveAppearance.name == .vibrantDark
+        // Use the status item button's appearance when available; it reflects the actual menu bar theme.
+        let appearance = statusItem?.button?.effectiveAppearance ?? NSApp.effectiveAppearance
+        return appearance.bestMatch(from: [.darkAqua, .vibrantDark]) != nil
     }
     
     override init() {
@@ -80,11 +79,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // Initial Theme
         applyPanelTheme(UserDefaults.standard.string(forKey: "panelTheme") ?? "system")
         
-        // Listen for appearance changes
+        // Listen for appearance changes (both app-level and system-wide)
         NSApp.publisher(for: \.effectiveAppearance).sink { [weak self] _ in
-            self?.updateStatusItemImage()
+            self?.updateStatusItemImage(force: true)
         }.store(in: &cancellables)
-        
+
+        DistributedNotificationCenter.default.addObserver(
+            self,
+            selector: #selector(interfaceThemeChanged),
+            name: NSNotification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil
+        )
+
         // Render only when data changes, skipping unnecessary bitmap generations
         viewModel.objectWillChange
             .receive(on: DispatchQueue.main)
@@ -96,12 +102,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Initial draw
-        Task { @MainActor in
-            self.updateStatusItemImage()
+        // Initial draw — delay slightly so the button's effectiveAppearance has settled.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.updateStatusItemImage(force: true)
         }
     }
-    
+
+    @objc private func interfaceThemeChanged() {
+        // System theme may take a moment to propagate to the status bar button.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.updateStatusItemImage(force: true)
+        }
+    }
+
     private var cancellables = Set<AnyCancellable>()
     
     private func applyPanelTheme(_ theme: String) {
