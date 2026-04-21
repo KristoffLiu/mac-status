@@ -18,7 +18,7 @@ struct BatteryManView: View {
     var showArms: Bool = false
     var showPosture: Bool = false
     var showAccessory: Bool = false
-    var faceStyle: BatteryManFaceStyle = .outline
+    var faceStyle: BatteryManFaceStyle = .solid
 
     // Hand action (when arms enabled)
     var handAction: String = "none"      // "none", "bolt", "adapter", "scratch"
@@ -60,9 +60,8 @@ struct BatteryManView: View {
     /// Extra width on each side for arms.
     private var sideExtra: CGFloat { showArms ? armLength + 7 : 0 }
 
-    /// Extra space for the Q版 (outline) face so features can spill outside the battery.
-    private var faceExtraTop: CGFloat { showFace && faceStyle == .outline ? 5 : 0 }
-    private var faceExtraSide: CGFloat { showFace && faceStyle == .outline ? 3 : 0 }
+    private var faceExtraTop: CGFloat { 0 }
+    private var faceExtraSide: CGFloat { 0 }
 
     /// Extra top space for raised arms (charging) so hand items aren't clipped.
     private var armExtraTop: CGFloat { showArms && isCharging ? 6 : 0 }
@@ -112,7 +111,15 @@ struct BatteryManView: View {
                 .path(in: bodyRect)
             ctx.stroke(bodyPath, with: .color(strokeColor), lineWidth: strokeWidth)
 
-            // ===== Inner fill =====
+            // ===== Terminal tip =====
+            let tipX = bodyOriginX + bodyWidth + terminalGap
+            let tipY = bodyOriginY + (bodyHeight - terminalHeight) / 2
+            let tipRect = CGRect(x: tipX, y: tipY,
+                                 width: terminalWidth, height: terminalHeight)
+            let tipPath = Capsule(style: .continuous).path(in: tipRect)
+            ctx.fill(tipPath, with: .color(strokeColor))
+
+            // ===== Inner fill path (computed early, used by face + fill) =====
             let fillInset: CGFloat = 1.5
             let maxFillW = bodyWidth - fillInset * 2
             let fillW = maxFillW * percentage
@@ -122,15 +129,41 @@ struct BatteryManView: View {
                                   height: bodyHeight - fillInset * 2)
             let fillPath = RoundedRectangle(cornerRadius: 1.2, style: .continuous)
                 .path(in: fillRect)
-            ctx.fill(fillPath, with: .color(fillColor))
 
-            // ===== Terminal tip =====
-            let tipX = bodyOriginX + bodyWidth + terminalGap
-            let tipY = bodyOriginY + (bodyHeight - terminalHeight) / 2
-            let tipRect = CGRect(x: tipX, y: tipY,
-                                 width: terminalWidth, height: terminalHeight)
-            let tipPath = Capsule(style: .continuous).path(in: tipRect)
-            ctx.fill(tipPath, with: .color(strokeColor))
+            // ===== Face paths (computed before deciding draw order) =====
+            let facePaths = showFace ? computeFacePaths(
+                bodyOrigin: CGPoint(x: bodyOriginX, y: bodyOriginY),
+                capacity: capacity, isCharging: isCharging
+            ) : nil
+
+            if showFace, let fp = facePaths, faceStyle == .hollow {
+                // Hollow: draw face outlines on empty background first,
+                // then fill minus face areas so fill doesn't cover them.
+                let allFace = fp.leftEye.union(fp.rightEye).union(fp.mouth)
+
+                // Face on empty background
+                ctx.fill(fp.leftEye.subtracting(fillPath), with: .color(strokeColor))
+                ctx.fill(fp.rightEye.subtracting(fillPath), with: .color(strokeColor))
+                ctx.fill(fp.mouth.subtracting(fillPath), with: .color(strokeColor))
+
+                // Fill that excludes the face (creates transparency over face area)
+                ctx.fill(fillPath.subtracting(allFace), with: .color(fillColor))
+            } else {
+                // Solid (or no face): draw fill first, then face on top
+                ctx.fill(fillPath, with: .color(fillColor))
+
+                if showFace, let fp = facePaths {
+                    let faceOnFillColor: Color = colorScheme == .dark ? .black : .white
+                    let faceOnEmptyColor: Color = strokeColor
+
+                    ctx.fill(fp.leftEye.intersection(fillPath), with: .color(faceOnFillColor))
+                    ctx.fill(fp.leftEye.subtracting(fillPath), with: .color(faceOnEmptyColor))
+                    ctx.fill(fp.rightEye.intersection(fillPath), with: .color(faceOnFillColor))
+                    ctx.fill(fp.rightEye.subtracting(fillPath), with: .color(faceOnEmptyColor))
+                    ctx.fill(fp.mouth.intersection(fillPath), with: .color(faceOnFillColor))
+                    ctx.fill(fp.mouth.subtracting(fillPath), with: .color(faceOnEmptyColor))
+                }
+            }
 
             // ===== Charging bolt (inside body) =====
             if isCharging && showBolt && !showFace {
@@ -138,12 +171,6 @@ struct BatteryManView: View {
                                          y: bodyOriginY + bodyHeight / 2)
                 let boltPath = makeBoltPath(center: boltCenter, scale: 0.55)
                 ctx.fill(boltPath, with: .color(isColored ? .white : .black))
-            }
-
-            // ===== Face =====
-            if showFace {
-                drawFace(ctx: ctx, bodyOrigin: CGPoint(x: bodyOriginX, y: bodyOriginY),
-                         capacity: capacity, isCharging: isCharging, strokeColor: strokeColor)
             }
 
             // ===== Arms =====
@@ -321,29 +348,14 @@ struct BatteryManView: View {
         }
     }
 
-    // ── Face ──
-    private func drawFace(ctx: GraphicsContext, bodyOrigin: CGPoint,
-                          capacity: Int, isCharging: Bool, strokeColor: Color) {
-        let scale: CGFloat
-        let eyeY: CGFloat
-        let leftEyeX: CGFloat
-        let rightEyeX: CGFloat
-        let mouthY: CGFloat
-
-        switch faceStyle {
-        case .outline:
-            scale = 1.6
-            eyeY = bodyOrigin.y + bodyHeight * 0.30
-            leftEyeX = bodyOrigin.x + bodyWidth * 0.25
-            rightEyeX = bodyOrigin.x + bodyWidth * 0.75
-            mouthY = bodyOrigin.y + bodyHeight * 0.85
-        case .solid, .hollow:
-            scale = 1.0
-            eyeY = bodyOrigin.y + bodyHeight * 0.40
-            leftEyeX = bodyOrigin.x + bodyWidth * 0.32
-            rightEyeX = bodyOrigin.x + bodyWidth * 0.68
-            mouthY = bodyOrigin.y + bodyHeight * 0.72
-        }
+    // ── Face paths (computed, caller decides draw order) ──
+    private func computeFacePaths(bodyOrigin: CGPoint,
+                                  capacity: Int, isCharging: Bool) -> (leftEye: Path, rightEye: Path, mouth: Path) {
+        let scale: CGFloat = 1.0
+        let eyeY = bodyOrigin.y + bodyHeight * 0.40
+        let leftEyeX = bodyOrigin.x + bodyWidth * 0.32
+        let rightEyeX = bodyOrigin.x + bodyWidth * 0.68
+        let mouthY = bodyOrigin.y + bodyHeight * 0.72
 
         let eyeR: CGFloat = 1.1 * scale
         let cx = bodyOrigin.x + bodyWidth * 0.5
@@ -363,17 +375,6 @@ struct BatteryManView: View {
             mouthPath.addLine(to: CGPoint(x: cx + w / 2, y: mouthY - 1 * scale))
         }
 
-        // Shared fill path for solid clipping.
-        let percentage = Double(capacity) / 100.0
-        let fillInset: CGFloat = 1.5
-        let maxFillW = bodyWidth - fillInset * 2
-        let fillW = maxFillW * percentage
-        let fillRect = CGRect(x: bodyOrigin.x + fillInset,
-                              y: bodyOrigin.y + fillInset,
-                              width: fillW,
-                              height: bodyHeight - fillInset * 2)
-        let fillPath = RoundedRectangle(cornerRadius: 1.2, style: .continuous).path(in: fillRect)
-
         let leftEye = CGRect(x: leftEyeX - eyeR, y: eyeY - eyeR,
                              width: eyeR * 2, height: eyeR * 2)
         let rightEye = CGRect(x: rightEyeX - eyeR, y: eyeY - eyeR,
@@ -382,71 +383,24 @@ struct BatteryManView: View {
         let leftEyePath = Path(ellipseIn: leftEye)
         let rightEyePath = Path(ellipseIn: rightEye)
 
-        switch faceStyle {
-        case .solid:
-            // Ensure solid face stays visible regardless of fill/background colour.
-            let faceOnFillColor: Color = colorScheme == .dark ? .black : .white
-            let faceOnEmptyColor: Color = strokeColor
+        let mouthStroke: Path = {
+            if isCharging || capacity > 60 {
+                let p0 = CGPoint(x: cx - w / 2, y: mouthY - 1 * scale)
+                let p1 = CGPoint(x: cx, y: mouthY + 1 * scale)
+                let p2 = CGPoint(x: cx + w / 2, y: mouthY - 1 * scale)
+                return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5 * scale)
+            } else if capacity <= 20 {
+                let p0 = CGPoint(x: cx - w / 2, y: mouthY)
+                let p1 = CGPoint(x: cx, y: mouthY - 2.2 * scale)
+                let p2 = CGPoint(x: cx + w / 2, y: mouthY)
+                return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5 * scale)
+            } else {
+                let rect = CGRect(x: cx - w / 2, y: mouthY - 1 * scale - 0.75 * scale, width: w, height: 1.5 * scale)
+                return RoundedRectangle(cornerRadius: 0.75 * scale, style: .continuous).path(in: rect)
+            }
+        }()
 
-            // Eyes
-            ctx.fill(leftEyePath.intersection(fillPath), with: .color(faceOnFillColor))
-            ctx.fill(leftEyePath.subtracting(fillPath), with: .color(faceOnEmptyColor))
-            ctx.fill(rightEyePath.intersection(fillPath), with: .color(faceOnFillColor))
-            ctx.fill(rightEyePath.subtracting(fillPath), with: .color(faceOnEmptyColor))
-
-            // Mouth as a filled "sausage" shape, clipped against the battery fill.
-            let mouthSausage: Path = {
-                if isCharging || capacity > 60 {
-                    let p0 = CGPoint(x: cx - w / 2, y: mouthY - 1 * scale)
-                    let p1 = CGPoint(x: cx, y: mouthY + 1 * scale)
-                    let p2 = CGPoint(x: cx + w / 2, y: mouthY - 1 * scale)
-                    return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5 * scale)
-                } else if capacity <= 20 {
-                    let p0 = CGPoint(x: cx - w / 2, y: mouthY)
-                    let p1 = CGPoint(x: cx, y: mouthY - 2.2 * scale)
-                    let p2 = CGPoint(x: cx + w / 2, y: mouthY)
-                    return makeSausageFromQuadCurve(p0: p0, p1: p1, p2: p2, lineWidth: 1.5 * scale)
-                } else {
-                    let rect = CGRect(x: cx - w / 2, y: mouthY - 1 * scale - 0.75 * scale, width: w, height: 1.5 * scale)
-                    return RoundedRectangle(cornerRadius: 0.75 * scale, style: .continuous).path(in: rect)
-                }
-            }()
-            ctx.fill(mouthSausage.intersection(fillPath), with: .color(faceOnFillColor))
-            ctx.fill(mouthSausage.subtracting(fillPath), with: .color(faceOnEmptyColor))
-
-        case .outline:
-            // Solid outline + transparent fill (Q版大头), features can spill outside
-            let haloR = eyeR + 0.8 * scale
-            let leftHalo = CGRect(x: leftEyeX - haloR, y: eyeY - haloR,
-                                  width: haloR * 2, height: haloR * 2)
-            let rightHalo = CGRect(x: rightEyeX - haloR, y: eyeY - haloR,
-                                   width: haloR * 2, height: haloR * 2)
-
-            // Eyes: solid outer ring, hollow inside
-            ctx.fill(Path(ellipseIn: leftHalo), with: .color(strokeColor))
-            ctx.fill(Path(ellipseIn: rightHalo), with: .color(strokeColor))
-
-            var clearCtx = ctx
-            clearCtx.blendMode = .clear
-            clearCtx.fill(leftEyePath, with: .color(.white))
-            clearCtx.fill(rightEyePath, with: .color(.white))
-
-            // Mouth: solid outline tube, hollow inside
-            let outerMouth = mouthPath.strokedPath(StrokeStyle(lineWidth: 3.5 * scale, lineCap: .round, lineJoin: .round))
-            let innerMouth = mouthPath.strokedPath(StrokeStyle(lineWidth: 1.5 * scale, lineCap: .round, lineJoin: .round))
-            ctx.fill(outerMouth, with: .color(strokeColor))
-            clearCtx.fill(innerMouth, with: .color(.white))
-
-        case .hollow:
-            // Transparent holes only, no thick outline
-            var clearCtx = ctx
-            clearCtx.blendMode = .clear
-            clearCtx.fill(leftEyePath, with: .color(.white))
-            clearCtx.fill(rightEyePath, with: .color(.white))
-
-            let mouthStroke = mouthPath.strokedPath(StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-            clearCtx.fill(mouthStroke, with: .color(.white))
-        }
+        return (leftEyePath, rightEyePath, mouthStroke)
     }
 
     // ── Hat bolt (charging accessory) ──
@@ -543,7 +497,6 @@ enum BatteryManLegLength: String, CaseIterable, Identifiable {
 enum BatteryManFaceStyle: String, CaseIterable, Identifiable {
     case solid = "solid"
     case hollow = "hollow"
-    case outline = "outline"
 
     var id: String { rawValue }
 
@@ -551,7 +504,6 @@ enum BatteryManFaceStyle: String, CaseIterable, Identifiable {
         switch self {
         case .solid:   return "实心"
         case .hollow:  return "空心"
-        case .outline: return "Q版大头"
         }
     }
 }
@@ -567,7 +519,7 @@ struct IsolatedBatteryManRenderer: View {
     @AppStorage("batteryManShowArms") private var showArms = false
     @AppStorage("batteryManShowPosture") private var showPosture = false
     @AppStorage("batteryManShowAccessory") private var showAccessory = false
-    @AppStorage("batteryManFaceStyle") private var faceStyle: BatteryManFaceStyle = .outline
+    @AppStorage("batteryManFaceStyle") private var faceStyle: BatteryManFaceStyle = .solid
     @AppStorage("batteryManHandAction") private var handAction = "none"
     @AppStorage("batteryManHandActionSide") private var handActionSide = "right"
 

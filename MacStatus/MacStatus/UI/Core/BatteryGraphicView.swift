@@ -247,7 +247,7 @@ struct MenuBarLabelRendererView: View {
     @AppStorage("batteryManShowArms") private var batteryManShowArms = false
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
-    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
+    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .solid
     @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
     @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
 

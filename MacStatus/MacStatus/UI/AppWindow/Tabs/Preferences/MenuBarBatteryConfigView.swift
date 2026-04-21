@@ -17,7 +17,7 @@ struct MenuBarBatteryConfigView: View {
     @AppStorage("batteryManShowArms") private var batteryManShowArms = false
     @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
     @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
-    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .outline
+    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .solid
     @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
     @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
 
@@ -132,7 +132,6 @@ struct MenuBarBatteryConfigView: View {
                                 HStack(spacing: 12) {
                                     FaceStyleSelectButton(title: "实心", value: .solid, currentSelection: $batteryManFaceStyle)
                                     FaceStyleSelectButton(title: "空心", value: .hollow, currentSelection: $batteryManFaceStyle)
-                                    FaceStyleSelectButton(title: "Q版大头", value: .outline, currentSelection: $batteryManFaceStyle)
                                 }
                             }
                             .padding(.vertical, 2)
