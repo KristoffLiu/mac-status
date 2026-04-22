@@ -57,6 +57,15 @@ struct MainPanelView: View {
             VStack(spacing: 0) {
                 ForEach(widgetManager.activeWidgets, id: \.self) { widgetId in
                     HStack(spacing: 0) {
+                        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
+                            WidgetContainerView(plugin: plugin)
+                                .environmentObject(viewModel)
+                        } else {
+                            Text("Unknown Widget")
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .overlay(alignment: .leading) {
                         if isEditing {
                             Button(action: {
                                 widgetManager.remove(widgetId)
@@ -66,23 +75,15 @@ struct MainPanelView: View {
                                     .font(.system(size: 16))
                             }
                             .buttonStyle(.plain)
-                            .padding(.leading, 8)
-                            .padding(.trailing, 4)
+                            .padding(.leading, 4)
                             .transition(.move(edge: .leading).combined(with: .opacity))
                         }
-                        
-                        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
-                            WidgetContainerView(plugin: plugin)
-                                .environmentObject(viewModel)
-                        } else {
-                            Text("Unknown Widget")
-                                .foregroundColor(.red)
-                        }
-                        
+                    }
+                    .overlay(alignment: .trailing) {
                         if isEditing {
                             Image(systemName: "line.3.horizontal")
                                 .foregroundColor(.secondary.opacity(0.5))
-                                .padding(.horizontal, 8)
+                                .padding(.trailing, 4)
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
