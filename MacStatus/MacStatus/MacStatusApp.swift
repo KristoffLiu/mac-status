@@ -4,9 +4,10 @@ import ServiceManagement
 @main
 struct MacStatusApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var settingsUpdateTrigger = UUID()
 
     init() {
+        AppPreferences.registerDefaults()
+        AppPreferences.migrate()
         // Hide the dock icon to make it a pure Menu Bar agent
         NSApplication.shared.setActivationPolicy(.accessory)
     }
@@ -14,11 +15,9 @@ struct MacStatusApp: App {
     var body: some Scene {
         Window("MacStatus", id: "settings") {
             AppWindowView()
-                .onChange(of: appDelegate.viewModel.isCharging) { _ in settingsUpdateTrigger = UUID() }
-                .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
-                    settingsUpdateTrigger = UUID()
-                }
         }
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
         .windowToolbarStyle(.unified)
         .windowResizability(.contentSize)
     }

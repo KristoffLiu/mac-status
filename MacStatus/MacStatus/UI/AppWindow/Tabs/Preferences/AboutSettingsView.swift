@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct AboutSettingsView: View {
     var body: some View {
@@ -15,7 +16,7 @@ struct AboutSettingsView: View {
                     VStack(spacing: 4) {
                         Text("MacStatus")
                             .font(.system(.title3, design: .rounded, weight: .bold))
-                        Text("Version 1.0.0 (Build 100)")
+                        Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—") (Build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"))")
                             .font(.system(.caption, design: .monospaced))
                             .foregroundColor(.secondary)
                     }
@@ -25,21 +26,29 @@ struct AboutSettingsView: View {
             }
             
             Section("App Features") {
-                Text("A minimalist tool to monitor your Mac's power and battery status in real-time.")
+                Text("在菜单栏查看电池、功率流向和系统状态。估算读数会单独标注。")
                     .font(.callout)
                     .foregroundColor(.secondary)
             }
             
             Section("Links & Support") {
                 LabeledContent("Developer", value: "Kristoff")
-                LabeledContent("Official Website", value: "github.com/kristoff")
+                if let license = Bundle.main.url(forResource: "LICENSE", withExtension: "txt") {
+                    Button("MIT License") {
+                        NSWorkspace.shared.open(license)
+                    }
+                }
+                if let address = Bundle.main.object(forInfoDictionaryKey: "MacStatusSupportURL") as? String,
+                   let url = URL(string: address), url.scheme == "https" {
+                    Link("反馈与支持", destination: url)
+                }
             }
             
             Section {
                 // Empty section for spacing or future links
             } footer: {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("© 2024 Kristoff. All rights reserved.")
+                    Text("© \(String(Calendar.current.component(.year, from: Date()))) Kristoff.")
                     Text("Powered by SwiftUI.")
                 }
                 .font(.system(size: 10))

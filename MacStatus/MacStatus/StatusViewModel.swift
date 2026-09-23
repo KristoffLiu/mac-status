@@ -1,72 +1,68 @@
 import Foundation
 import Combine
 
+@MainActor
 class StatusViewModel: ObservableObject {
+    static let shared = StatusViewModel()
     @Published var batteryData: BatteryData = .empty
-    @Published var powerFlow: PowerFlowData = PowerFlowData(adapterPower: 0, batteryPower: 0, systemPower: 0, isCharging: false, isDischarging: false, topology: .topologyB)
-    
-    // For backwards compatibility and easier access during migration
+    @Published var powerFlow = PowerFlowData(adapterPower: 0, batteryPower: 0, systemPower: 0,
+        isCharging: false, isDischarging: false, topology: .topologyB,
+        adapterQuality: .unavailable, batteryQuality: .unavailable, systemQuality: .unavailable)
+
     var voltage: Int { batteryData.voltage }
     var amperage: Int { batteryData.amperage }
-    var isCharging: Bool { batteryData.isCharging }
+    var isCharging: Bool { powerFlow.isCharging }
     var currentCapacity: Int { batteryData.currentCapacity }
     var maxCapacity: Int { batteryData.maxCapacity }
     var designCapacity: Int { batteryData.designCapacity }
     var cycleCount: Int { batteryData.cycleCount }
     var temperature: Double { batteryData.temperature }
     var adapterWatts: Int { batteryData.adapterWatts }
+    var capacityText: String { batteryData.isAvailable ? "\(currentCapacity)%" : "—" }
     var powerDirection: String {
-        if batteryData.amperage > 0 { return "Charging" }
-        if batteryData.amperage < 0 { return "Discharging" }
-        if batteryData.adapterWatts > 0 { return "Adapter Power" }
-        return "Idle"
+        if powerFlow.readingsConflict { return "Unknown" }
+        if powerFlow.isCharging { return "Charging" }
+        if powerFlow.isDischarging { return "Discharging" }
+        if powerFlow.hasAdapter { return "Adapter Power" }
+        return "Unknown"
     }
-    
+
     private var cancellables = Set<AnyCancellable>()
-    
-    init() {
-        // Fetch synchronously on init to avoid initial 0% display
-        let data = BatteryService.shared.fetchBatteryData()
-        let flow = PowerCalculationService.shared.calculateFlow(from: data)
-        self.batteryData = data
-        self.powerFlow = flow
-        self.lastBatteryFetch = Date()
-        
-        EnergyEfficiencyManager.shared.tickPublisher
-            .sink { [weak self] _ in
-                self?.refresh()
-            }
-            .store(in: &cancellables)
-    }
-    
-    private var lastBatteryFetch: Date = .distantPast
     private var isFetching = false
-    
+    private var refreshPending = false
+    private var powerPresentationReducer = PowerPresentationReducer()
+
+    init(startMonitoring: Bool = true) {
+        guard startMonitoring else { return }
+        EnergyEfficiencyManager.shared.tickPublisher
+            .sink { [weak self] _ in self?.refresh() }.store(in: &cancellables)
+        EnergyEfficiencyManager.shared.$policy
+            .dropFirst()
+            .sink { [weak self] _ in self?.powerPresentationReducer.reset() }
+            .store(in: &cancellables)
+        refresh()
+    }
+
     private func refresh() {
-        guard !isFetching else { return }
+        guard !isFetching else { refreshPending = true; return }
         isFetching = true
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            // AppleSmartBattery queries (IOKit) can be slow (up to 500ms) on state changes.
-            // We only query it every 2 seconds, but we query ultra-fast SMC data on every tick.
-            let now = Date()
-            var data = self.batteryData
-            if now.timeIntervalSince(self.lastBatteryFetch) >= 2.0 {
-                data = BatteryService.shared.fetchBatteryData()
-                
-                // Keep the state on the main thread consistent
-                DispatchQueue.main.async { [weak self] in
-                    self?.lastBatteryFetch = now
-                }
-            }
-            
-            // SMC fetch is instantaneous (~0.01ms) and will now never be blocked by battery PMU latency
-            let flow = PowerCalculationService.shared.calculateFlow(from: data)
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.batteryData = data
-                self?.powerFlow = flow
-                self?.isFetching = false
+        Task { [weak self] in
+            let policy = EnergyEfficiencyManager.shared.policy
+            let snapshot = await StatusSnapshotCoordinator.shared.sample(for: policy)
+            guard let self else { return }
+            let data = snapshot.battery
+            let rawFlow = PowerCalculationService.shared.calculateFlow(from: data, sensors: snapshot.sensors)
+            let flow = powerPresentationReducer.reduce(
+                flow: rawFlow,
+                battery: data,
+                expectedInterval: policy.tickInterval ?? 2
+            )
+            if batteryData != data { batteryData = data }
+            if powerFlow != flow { powerFlow = flow }
+            isFetching = false
+            if refreshPending {
+                refreshPending = false
+                if EnergyEfficiencyManager.shared.policy.tickInterval != nil { refresh() }
             }
         }
     }

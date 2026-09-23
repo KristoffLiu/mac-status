@@ -2,52 +2,52 @@ import SwiftUI
 
 struct MenuBarSettingsView: View {
     // 主图标原子选项 (Atomic Options)
-    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
-    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
-    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
-    @AppStorage("batteryLayout") private var batteryLayout = "left"
+    @AppStorage(AppPreferenceKeys.batteryShellStyle) private var batteryShellStyle = "native"
+    @AppStorage(AppPreferenceKeys.batteryFillStyle) private var batteryFillStyle = "monochrome"
+    @AppStorage(AppPreferenceKeys.batteryInnerContent) private var batteryInnerContent = "none"
+    @AppStorage(AppPreferenceKeys.batteryChargingIndicator) private var batteryChargingIndicator = "bolt"
+    @AppStorage(AppPreferenceKeys.batteryLayout) private var batteryLayout = "left"
     
-    @AppStorage("showPercentage") private var showPercentage = true
-    @AppStorage("showChargingStatus") private var showChargingStatus = false
+    @AppStorage(AppPreferenceKeys.showPercentage) private var showPercentage = true
+    @AppStorage(AppPreferenceKeys.showChargingStatus) private var showChargingStatus = false
     
     // 主图标选项
-    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    @AppStorage(AppPreferenceKeys.iconLowPowerColor) private var iconLowPowerColor = false
     
     // 电池健康
-    @AppStorage("showMaxCapacity") private var showMaxCapacity = false
-    @AppStorage("showMacOSCapacity") private var showMacOSCapacity = false
-    @AppStorage("showMacOSCondition") private var showMacOSCondition = false
-    @AppStorage("showCycles") private var showCycles = false
+    @AppStorage(AppPreferenceKeys.showMaxCapacity) private var showMaxCapacity = false
+    @AppStorage(AppPreferenceKeys.showMacOSCapacity) private var showMacOSCapacity = false
+    @AppStorage(AppPreferenceKeys.showMacOSCondition) private var showMacOSCondition = false
+    @AppStorage(AppPreferenceKeys.showCycles) private var showCycles = false
     
     // 预览外观
-    @AppStorage("previewIsDark") private var previewIsDark = true
+    @AppStorage(AppPreferenceKeys.previewIsDark) private var previewIsDark = true
     
     // 电池规格
-    @AppStorage("showTemperature") private var showTemperature = false
-    @AppStorage("showTimeRemaining") private var showTimeRemaining = false
-    @AppStorage("showAmperage") private var showAmperage = false
-    @AppStorage("showVoltage") private var showVoltage = false
-    @AppStorage("showWattage") private var showWattage = false
-    @AppStorage("showSystemLoad") private var showSystemLoad = false
+    @AppStorage(AppPreferenceKeys.showTemperature) private var showTemperature = false
+    @AppStorage(AppPreferenceKeys.showTimeRemaining) private var showTimeRemaining = false
+    @AppStorage(AppPreferenceKeys.showAmperage) private var showAmperage = false
+    @AppStorage(AppPreferenceKeys.showVoltage) private var showVoltage = false
+    @AppStorage(AppPreferenceKeys.showWattage) private var showWattage = false
+    @AppStorage(AppPreferenceKeys.showSystemLoad) private var showSystemLoad = false
     
     // 电源适配器规格
-    @AppStorage("showAdapterCurrent") private var showAdapterCurrent = false
-    @AppStorage("showAdapterVoltage") private var showAdapterVoltage = false
-    @AppStorage("showAdapterPower") private var showAdapterPower = false
+    @AppStorage(AppPreferenceKeys.showAdapterCurrent) private var showAdapterCurrent = false
+    @AppStorage(AppPreferenceKeys.showAdapterVoltage) private var showAdapterVoltage = false
+    @AppStorage(AppPreferenceKeys.showAdapterPower) private var showAdapterPower = false
     
     // AlDente 状态
-    @AppStorage("showAlDenteCalibration") private var showAlDenteCalibration = false
-    @AppStorage("showAlDenteOverheat") private var showAlDenteOverheat = false
-    @AppStorage("showAlDenteSailing") private var showAlDenteSailing = false
-    @AppStorage("showAlDenteFull") private var showAlDenteFull = false
+    @AppStorage(AppPreferenceKeys.showAlDenteCalibration) private var showAlDenteCalibration = false
+    @AppStorage(AppPreferenceKeys.showAlDenteOverheat) private var showAlDenteOverheat = false
+    @AppStorage(AppPreferenceKeys.showAlDenteSailing) private var showAlDenteSailing = false
+    @AppStorage(AppPreferenceKeys.showAlDenteFull) private var showAlDenteFull = false
     
     // 底部参数
-    @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
-    @AppStorage("menuUpdateInterval") private var menuUpdateInterval: Double = 2
-    @AppStorage("menuRightClickAction") private var menuRightClickAction = "同左击"
+    @AppStorage(AppPreferenceKeys.menuItemSpacing) private var menuItemSpacing: Double = 4
+    @AppStorage(AppPreferenceKeys.menuUpdateInterval) private var menuUpdateInterval: Double = 10
+    @AppStorage(AppPreferenceKeys.menuRightClickAction) private var menuRightClickAction: MenuBarRightClickAction = .sameAsLeft
 
-    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
+    @AppStorage(AppPreferenceKeys.mainIconGroupSpacing) private var mainIconGroupSpacing: Double = 4
 
     // 弹出状态
     @State private var isShowingBatteryConfig = false
@@ -107,10 +107,8 @@ struct MenuBarSettingsView: View {
             }
             
             Section("AlDente 状态") {
-                Toggle("校准模式", isOn: $showAlDenteCalibration)
-                Toggle("过热保护", isOn: $showAlDenteOverheat)
-                Toggle("航海模式", isOn: $showAlDenteSailing)
-                Toggle("充满", isOn: $showAlDenteFull)
+                Text("尚未接入 AlDente 状态数据")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             
             Section("菜单栏偏好设置") {
@@ -131,8 +129,8 @@ struct MenuBarSettingsView: View {
                 }
                 
                 Picker("菜单栏右击", selection: $menuRightClickAction) {
-                    Text("同左击").tag("同左击")
-                    Text("退出应用").tag("退出应用")
+                    Text("同左击").tag(MenuBarRightClickAction.sameAsLeft)
+                    Text("退出应用").tag(MenuBarRightClickAction.quit)
                 }
             }
             
@@ -140,17 +138,7 @@ struct MenuBarSettingsView: View {
                 HStack {
                     Spacer()
                     Button("重置所有设置") {
-                        menuItemSpacing = 4
-                        mainIconGroupSpacing = 4
-                        menuUpdateInterval = 2
-                        batteryShellStyle = "native"
-                        batteryFillStyle = "monochrome"
-                        batteryInnerContent = "outside"
-                        batteryChargingIndicator = "bolt"
-                        batteryLayout = "left"
-                        showPercentage = true
-                        showChargingStatus = false
-                        iconLowPowerColor = false
+                        AppPreferences.resetMenuBar()
                     }
                     .buttonStyle(.borderless)
                     
@@ -212,22 +200,22 @@ struct MenuBarSettingsView: View {
 
 // Simplified Preview for the main settings page
 struct UnifiedPreviewRow: View {
-    @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
-    @AppStorage("previewIsDark") private var previewIsDark = true
-    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
-    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
-    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
-    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+    @AppStorage(AppPreferenceKeys.menuBarPowerStyle) private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
+    @AppStorage(AppPreferenceKeys.previewIsDark) private var previewIsDark = true
+    @AppStorage(AppPreferenceKeys.batteryShellStyle) private var batteryShellStyle = "native"
+    @AppStorage(AppPreferenceKeys.batteryFillStyle) private var batteryFillStyle = "monochrome"
+    @AppStorage(AppPreferenceKeys.batteryInnerContent) private var batteryInnerContent = "none"
+    @AppStorage(AppPreferenceKeys.batteryChargingIndicator) private var batteryChargingIndicator = "bolt"
+    @AppStorage(AppPreferenceKeys.batteryChargingBorderStyle) private var batteryChargingBorderStyle = "sharp"
 
     // We use actual data from the shared service or a static mock for the main page
-    @StateObject private var viewModel = StatusViewModel()
+    @ObservedObject private var viewModel = StatusViewModel.shared
 
     var body: some View {
         let batteryView = BatteryGraphicView(
             capacity: viewModel.currentCapacity,
             isCharging: viewModel.isCharging,
-            isPowered: viewModel.batteryData.adapter != nil,
+            isPowered: viewModel.powerFlow.hasAdapter,
             isColored: batteryFillStyle == "status_color",
             chargingStyle: batteryChargingIndicator,
             showNumber: batteryInnerContent == "inside",

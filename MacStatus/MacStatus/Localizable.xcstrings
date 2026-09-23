@@ -1,9 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
+    "" : {},
     " -- W" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -33,7 +31,14 @@
 
     },
     "%@ 选项..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Options..."
+          }
+        }
+      }
     },
     "%@pt" : {
 
@@ -45,13 +50,27 @@
 
     },
     "%lld 秒" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld seconds"
+          }
+        }
+      }
     },
     "%lld%%" : {
 
     },
     "%lld%% 余量" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% remaining"
+          }
+        }
+      }
     },
     "%lldm" : {
 
@@ -325,7 +344,14 @@
       }
     },
     "AlDente 状态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AlDente Status"
+          }
+        }
+      }
     },
     "All widgets added" : {
       "extractionState" : "manual",
@@ -1354,7 +1380,14 @@
 
     },
     "三段视图" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Three-Stage View"
+          }
+        }
+      }
     },
     "仪表盘" : {
       "extractionState" : "manual",
@@ -1368,10 +1401,24 @@
       }
     },
     "低电量变红" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn Red on Low Battery"
+          }
+        }
+      }
     },
     "低电量时显示疲惫姿态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Tired Posture on Low Battery"
+          }
+        }
+      }
     },
     "低电量模式颜色" : {
       "extractionState" : "manual",
@@ -1396,13 +1443,34 @@
       }
     },
     "像素个体形态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel Shape"
+          }
+        }
+      }
     },
     "像素阵列间距" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel Grid Spacing"
+          }
+        }
+      }
     },
     "像素风格渲染" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel-Style Rendering"
+          }
+        }
+      }
     },
     "充满" : {
       "extractionState" : "manual",
@@ -1427,13 +1495,34 @@
       }
     },
     "充电时手臂自动举起" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raise Arms While Charging"
+          }
+        }
+      }
     },
     "充电状态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charging Status"
+          }
+        }
+      }
     },
     "全局面板行为" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel Behavior"
+          }
+        }
+      }
     },
     "全部清除" : {
       "extractionState" : "manual",
@@ -1480,10 +1569,24 @@
       }
     },
     "分隔网格模式" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grid Divider Mode"
+          }
+        }
+      }
     },
     "列分隔 (横向)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Column Dividers (Horizontal)"
+          }
+        }
+      }
     },
     "刷新频率" : {
       "extractionState" : "manual",
@@ -1497,16 +1600,44 @@
       }
     },
     "动作手" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action Hand"
+          }
+        }
+      }
     },
     "双向发散" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bidirectional"
+          }
+        }
+      }
     },
     "可将系统模块控制配置为在面板中显示。拖拽可以进行排序。" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose which modules appear in the panel. Drag to reorder them."
+          }
+        }
+      }
     },
     "右侧" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Right"
+          }
+        }
+      }
     },
     "同左击" : {
       "extractionState" : "manual",
@@ -1520,37 +1651,114 @@
       }
     },
     "呼出面板进行交互排布..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Panel to Arrange..."
+          }
+        }
+      }
     },
     "图形" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graphic"
+          }
+        }
+      }
     },
     "图形定制" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graphic Customization"
+          }
+        }
+      }
     },
     "图形所在位置" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graphic Position"
+          }
+        }
+      }
     },
     "图标间距" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon Spacing"
+          }
+        }
+      }
     },
     "图表与尺寸" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charts and Sizing"
+          }
+        }
+      }
     },
     "圆角矩阵" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rounded Grid"
+          }
+        }
+      }
     },
     "在管道上显示具体瓦数" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Wattage on Flows"
+          }
+        }
+      }
     },
     "外置显式充电状态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Charging Status Outside"
+          }
+        }
+      }
     },
     "外置显式百分比" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Percentage Outside"
+          }
+        }
+      }
     },
     "外观" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
     },
     "外观设置" : {
       "extractionState" : "manual",
@@ -1564,22 +1772,64 @@
       }
     },
     "失去焦点时自动隐藏" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide When Focus Is Lost"
+          }
+        }
+      }
     },
     "头部" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Head"
+          }
+        }
+      }
     },
     "头饰" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Head Accessory"
+          }
+        }
+      }
     },
     "始终浅色" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always Light"
+          }
+        }
+      }
     },
     "始终深色" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always Dark"
+          }
+        }
+      }
     },
     "姿态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posture"
+          }
+        }
+      }
     },
     "完成" : {
       "extractionState" : "manual",
@@ -1593,7 +1843,14 @@
       }
     },
     "实时显示效果" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Preview"
+          }
+        }
+      }
     },
     "实时监控 Mac 电源与电池状态的极简工具，为您提供精确的系统功耗与电池健康分析。" : {
       "extractionState" : "manual",
@@ -1618,19 +1875,54 @@
       }
     },
     "宽松 (2.5)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wide (2.5)"
+          }
+        }
+      }
     },
     "展示与动画" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Display and Animation"
+          }
+        }
+      }
     },
     "峰值: %lldW" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peak: %lldW"
+          }
+        }
+      }
     },
     "左侧" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left"
+          }
+        }
+      }
     },
     "已添加所有可用组件" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All Available Modules Added"
+          }
+        }
+      }
     },
     "常规" : {
       "extractionState" : "manual",
@@ -1644,7 +1936,14 @@
       }
     },
     "平滑弹出动画" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smooth Panel Animation"
+          }
+        }
+      }
     },
     "当前" : {
       "extractionState" : "manual",
@@ -1658,7 +1957,14 @@
       }
     },
     "待机" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idle"
+          }
+        }
+      }
     },
     "循环" : {
       "extractionState" : "manual",
@@ -1672,7 +1978,14 @@
       }
     },
     "循环: %lld 次" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cycles: %lld"
+          }
+        }
+      }
     },
     "循环次数" : {
       "extractionState" : "manual",
@@ -1686,7 +1999,14 @@
       }
     },
     "悬浮面板" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating Panel"
+          }
+        }
+      }
     },
     "所有小组件已添加在面板上" : {
       "extractionState" : "manual",
@@ -1700,37 +2020,114 @@
       }
     },
     "手臂" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arms"
+          }
+        }
+      }
     },
     "手部动作" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hand Action"
+          }
+        }
+      }
     },
     "接着适配器" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adapter Connected"
+          }
+        }
+      }
     },
     "描边风格" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outline Style"
+          }
+        }
+      }
     },
     "播放全局流动动画" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animate All Flows"
+          }
+        }
+      }
     },
     "播放流动动画" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animate Flows"
+          }
+        }
+      }
     },
     "无分隔 (平滑)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Dividers (Smooth)"
+          }
+        }
+      }
     },
     "无额外设置" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Additional Settings"
+          }
+        }
+      }
     },
     "显示内容" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Displayed Content"
+          }
+        }
+      }
     },
     "显示样式" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Display Style"
+          }
+        }
+      }
     },
     "显示模块" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Displayed Modules"
+          }
+        }
+      }
     },
     "显示百分比" : {
       "extractionState" : "manual",
@@ -1744,7 +2141,14 @@
       }
     },
     "暂无可用的自定义选项。" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No customization options are available."
+          }
+        }
+      }
     },
     "来源" : {
       "extractionState" : "manual",
@@ -1758,16 +2162,44 @@
       }
     },
     "柔和" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soft"
+          }
+        }
+      }
     },
     "标准" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
     },
     "标准 (1.5)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard (1.5)"
+          }
+        }
+      }
     },
     "标准 (x1.0)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard (x1.0)"
+          }
+        }
+      }
     },
     "校准模式" : {
       "extractionState" : "manual",
@@ -1781,7 +2213,14 @@
       }
     },
     "样式" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Style"
+          }
+        }
+      }
     },
     "桑基图能量流 (已启用)" : {
       "extractionState" : "manual",
@@ -1795,19 +2234,60 @@
       }
     },
     "档位: %@" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile: %@"
+          }
+        }
+      }
     },
     "模拟电量" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulated Battery Level"
+          }
+        }
+      }
     },
     "正向堆叠" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forward Stacked"
+          }
+        }
+      }
     },
     "正在充电" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charging"
+          }
+        }
+      }
     },
     "正常" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正常"
+          }
+        }
+      }
     },
     "没有高功耗的应用程序" : {
       "extractionState" : "manual",
@@ -1821,7 +2301,14 @@
       }
     },
     "浑圆点阵" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Round Dot Grid"
+          }
+        }
+      }
     },
     "添加小组件" : {
       "extractionState" : "manual",
@@ -1835,10 +2322,24 @@
       }
     },
     "添加组件" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Module"
+          }
+        }
+      }
     },
     "清空显示项" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Display Items"
+          }
+        }
+      }
     },
     "温度" : {
       "extractionState" : "manual",
@@ -1852,10 +2353,24 @@
       }
     },
     "渲染" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendering"
+          }
+        }
+      }
     },
     "满充: %lld mAh" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Charge: %lld mAh"
+          }
+        }
+      }
     },
     "满载/剩余时间" : {
       "extractionState" : "manual",
@@ -1869,7 +2384,14 @@
       }
     },
     "热力方块尺寸" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heatmap Cell Size"
+          }
+        }
+      }
     },
     "版本 1.0.0 (Build 100)" : {
       "extractionState" : "manual",
@@ -1894,10 +2416,24 @@
       }
     },
     "状态看板" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dashboard"
+          }
+        }
+      }
     },
     "理线风格" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cable Style"
+          }
+        }
+      }
     },
     "由 SwiftUI 提供驱动。" : {
       "extractionState" : "manual",
@@ -1933,10 +2469,24 @@
       }
     },
     "电池图标" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Icon"
+          }
+        }
+      }
     },
     "电池图标 选项..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Icon Options..."
+          }
+        }
+      }
     },
     "电池图标状态：" : {
       "extractionState" : "manual",
@@ -1950,16 +2500,44 @@
       }
     },
     "电池外形" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Shape"
+          }
+        }
+      }
     },
     "电池已满电自动拒充" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charging Limited at Full Battery"
+          }
+        }
+      }
     },
     "电池规格" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Details"
+          }
+        }
+      }
     },
     "电流" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current"
+          }
+        }
+      }
     },
     "电源" : {
       "extractionState" : "manual",
@@ -1984,7 +2562,14 @@
       }
     },
     "电源适配器规格" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power Adapter Details"
+          }
+        }
+      }
     },
     "电量" : {
       "extractionState" : "manual",
@@ -1998,31 +2583,100 @@
       }
     },
     "电量信息" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Information"
+          }
+        }
+      }
     },
     "疲惫姿态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tired Posture"
+          }
+        }
+      }
     },
     "硬件外观" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hardware Appearance"
+          }
+        }
+      }
     },
     "磁盘" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disk"
+          }
+        }
+      }
     },
     "稀疏 (x0.5)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sparse (x0.5)"
+          }
+        }
+      }
     },
     "管线外观" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow Appearance"
+          }
+        }
+      }
     },
     "管线风格" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow Style"
+          }
+        }
+      }
     },
     "系统" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统"
+          }
+        }
+      }
     },
     "系统消耗" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Usage"
+          }
+        }
+      }
     },
     "系统负载" : {
       "extractionState" : "manual",
@@ -2036,31 +2690,94 @@
       }
     },
     "紧密 (1.0)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact (1.0)"
+          }
+        }
+      }
     },
     "统一内存" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unified Memory"
+          }
+        }
+      }
     },
     "网格致密程度" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grid Density"
+          }
+        }
+      }
     },
     "网络" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network"
+          }
+        }
+      }
     },
     "网络与磁盘" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network and Disk"
+          }
+        }
+      }
     },
     "网络磁盘走势向" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network and Disk Direction"
+          }
+        }
+      }
     },
     "腿部" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs"
+          }
+        }
+      }
     },
     "腿长" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg Length"
+          }
+        }
+      }
     },
     "致密 (x1.5)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dense (x1.5)"
+          }
+        }
+      }
     },
     "航海模式" : {
       "extractionState" : "manual",
@@ -2074,7 +2791,14 @@
       }
     },
     "色彩" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color"
+          }
+        }
+      }
     },
     "菜单更新间隔" : {
       "extractionState" : "manual",
@@ -2088,10 +2812,24 @@
       }
     },
     "菜单栏" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Bar"
+          }
+        }
+      }
     },
     "菜单栏偏好设置" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu Bar Preferences"
+          }
+        }
+      }
     },
     "菜单栏右击" : {
       "extractionState" : "manual",
@@ -2138,28 +2876,84 @@
       }
     },
     "行分隔 (纵向)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Row Dividers (Vertical)"
+          }
+        }
+      }
     },
     "行列开阵列" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Row and Column Grid"
+          }
+        }
+      }
     },
     "表情" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face"
+          }
+        }
+      }
     },
     "表情随电量变化，头饰反映充电或低电量状态" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The face changes with battery level; the accessory reflects charging or low battery."
+          }
+        }
+      }
     },
     "计算 (CPU 与 GPU)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compute (CPU and GPU)"
+          }
+        }
+      }
     },
     "设备型号" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device Model"
+          }
+        }
+      }
     },
     "设置电源参数..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure Power Values..."
+          }
+        }
+      }
     },
     "设置电量参数..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure Battery Level..."
+          }
+        }
+      }
     },
     "请选择左侧菜单" : {
       "extractionState" : "manual",
@@ -2173,7 +2967,14 @@
       }
     },
     "走势图颗粒尺寸" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chart Pixel Size"
+          }
+        }
+      }
     },
     "跟随系统" : {
       "extractionState" : "manual",
@@ -2209,7 +3010,14 @@
       }
     },
     "适配器输入" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adapter Input"
+          }
+        }
+      }
     },
     "选定的菜单项" : {
       "extractionState" : "manual",
@@ -2223,7 +3031,14 @@
       }
     },
     "通用" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        }
+      }
     },
     "通用设置" : {
       "extractionState" : "manual",
@@ -2237,7 +3052,14 @@
       }
     },
     "配置电池图标外观与显示风格。" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure the battery icon's appearance and display style."
+          }
+        }
+      }
     },
     "重置" : {
       "extractionState" : "manual",
@@ -2251,22 +3073,64 @@
       }
     },
     "重置所有设置" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset All Settings"
+          }
+        }
+      }
     },
     "金属配色" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metal Finish"
+          }
+        }
+      }
     },
     "锐利方块" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharp Squares"
+          }
+        }
+      }
     },
     "间距" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spacing"
+          }
+        }
+      }
     },
     "附加显示 (图标组外部)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional Display (Outside Icon Group)"
+          }
+        }
+      }
     },
     "面板主题" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel Theme"
+          }
+        }
+      }
     },
     "面板关闭后会在后台自动降速为 10 秒刷新" : {
       "extractionState" : "manual",
@@ -2291,10 +3155,24 @@
       }
     },
     "面板控制" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel Controls"
+          }
+        }
+      }
     },
     "预览调节" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview Controls"
+          }
+        }
+      }
     },
     "高功耗：" : {
       "extractionState" : "manual",
@@ -2303,6 +3181,342 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "High Energy Impact:"
+          }
+        }
+      }
+    },
+    "启动" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startup"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启动"
+          }
+        }
+      }
+    },
+    "登录时启动" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Launch at Login"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录时启动"
+          }
+        }
+      }
+    },
+    "已注册，等待在系统设置中允许登录时启动。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registered. Allow launch at login in System Settings."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已注册，等待在系统设置中允许登录时启动。"
+          }
+        }
+      }
+    },
+    "打开登录项设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Login Items Settings"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开登录项设置"
+          }
+        }
+      }
+    },
+    "面板关闭后仅保留菜单栏采样，后台间隔可在菜单栏设置中调整（默认 10 秒）" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When the panel is closed, only menu bar readings update. Set the background interval in Menu Bar settings (10 seconds by default)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "面板关闭后仅保留菜单栏采样，后台间隔可在菜单栏设置中调整（默认 10 秒）"
+          }
+        }
+      }
+    },
+    "部分功率读数暂不可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some power readings are unavailable"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分功率读数暂不可用"
+          }
+        }
+      }
+    },
+    "适配器" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adapter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适配器"
+          }
+        }
+      }
+    },
+    "电池" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电池"
+          }
+        }
+      }
+    },
+    "核心、外设和应用功率为估算值" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core, peripheral and app power readings are estimates."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "核心、外设和应用功率为估算值"
+          }
+        }
+      }
+    },
+    "应用能耗暂不可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App energy readings are unavailable"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用能耗暂不可用"
+          }
+        }
+      }
+    },
+    "正在读取应用能耗…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading app energy…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在读取应用能耗…"
+          }
+        }
+      }
+    },
+    "能耗影响分数，不是瓦数" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy impact score, not watts"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "能耗影响分数，不是瓦数"
+          }
+        }
+      }
+    },
+    "尚未接入 AlDente 状态数据" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AlDente status data is not connected."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未接入 AlDente 状态数据"
+          }
+        }
+      }
+    },
+    "容量评估（非系统诊断）" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capacity assessment (not a system diagnosis)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "容量评估（非系统诊断）"
+          }
+        }
+      }
+    },
+    "在菜单栏查看电池、功率流向和系统状态。估算读数会单独标注。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View battery, power flow and system status in the menu bar. Estimated readings are labeled."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在菜单栏查看电池、功率流向和系统状态。估算读数会单独标注。"
+          }
+        }
+      }
+    },
+    "反馈与支持" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback & Support"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "反馈与支持"
+          }
+        }
+      }
+    },
+    "容量正常" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal capacity"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "容量正常"
+          }
+        }
+      }
+    },
+    "容量偏低" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduced capacity"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "容量偏低"
+          }
+        }
+      }
+    },
+    "暂不可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不可用"
+          }
+        }
+      }
+    },
+    "传感器读数暂不一致" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensor readings disagree"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器读数暂不一致"
+          }
+        }
+      }
+    },
+    "等待读数稳定后恢复能量流向" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power flow will resume when readings agree."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待读数稳定后恢复能量流向"
           }
         }
       }

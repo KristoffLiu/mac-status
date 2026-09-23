@@ -1,0 +1,106 @@
+name: Signed release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: release
+    permissions:
+      contents: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.0.1.app/Contents/Developer
+      MACSTATUS_SIGNING_IDENTITY: ${{ secrets.MACSTATUS_SIGNING_IDENTITY }}
+      MACSTATUS_TEAM_ID: ${{ secrets.MACSTATUS_TEAM_ID }}
+      MACSTATUS_BUNDLE_ID: ${{ vars.MACSTATUS_BUNDLE_ID }}
+      MACSTATUS_NOTARY_PROFILE: macstatus-release
+      MACSTATUS_KEYCHAIN: ${{ runner.temp }}/macstatus-signing.keychain-db
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate release configuration
+        env:
+          CERTIFICATE: ${{ secrets.MACSTATUS_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACSTATUS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.MACSTATUS_APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.MACSTATUS_APP_SPECIFIC_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          required = ['CERTIFICATE', 'CERTIFICATE_PASSWORD', 'APPLE_ID', 'APP_PASSWORD',
+                      'MACSTATUS_SIGNING_IDENTITY', 'MACSTATUS_TEAM_ID', 'MACSTATUS_BUNDLE_ID']
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              raise SystemExit('Configure release environment secrets/variables: ' + ', '.join(missing))
+          if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', os.environ['GITHUB_REF_NAME']):
+              raise SystemExit('Release tags must be vMAJOR.MINOR.PATCH')
+          PY
+      - name: Test release validation
+        run: python3 -m unittest discover -s Tests -p 'test_*.py' -v
+      - name: Test core calculations
+        run: swift test
+      - name: Import temporary signing identity
+        env:
+          CERTIFICATE: ${{ secrets.MACSTATUS_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACSTATUS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.MACSTATUS_APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.MACSTATUS_APP_SPECIFIC_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          Path(os.environ['RUNNER_TEMP'], 'signing.p12').write_bytes(base64.b64decode(os.environ['CERTIFICATE'], validate=True))
+          PY
+          keychain_password="$(openssl rand -hex 32)"
+          echo "::add-mask::$keychain_password"
+          security create-keychain -p "$keychain_password" "$MACSTATUS_KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$MACSTATUS_KEYCHAIN"
+          security unlock-keychain -p "$keychain_password" "$MACSTATUS_KEYCHAIN"
+          security import "$RUNNER_TEMP/signing.p12" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$MACSTATUS_KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$MACSTATUS_KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$MACSTATUS_KEYCHAIN" login.keychain-db
+          xcrun notarytool store-credentials "$MACSTATUS_NOTARY_PROFILE" \
+            --apple-id "$APPLE_ID" --team-id "$MACSTATUS_TEAM_ID" \
+            --password "$APP_PASSWORD" --keychain "$MACSTATUS_KEYCHAIN"
+      - name: Build, sign and notarize
+        run: |
+          python3 scripts/release.py build --mode release \
+            --version "${GITHUB_REF_NAME#v}" --build-number "$GITHUB_RUN_NUMBER"
+      - name: Generate Homebrew Cask
+        run: |
+          python3 scripts/release.py cask \
+            --artifacts "dist/${GITHUB_REF_NAME#v}-arm64" \
+            --repository "$GITHUB_REPOSITORY" \
+            --output "dist/${GITHUB_REF_NAME#v}-arm64/mac-status.rb"
+      - name: Verify packaged applications
+        run: python3 scripts/release.py verify --artifacts "dist/${GITHUB_REF_NAME#v}-arm64"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MacStatus-${{ github.ref_name }}-signed
+          path: dist/*/*
+          if-no-files-found: error
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/${GITHUB_REF_NAME#v}-arm64/"* \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+            --title "MacStatus $GITHUB_REF_NAME" --generate-notes
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          security delete-keychain "$MACSTATUS_KEYCHAIN" || true
+          rm -f "$RUNNER_TEMP/signing.p12"

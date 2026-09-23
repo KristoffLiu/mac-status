@@ -7,7 +7,6 @@ struct AppWindowView: View {
     
     enum AppWindowTab: String, CaseIterable, Hashable {
         case general = "通用"
-        // case dashboard = "状态看板"
         case menuBar = "菜单栏"
         case panels = "悬浮面板"
         case about = "关于"
@@ -15,7 +14,6 @@ struct AppWindowView: View {
         var icon: String {
             switch self {
             case .general: return "gearshape.fill"
-            // case .dashboard: return "square.grid.2x2.fill"
             case .menuBar: return "menubar.rectangle"
             case .panels: return "macwindow.on.rectangle"
             case .about: return "info.circle.fill"
@@ -25,7 +23,6 @@ struct AppWindowView: View {
         var iconColor: Color {
             switch self {
             case .general: return Color.gray
-            // case .dashboard: return Color.blue
             case .menuBar: return Color.indigo
             case .panels: return Color.purple
             case .about: return Color(NSColor.darkGray)
@@ -76,10 +73,6 @@ struct AppWindowView: View {
             Group {
                 if let tab = selectedTab {
                     switch tab {
-                    /*
-                    case .dashboard:
-                        DashboardView()
-                    */
                     case .general:
                         GeneralSettingsView()
                     case .menuBar:

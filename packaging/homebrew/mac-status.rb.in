@@ -1,0 +1,14 @@
+cask "mac-status" do
+  version "@VERSION@"
+  sha256 "@SHA256@"
+
+  url "https://github.com/@REPOSITORY@/releases/download/v#{version}/MacStatus-#{version}-arm64.dmg"
+  name "MacStatus"
+  desc "Menu bar system and battery power monitor"
+  homepage "https://github.com/@REPOSITORY@"
+
+  depends_on arch: :arm64
+  depends_on macos: ">= :tahoe"
+
+  app "MacStatus.app"
+end

@@ -4,29 +4,29 @@ struct MenuBarBatteryConfigView: View {
     @Environment(\.dismiss) private var dismiss
 
     // 主图标原子选项 (Atomic Options)
-    @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
-    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
-    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
-    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
-    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+    @AppStorage(AppPreferenceKeys.menuBarPowerStyle) private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
+    @AppStorage(AppPreferenceKeys.batteryShellStyle) private var batteryShellStyle = "native"
+    @AppStorage(AppPreferenceKeys.batteryFillStyle) private var batteryFillStyle = "monochrome"
+    @AppStorage(AppPreferenceKeys.batteryInnerContent) private var batteryInnerContent = "none"
+    @AppStorage(AppPreferenceKeys.batteryChargingIndicator) private var batteryChargingIndicator = "bolt"
+    @AppStorage(AppPreferenceKeys.batteryChargingBorderStyle) private var batteryChargingBorderStyle = "sharp"
 
     // 电池小人选项
-    @AppStorage("batteryManLegLength") private var batteryManLegLength: BatteryManLegLength = .normal
-    @AppStorage("batteryManShowFace") private var batteryManShowFace = false
-    @AppStorage("batteryManShowArms") private var batteryManShowArms = false
-    @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
-    @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
-    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .solid
-    @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
-    @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
+    @AppStorage(AppPreferenceKeys.batteryManLegLength) private var batteryManLegLength: BatteryManLegLength = .normal
+    @AppStorage(AppPreferenceKeys.batteryManShowFace) private var batteryManShowFace = false
+    @AppStorage(AppPreferenceKeys.batteryManShowArms) private var batteryManShowArms = false
+    @AppStorage(AppPreferenceKeys.batteryManShowPosture) private var batteryManShowPosture = false
+    @AppStorage(AppPreferenceKeys.batteryManShowAccessory) private var batteryManShowAccessory = false
+    @AppStorage(AppPreferenceKeys.batteryManFaceStyle) private var batteryManFaceStyle: BatteryManFaceStyle = .solid
+    @AppStorage(AppPreferenceKeys.batteryManHandAction) private var batteryManHandAction = "none"
+    @AppStorage(AppPreferenceKeys.batteryManHandActionSide) private var batteryManHandActionSide = "right"
 
     // 主图标选项
-    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
-    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
+    @AppStorage(AppPreferenceKeys.iconLowPowerColor) private var iconLowPowerColor = false
+    @AppStorage(AppPreferenceKeys.mainIconGroupSpacing) private var mainIconGroupSpacing: Double = 4
 
     // 预览外观
-    @AppStorage("previewIsDark") private var previewIsDark = true
+    @AppStorage(AppPreferenceKeys.previewIsDark) private var previewIsDark = true
 
     // 模拟器状态
     @State private var simCapacity: Int = 75
@@ -338,26 +338,26 @@ struct MenuBarBatteryConfigView: View {
         .contentMargins(.top, 16, for: .scrollIndicators)
         .onAppear {
             // v1: split old batteryInnerContent "bolt" into separate charging indicator
-            if !UserDefaults.standard.bool(forKey: "batteryChargingIndicatorMigrated") {
+            if !UserDefaults.standard.bool(forKey: AppPreferenceKeys.batteryChargingIndicatorMigrated) {
                 if batteryInnerContent == "none" {
                     batteryChargingIndicator = "none"
                 }
                 if batteryInnerContent == "bolt" {
                     batteryInnerContent = "none"
                 }
-                UserDefaults.standard.set(true, forKey: "batteryChargingIndicatorMigrated")
+                UserDefaults.standard.set(true, forKey: AppPreferenceKeys.batteryChargingIndicatorMigrated)
             }
             // v2: rename "number" → "inside", migrate showPercentage → "outside"
-            if !UserDefaults.standard.bool(forKey: "batteryInnerContentV2Migrated") {
+            if !UserDefaults.standard.bool(forKey: AppPreferenceKeys.batteryInnerContentV2Migrated) {
                 if batteryInnerContent == "number" {
                     batteryInnerContent = "inside"
                 } else if batteryInnerContent == "none" {
-                    let wasShowingPercentage = UserDefaults.standard.object(forKey: "showPercentage") as? Bool ?? true
+                    let wasShowingPercentage = UserDefaults.standard.object(forKey: AppPreferenceKeys.showPercentage) as? Bool ?? true
                     if wasShowingPercentage {
                         batteryInnerContent = "outside"
                     }
                 }
-                UserDefaults.standard.set(true, forKey: "batteryInnerContentV2Migrated")
+                UserDefaults.standard.set(true, forKey: AppPreferenceKeys.batteryInnerContentV2Migrated)
             }
         }
         .onChange(of: batteryInnerContent) { _, newValue in
@@ -397,7 +397,9 @@ struct MenuBarBatteryConfigView: View {
 
 class PreviewStatusViewModel: StatusViewModel {
     init(capacity: Int, isCharging: Bool, hasAdapter: Bool = true) {
-        super.init()
+        super.init(startMonitoring: false)
+        self.batteryData.isAvailable = true
+        self.powerFlow.externalPowerConnected = hasAdapter
         self.batteryData.currentCapacity = capacity
         self.batteryData.isCharging = isCharging
         self.powerFlow.isCharging = isCharging
@@ -492,7 +494,7 @@ struct ChargingSkeletonBolt: View {
 }
 
 struct ChargingSkeletonClassic: View {
-    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+    @AppStorage(AppPreferenceKeys.batteryChargingBorderStyle) private var batteryChargingBorderStyle = "sharp"
 
     var body: some View {
         ZStack {
@@ -539,7 +541,7 @@ struct FaceStyleSelectButton: View {
 }
 
 struct ChargingSkeletonPlug: View {
-    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+    @AppStorage(AppPreferenceKeys.batteryChargingBorderStyle) private var batteryChargingBorderStyle = "sharp"
 
     var body: some View {
         ZStack {

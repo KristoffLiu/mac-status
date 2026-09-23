@@ -1,200 +1,128 @@
 import Foundation
-import IOKit.ps
 
-class PowerCalculationService {
+/// Deterministic power accounting. Rated adapter capacity is deliberately never an input.
+nonisolated final class PowerCalculationService: Sendable {
     static let shared = PowerCalculationService()
-    
     private init() {}
-    
-    func calculateFlow(from data: BatteryData) -> PowerFlowData {
-        // High-Fidelity Power Fetching via AppleSMC
-        let smcSystemWatts = SMCService.shared.systemTotalPower
-        
-        // NEW: Fetch real-time high-fidelity hardware adapter sensors if available
-        let smcAdapterVolts = SMCService.shared.adapterVoltage
-        let smcAdapterAmps = SMCService.shared.adapterCurrent
-        
-        var smcAdapterWatts: Double? = nil
-        if let v = smcAdapterVolts, let a = smcAdapterAmps, v > 4.0, a > 0.0 {
-            smcAdapterWatts = v * a
-        }
-        
-        // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
-        let powerSourceType = IOPSGetProvidingPowerSourceType(nil)?.takeRetainedValue() as? String ?? ""
-        let isTrueAC = (powerSourceType == "AC Power") || (data.adapter != nil) || (data.adapterWatts > 0)
-        
-        // IOKit caches AppleSmartBattery data for seconds. Force adapter to 0 if the system physically switched to battery!
-        let adapterWatts = isTrueAC ? (data.adapter?.realTimeWatts ?? Double(data.adapterWatts)) : 0.0
-        
-        // Some adapters don't broadcast real-time watts via BatteryData dict, so if it's 0 but it's connected, fallback to design watts or smc.
-        let actualAdapterWatts = (adapterWatts <= 0.1 && isTrueAC) ? Double(data.adapterWatts) : adapterWatts
-        
-        var batteryWatts = abs(Double(data.voltage) / 1000.0 * Double(data.amperage) / 1000.0)
 
-        
-        var systemWatts: Double = 0.0
-        var topology: TopologyState = .topologyB
-        var isCharging = false
-        var isDischarging = false
-        
-        let actualAmperage = data.amperage
-        
-        if !isTrueAC {
-            // Physically unplugged. Override stale battery data.
-            isCharging = false
-            isDischarging = true
-            // If SMC system watts is there, use it as battery watts; else estimate
-            systemWatts = smcSystemWatts ?? batteryWatts
-            batteryWatts = systemWatts
-            topology = .topologyB
-        } else if actualAmperage > 0 || (smcSystemWatts != nil && smcAdapterWatts != nil && (smcAdapterWatts! - smcSystemWatts!) > 2.0) {
-            // Charging (either confirmed by battery controller OR deduced instantly by SMC high-frequency surplus)
-            isCharging = true
-            isDischarging = false
-            // Real-time system power is preferred, otherwise fallback to adapter - battery
-            systemWatts = smcSystemWatts ?? (actualAdapterWatts - batteryWatts)
-            topology = .topologyA
-        } else if actualAmperage < 0 {
-            // Discharging...
-            // BUT wait! If we are plugged in (isTrueAC), and the adapter is clearly strong enough 
-            // to power the system (adapterWatts >= system draw), then the battery is idling!
-            // IOKit's battery controller is merely lagging behind the AC controller. We shouldn't show a frozen "discharging ghost".
-            let currentSystemDraw = smcSystemWatts ?? actualAdapterWatts
-            let theoreticalTotalSource = actualAdapterWatts + batteryWatts
-            
-            // If the battery alone claims to be discharging roughly as much (or more) than the whole system is drawing,
-            // while we are physically on AC power, it's definitively a lagging ghost sensor.
-            let isDefinitivelyLagging = (smcSystemWatts != nil && batteryWatts >= currentSystemDraw * 0.7)
-            
-            let isGhost = isTrueAC && (
-                isDefinitivelyLagging ||
-                actualAdapterWatts >= currentSystemDraw * 0.6 ||
-                (smcSystemWatts != nil && theoreticalTotalSource > currentSystemDraw + 15.0)
-            )
-            
-            // Re-check smc instant charge to avoid false negatives completely over-riding to bypass
-            let smcSurplus = (smcAdapterWatts ?? actualAdapterWatts) - (smcSystemWatts ?? actualAdapterWatts)
-            
-            if smcSurplus > 2.0 {
-                isCharging = true
-                isDischarging = false
-                systemWatts = smcSystemWatts ?? actualAdapterWatts
-                batteryWatts = smcSurplus
-                topology = .topologyA
-            } else if isGhost || (isTrueAC && actualAdapterWatts > currentSystemDraw) {
-                // False negative: It's just transient lag. Force bypass/charging state logic.
-                isCharging = false
-                isDischarging = false
-                systemWatts = smcSystemWatts ?? actualAdapterWatts
-                batteryWatts = 0.0 // 🛑 CRITICAL FIX: Kill the ghost battery value
-                topology = .topologyA
-            } else {
-                // Genuinely discharging alongside adapter (or unplugged)
-                isCharging = false
-                isDischarging = true
-                systemWatts = smcSystemWatts ?? batteryWatts
-                batteryWatts = max(0.0, systemWatts - (smcAdapterWatts ?? actualAdapterWatts))
-                topology = .topologyB
-            }
-        } else {
-            // Idle / Bypass (Fully charged and connected to AC)
-            isCharging = false
-            isDischarging = false
-            
-            let smcSurplus = (smcAdapterWatts ?? actualAdapterWatts) - (smcSystemWatts ?? actualAdapterWatts)
-            if isTrueAC, smcSurplus > 2.0 {
-                // Caught late bypass false-negative!
-                isCharging = true
-                systemWatts = smcSystemWatts ?? actualAdapterWatts
-                batteryWatts = smcSurplus
-                topology = .topologyA
-            }
-            // In bypass, the total system power comes entirely from the adapter.
-            // PSTR tells us exactly what the system is drawing right now.
-            if let smcWatts = smcSystemWatts {
-                systemWatts = smcWatts
-                topology = .topologyA
-            } else if actualAdapterWatts > 0 {
-                // Fallback
-                systemWatts = actualAdapterWatts
-                topology = .topologyA
-            } else {
-                // Unknown / no load
-                systemWatts = 0.0
-                topology = .topologyB
-            }
+    func calculateFlow(from data: BatteryData, sensors: PowerSensors) -> PowerFlowData {
+        let source = sensors.source == .unknown
+            ? data.externalConnected.map { $0 ? PowerSource.ac : .battery } ?? .unknown
+            : sensors.source
+        var system = validPower(sensors.systemWatts)
+        let volts = valid(sensors.adapterVoltage, in: 4...60)
+        let amps = valid(sensors.adapterCurrent, in: 0...20)
+        var adapter = volts.flatMap { v in amps.flatMap { validPower(v * $0) } }
+        if adapter == nil, let info = data.adapter,
+           info.hasRealTimePower || info.realTimeWatts > 0 {
+            adapter = validPower(info.realTimeWatts)
         }
-        
-        // For the visual flow logic (adapterPower rendering)
+        var signedBattery: Double? = data.isAvailable && data.hasCurrentReading && data.voltage > 0
+            ? Double(data.voltage) * Double(data.amperage) / 1_000_000 : nil
+        if let watts = signedBattery, !watts.isFinite || abs(watts) > 1000 { signedBattery = nil }
+        var systemQuality: ReadingQuality = system == nil ? .unavailable : .measured
+        var adapterQuality: ReadingQuality = adapter == nil ? .unavailable : .measured
+        var batteryQuality: ReadingQuality = signedBattery == nil ? .unavailable : .measured
 
-        var trueAdapterWatts = actualAdapterWatts
-        if isCharging {
-            if let realAdapter = smcAdapterWatts, let realSystem = smcSystemWatts {
-                // Smooth out microscopic jitter where adapter drops below system momentarily
-                batteryWatts = max(0.0, realAdapter - realSystem)
-                trueAdapterWatts = realAdapter
+        var readingsConflict = false
+        var powerDomainsDiffer = false
+
+        switch source {
+        case .battery:
+            // The current system source wins over AppleSmartBattery's cached adapter dictionary.
+            adapter = 0
+            adapterQuality = .measured
+            if let watts = system {
+                signedBattery = -watts
+                batteryQuality = .estimated
+            } else if let battery = signedBattery, battery <= 0 {
+                system = -battery
+                systemQuality = .estimated
             } else {
-                trueAdapterWatts = systemWatts + batteryWatts
+                // A positive battery current after unplugging is stale, not a charging state.
+                signedBattery = nil
+                batteryQuality = .unavailable
             }
-        } else if !isDischarging && topology == .topologyA {
-            trueAdapterWatts = smcAdapterWatts ?? systemWatts
-        } else if isDischarging {
-            // When discharging, the adapter might be assisting (rare but possible under heavy load).
-            // Trust the real-time intake watts from the PMU if present.
-            // Ensure if we are physically unplugged (adapter == nil or !isTrueAC), it stays at 0.
-            if data.adapter == nil || !isTrueAC {
-                trueAdapterWatts = 0.0
-            } else {
-                trueAdapterWatts = smcAdapterWatts ?? actualAdapterWatts
+        case .ac:
+            if let input = adapter, let load = system {
+                if let battery = signedBattery {
+                    // SMC keys can describe different power domains on different Macs.
+                    // Never invent battery discharge from disagreement with the battery controller.
+                    let expectedInput = load + battery
+                    let tolerance = max(2, max(input, load) * 0.1)
+                    if expectedInput < 0 {
+                        readingsConflict = true
+                    } else if abs(input - expectedInput) > tolerance {
+                        // These SMC values can cover different power domains and sample windows.
+                        // Preserve every measured value and trust the battery controller for direction.
+                        powerDomainsDiffer = true
+                    }
+                } else if data.isAvailable {
+                    signedBattery = input - load
+                    batteryQuality = .estimated
+                }
+            } else if let battery = signedBattery {
+                if let load = system {
+                    if let inferred = validPower(load + battery) {
+                        adapter = inferred
+                        adapterQuality = .estimated
+                    } else {
+                        signedBattery = nil
+                        batteryQuality = .unavailable
+                    }
+                } else if let input = adapter {
+                    if let inferred = validPower(input - battery) {
+                        system = inferred
+                        systemQuality = .estimated
+                    } else {
+                        signedBattery = nil
+                        batteryQuality = .unavailable
+                    }
+                }
             }
+        case .unknown:
+            adapter = nil
+            signedBattery = nil
+            adapterQuality = .unavailable
+            batteryQuality = .unavailable
         }
-        
 
-        
-        // --- 3-Stage Breakdown ---
-        let cpuTotal = SystemMonitorService.shared.cpuTotal 
-        let gpuUtil = SystemMonitorService.shared.gpuUtilization
-        let topApp = AppEnergyMonitor.shared.topApp
-        let baseWatts = 2.0 // Macbook baseline (Screen, Idle bus)
-        
-        var coreWatts = baseWatts + (cpuTotal * 20.0) + (gpuUtil * 10.0)
-        coreWatts = min(coreWatts, systemWatts)
-        
-        var topAppWatts: Double? = nil
-        var topAppName: String? = nil
-        
-        if let app = topApp, app.cpuPercent > 5.0 {
-            let numCores = Double(SystemMonitorService.shared.pCoreCount + SystemMonitorService.shared.eCoreCount)
-            let safeNumCores = numCores > 0 ? numCores : 8.0
-            
-            let totalAvailablePercent = safeNumCores * 100.0
-            let appCoreFraction = min(1.0, app.cpuPercent / max(totalAvailablePercent * cpuTotal, 1.0))
-            
-            let dynamicCoreWatts = max(0.0, coreWatts - 2.0)
-            let allocatedAppWatts = dynamicCoreWatts * appCoreFraction
-            
-            if allocatedAppWatts >= 0.5 {
-                topAppWatts = allocatedAppWatts
-                topAppName = app.name
-                coreWatts -= allocatedAppWatts
-            }
-        }
-        
-        let peripheralWatts = max(0.0, systemWatts - coreWatts - (topAppWatts ?? 0.0))
-
-        return PowerFlowData(
-            adapterPower: trueAdapterWatts,
-            batteryPower: batteryWatts,
-            systemPower: systemWatts,
-            isCharging: isCharging,
-            isDischarging: isDischarging,
-            topology: topology,
-            adapterVoltage: smcAdapterVolts,
-            adapterCurrent: smcAdapterAmps,
-            coreWatts: coreWatts,
-            peripheralWatts: peripheralWatts,
-            topAppWatts: topAppWatts,
-            topAppName: topAppName
+        let charging = !readingsConflict && source == .ac && (signedBattery ?? 0) > 0
+        let discharging = source == .battery || (!readingsConflict && source == .ac && (signedBattery ?? 0) < 0)
+        var flow = PowerFlowData(
+            adapterPower: adapter ?? 0, batteryPower: abs(signedBattery ?? 0), systemPower: system ?? 0,
+            isCharging: charging, isDischarging: discharging,
+            topology: source == .ac && !discharging ? .topologyA : .topologyB,
+            adapterVoltage: source == .ac ? volts : nil, adapterCurrent: source == .ac ? amps : nil,
+            adapterQuality: adapterQuality, batteryQuality: batteryQuality, systemQuality: systemQuality,
+            externalPowerConnected: source == .unknown ? nil : source == .ac, readingsConflict: readingsConflict,
+            powerDomainsDiffer: powerDomainsDiffer,
+            signedBatteryPower: signedBattery,
+            batteryActivity: source == .battery ? .batteryPowered : (charging ? .charging : (discharging ? .assisting : .idle))
         )
+        if sensors.includeBreakdown, let system {
+            // A heuristic CPU/GPU allocation, not per-process measured watts.
+            let cpu = valid(sensors.cpuTotal, in: 0...1) ?? 0
+            let gpu = valid(sensors.gpuUtilization, in: 0...1) ?? 0
+            var core = min(system, 2 + cpu * 20 + gpu * 10)
+            if let app = sensors.topApp, app.cpuPercent.isFinite, app.cpuPercent > 5 {
+                let fraction = min(1, app.cpuPercent / max(Double(max(1, sensors.coreCount)) * 100 * cpu, 1))
+                let watts = max(0, core - 2) * fraction
+                if watts >= 0.5 {
+                    flow.topAppWatts = watts
+                    flow.topAppName = app.name
+                    core -= watts
+                }
+            }
+            flow.coreWatts = core
+            flow.peripheralWatts = max(0, system - core - (flow.topAppWatts ?? 0))
+        }
+        return flow
+    }
+
+    private func validPower(_ value: Double?) -> Double? { valid(value, in: 0...1000) }
+    private func valid(_ value: Double?, in range: ClosedRange<Double>) -> Double? {
+        guard let value, value.isFinite, range.contains(value) else { return nil }
+        return value
     }
 }

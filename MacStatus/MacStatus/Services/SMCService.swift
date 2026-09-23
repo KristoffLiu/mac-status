@@ -1,7 +1,7 @@
 import Foundation
 import IOKit
 
-public struct SMCParamStruct {
+nonisolated public struct SMCParamStruct {
     var key: UInt32 = 0
     var versMajor: UInt8 = 0
     var versMinor: UInt8 = 0
@@ -27,11 +27,17 @@ public struct SMCParamStruct {
     var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 }
 
-public class SMCService {
+nonisolated public final class SMCService: @unchecked Sendable {
+    // Every connection call and cache access is serialized by this lock.
+    private let lock = NSLock()
     public static let shared = SMCService()
     private var conn: io_connect_t = 0
     
-    private init() {
+    private var reconnectThrottle = MonotonicThrottle()
+
+    private init() {}
+
+    private func openConnection() {
         let dict = IOServiceMatching("AppleSMC")
         var iter: io_iterator_t = 0
         let matchRes = IOServiceGetMatchingServices(kIOMainPortDefault, dict, &iter)
@@ -79,10 +85,16 @@ public class SMCService {
     private var keyInfoCache: [UInt32: SMCParamStruct] = [:]
     
     public func readFloat(key: String) -> Double? {
-        guard conn != 0 else {
-            print("SMCService: Connection is 0!")
-            return nil
+        lock.lock()
+        defer { lock.unlock() }
+        if conn == 0,
+           reconnectThrottle.shouldRun(
+               now: ProcessInfo.processInfo.systemUptime,
+               minimumInterval: 30
+           ) {
+            openConnection()
         }
+        guard conn != 0 else { return nil }
         
         let keyNumeric = fourCharToInt(key)
         var size = MemoryLayout<SMCParamStruct>.size
@@ -98,7 +110,7 @@ public class SMCService {
             outKey = inKey
             
             res = IOConnectCallStructMethod(conn, 2, &inKey, size, &outKey, &size)
-            if res != kIOReturnSuccess || outKey.kIDataSize == 0 {
+            if res != kIOReturnSuccess || outKey.result != 0 || outKey.kIDataSize == 0 {
                 // Not ideal to print all the time if keys don't exist (e.g. TC0P on some Macs)
                 return nil
             }
@@ -113,15 +125,17 @@ public class SMCService {
         
         res = IOConnectCallStructMethod(conn, 2, &inVal, size, &outVal, &size)
         if res != kIOReturnSuccess {
+            IOServiceClose(conn)
+            conn = 0
+            keyInfoCache.removeAll()
             return nil
         }
+        guard outVal.result == 0 else { return nil }
         
-        // Convert to Float
-        let b = outVal.bytes
-        let arr: [UInt8] = [b.0, b.1, b.2, b.3]
-        let floatVal = arr.withUnsafeBytes { $0.load(as: Float.self) }
-        
-        return Double(floatVal)
+        let typeBytes = (0..<4).map { UInt8((outKey.kIDataType >> ((3 - $0) * 8)) & 0xff) }
+        let type = String(bytes: typeBytes, encoding: .ascii) ?? ""
+        let bytes = withUnsafeBytes(of: outVal.bytes) { Array($0) }
+        return SMCValueDecoder.decode(bytes: bytes, type: type, size: Int(outKey.kIDataSize))
     }
     
     public var systemTotalPower: Double? {

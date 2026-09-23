@@ -2,11 +2,11 @@ import SwiftUI
 
 struct AppearanceSettingsView: View {
     @StateObject private var widgetManager = WidgetManager.shared
-    @AppStorage("isPanelEditing") private var isPanelEditing = false
+    @AppStorage(AppPreferenceKeys.isPanelEditing) private var isPanelEditing = false
     
-    @AppStorage("autoHidePanel") private var autoHidePanel = true
-    @AppStorage("enablePanelAnimations") private var enablePanelAnimations = true
-    @AppStorage("panelTheme") private var panelTheme = "system"
+    @AppStorage(AppPreferenceKeys.autoHidePanel) private var autoHidePanel = true
+    @AppStorage(AppPreferenceKeys.enablePanelAnimations) private var enablePanelAnimations = true
+    @AppStorage(AppPreferenceKeys.panelTheme) private var panelTheme = "system"
     
     var body: some View {
         Form {
@@ -61,7 +61,7 @@ struct WidgetRowView: View {
     @State private var showingOptions = false
     
     var body: some View {
-        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
+        if let widget = WidgetID(rawValue: widgetId) {
             HStack(spacing: 12) {
                 Toggle("", isOn: Binding(
                     get: { isActive },
@@ -80,21 +80,21 @@ struct WidgetRowView: View {
                 
                 ZStack {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(plugin.iconColor.opacity(0.2))
-                    Image(systemName: plugin.icon)
-                        .foregroundColor(plugin.iconColor)
+                        .fill(widget.iconColor.opacity(0.2))
+                    Image(systemName: widget.icon)
+                        .foregroundColor(widget.iconColor)
                 }
                 .frame(width: 24, height: 24)
                 
-                Text(LocalizedStringKey(plugin.name))
+                Text(LocalizedStringKey(widget.name))
                 
                 Spacer()
                 
-                if plugin.hasSettings {
+                if widget.hasSettings {
                     Button {
                         showingOptions = true
                     } label: {
-                        Text("\(plugin.name) 选项...")
+                        Text("\(widget.name) 选项...")
                     }
                     .buttonStyle(.bordered)
                 } else {
@@ -106,21 +106,20 @@ struct WidgetRowView: View {
             }
             .padding(.vertical, 4)
             .sheet(isPresented: $showingOptions) {
-                WidgetOptionsSheet(widgetId: widgetId, plugin: plugin)
+                WidgetOptionsSheet(widget: widget)
             }
         }
     }
 }
 
 struct WidgetOptionsSheet: View {
-    let widgetId: String
-    let plugin: any AppWidgetPlugin
+    let widget: WidgetID
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         Group {
-            if plugin.hasSettings {
-                plugin.settingsView
+            if widget.hasSettings {
+                widget.settings
                     .contentMargins(.top, 16, for: .scrollIndicators)
                     .frame(maxHeight: 500)
             } else {

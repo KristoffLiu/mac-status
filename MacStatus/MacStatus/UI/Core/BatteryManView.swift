@@ -8,7 +8,7 @@ struct BatteryManView: View {
     var isPowered: Bool = false  // adapter connected (covers bypass/passthrough)
 
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    @AppStorage(AppPreferenceKeys.iconLowPowerColor) private var iconLowPowerColor = false
 
     // Configurable styles
     var isColored: Bool = false
@@ -513,15 +513,15 @@ enum BatteryManFaceStyle: String, CaseIterable, Identifiable {
 struct IsolatedBatteryManRenderer: View {
     @ObservedObject var viewModel: StatusViewModel
 
-    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryManLegLength") private var legLength: BatteryManLegLength = .normal
-    @AppStorage("batteryManShowFace") private var showFace = false
-    @AppStorage("batteryManShowArms") private var showArms = false
-    @AppStorage("batteryManShowPosture") private var showPosture = false
-    @AppStorage("batteryManShowAccessory") private var showAccessory = false
-    @AppStorage("batteryManFaceStyle") private var faceStyle: BatteryManFaceStyle = .solid
-    @AppStorage("batteryManHandAction") private var handAction = "none"
-    @AppStorage("batteryManHandActionSide") private var handActionSide = "right"
+    @AppStorage(AppPreferenceKeys.batteryFillStyle) private var batteryFillStyle = "monochrome"
+    @AppStorage(AppPreferenceKeys.batteryManLegLength) private var legLength: BatteryManLegLength = .normal
+    @AppStorage(AppPreferenceKeys.batteryManShowFace) private var showFace = false
+    @AppStorage(AppPreferenceKeys.batteryManShowArms) private var showArms = false
+    @AppStorage(AppPreferenceKeys.batteryManShowPosture) private var showPosture = false
+    @AppStorage(AppPreferenceKeys.batteryManShowAccessory) private var showAccessory = false
+    @AppStorage(AppPreferenceKeys.batteryManFaceStyle) private var faceStyle: BatteryManFaceStyle = .solid
+    @AppStorage(AppPreferenceKeys.batteryManHandAction) private var handAction = "none"
+    @AppStorage(AppPreferenceKeys.batteryManHandActionSide) private var handActionSide = "right"
 
     var body: some View {
         BatteryManView(

@@ -10,63 +10,57 @@ enum PowerFlowStyle: String, CaseIterable {
 struct PowerFlowModuleView: View {
     var powerFlow: PowerFlowData
     var batteryData: BatteryData?
-    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .cards
+    @AppStorage(AppPreferenceKeys.powerFlowStyle) private var style: PowerFlowStyle = .cards
     
     var body: some View {
-        switch style {
-        case .sankey:
-            SankeyPowerFlowView(powerFlow: powerFlow)
-        case .cards:
-            CardsPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
-        case .blocks:
-            BlockPowerFlowView(powerFlow: powerFlow)
-        case .twin:
-            DigitalTwinPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
+        VStack(spacing: 6) {
+            switch style {
+            case .sankey: SankeyPowerFlowView(powerFlow: powerFlow)
+            case .cards: CardsPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
+            case .blocks: BlockPowerFlowView(powerFlow: powerFlow)
+            case .twin: DigitalTwinPowerFlowView(powerFlow: powerFlow, batteryData: batteryData)
+            }
+            if powerFlow.coreWatts != nil {
+                Text("核心、外设和应用功率为估算值")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            if powerFlow.isComplete, !showsNeutralBatteryState,
+               let signed = powerFlow.signedBatteryPower, abs(signed) >= 0.05,
+               powerFlow.hasAdapter {
+                Text("电池瞬时\(signed > 0 ? "充入" : "放出") \(String(format: "%.1f W", abs(signed)))")
+                    .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+            }
+            if let trendText = batteryTrendText {
+                Text(trendText)
+                    .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+            }
         }
     }
-}
 
-// MARK: - Plugin Definition
-struct PowerFlowPlugin: AppWidgetPlugin {
-    let id = "powerFlow"
-    let name = "实时能耗流"
-    let icon = "bolt.horizontal"
-    let hasSettings = true
-    
-    var wantsEdgeToEdge: Bool {
-        @AppStorage("powerFlowStyle") var style = PowerFlowStyle.sankey
-        return style == .cards
+    private var showsNeutralBatteryState: Bool {
+        powerFlow.batteryActivity == .confirming || powerFlow.batteryActivity == .lowActivity
     }
-    
-    @MainActor
-    var contentView: AnyView {
-        AnyView(PowerFlowPluginContentView())
-    }
-    
-    @MainActor
-    var settingsView: AnyView {
-        AnyView(PowerFlowConfigView())
-    }
-}
 
-private struct PowerFlowPluginContentView: View {
-    @EnvironmentObject var viewModel: StatusViewModel
-    
-    var body: some View {
-        PowerFlowModuleView(powerFlow: viewModel.powerFlow, batteryData: viewModel.batteryData)
+    private var batteryTrendText: String? {
+        guard powerFlow.hasAdapter,
+              powerFlow.batteryTrend.isComplete,
+              let average = powerFlow.batteryTrend.averageWatts,
+              average.isFinite else { return nil }
+        if abs(average) < 0.05 { return "近 1 分钟电池净功率约 0 W" }
+        return String(format: "近 1 分钟电池平均净%@ %.1f W（估算）", average > 0 ? "充入" : "放出", abs(average))
     }
 }
 
 struct PowerFlowConfigView: View {
-    @AppStorage("powerFlowStyle") private var style: PowerFlowStyle = .sankey
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimated = true
-    @AppStorage("powerFlowThreeStage") private var isThreeStage = false
-    @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
-    @AppStorage("powerFlowTwinAnimated") private var isTwinAnimated = true
-    @AppStorage("twinDeviceType") private var twinDeviceType: String = "mbp"
-    @AppStorage("twinCableStyle") private var twinCableStyle: String = "p"
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
-    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    @AppStorage(AppPreferenceKeys.powerFlowStyle) private var style: PowerFlowStyle = .cards
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyAnimated) private var isAnimated = true
+    @AppStorage(AppPreferenceKeys.powerFlowThreeStage) private var isThreeStage = false
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyStyle) private var sankeyStyle = "watchband"
+    @AppStorage(AppPreferenceKeys.powerFlowTwinAnimated) private var isTwinAnimated = true
+    @AppStorage(AppPreferenceKeys.twinDeviceType) private var twinDeviceType: String = "mbp"
+    @AppStorage(AppPreferenceKeys.twinCableStyle) private var twinCableStyle: String = "p"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyShowValues) private var showValues = true
     @Environment(\.dismiss) var dismiss
     
     @State private var simSystemPower: Double = 25.0
@@ -115,6 +109,8 @@ struct PowerFlowConfigView: View {
             topology: topology,
             adapterVoltage: effectiveAdapterPower > 0 ? 20.0 : nil,
             adapterCurrent: effectiveAdapterPower > 0 ? (effectiveAdapterPower / 20.0) : nil,
+            signedBatteryPower: isCharging ? batteryWatts : (isDischarging ? -batteryWatts : 0),
+            batteryActivity: isCharging ? .charging : (isDischarging ? (effectiveAdapterPower > 0 ? .assisting : .batteryPowered) : .idle),
             coreWatts: isThreeStage ? coreW : nil,
             peripheralWatts: isThreeStage ? periW : nil,
             topAppWatts: isThreeStage ? appW : nil,
@@ -124,6 +120,7 @@ struct PowerFlowConfigView: View {
     
     var currentPreviewBatteryData: BatteryData {
         var data = BatteryData.empty
+        data.isAvailable = true
         data.currentCapacity = 80
         data.voltage = 11400
         data.amperage = 1500

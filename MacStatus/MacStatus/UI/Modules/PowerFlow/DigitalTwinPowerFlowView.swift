@@ -4,10 +4,11 @@ struct DigitalTwinPowerFlowView: View {
     var powerFlow: PowerFlowData
     var batteryData: BatteryData?
     
-    @AppStorage("powerFlowTwinAnimated") private var isAnimatedSetting = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(AppPreferenceKeys.powerFlowTwinAnimated) private var isAnimatedSetting = true
     @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
-    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
-    @AppStorage("twinCableStyle") private var twinCableStyle = "p"
+    private var isAnimated: Bool { isAnimatedSetting && !reduceMotion && energyManager.appState == .active && !energyManager.policy.sleeping }
+    @AppStorage(AppPreferenceKeys.twinCableStyle) private var twinCableStyle = "p"
     @State private var isLidOpen: Bool = false
     @State private var adapterRotation: Double = 0.0
     
@@ -20,7 +21,7 @@ struct DigitalTwinPowerFlowView: View {
                     Spacer()
                     MacAdapter3DView(
                         power: powerFlow.adapterPower,
-                        hasAdapter: powerFlow.adapterPower > 2,
+                        hasAdapter: powerFlow.hasAdapter,
                         adapterName: batteryData?.adapter?.name
                     )
                     .scaleEffect(adapterRotation != 0 ? 1.05 : 1.0)
@@ -36,8 +37,8 @@ struct DigitalTwinPowerFlowView: View {
                 
                 // 2. 能量连线 (Energy Wire)
                 EnergyWire3D(
-                    isActive: powerFlow.adapterPower > 2,
-                    adapterPower: powerFlow.adapterPower,
+                    isActive: powerFlow.hasAdapter,
+                    adapterPower: powerFlow.adapterSupplyPower,
                     isAnimated: isAnimated,
                     isCharging: powerFlow.isCharging,
                     batteryLevel: batteryData?.currentCapacity ?? 0,
@@ -56,7 +57,7 @@ struct DigitalTwinPowerFlowView: View {
                     Spacer()
                     MacDeviceSystem3D(
                         systemPower: powerFlow.systemPower,
-                        batteryPower: powerFlow.batteryPower,
+                        batteryPower: powerFlow.directionalBatteryPower,
                         batteryLevel: batteryData?.currentCapacity ?? 0,
                         isCharging: powerFlow.isCharging,
                         isOpen: $isLidOpen
@@ -184,7 +185,7 @@ struct MacDeviceSystem3D: View {
     var isCharging: Bool
     
     @Binding var isOpen: Bool
-    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
+    @AppStorage(AppPreferenceKeys.twinDeviceType) private var deviceType: String = "mbp"
     
     var body: some View {
         switch deviceType {
@@ -236,7 +237,7 @@ struct MacMini3DView: View {
     var batteryLevel: Int
     var isCharging: Bool
     
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -307,7 +308,7 @@ struct MacStudio3DView: View {
     var batteryLevel: Int
     var isCharging: Bool
     
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -376,7 +377,7 @@ struct iMac3DView: View {
     var batteryLevel: Int
     var isCharging: Bool
     
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -586,8 +587,8 @@ struct TwinMacColor {
 
 // 底座实体
 struct MacBookKeyboardBase: View {
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
-    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.twinDeviceType) private var deviceType: String = "mbp"
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -629,8 +630,8 @@ struct MacBookScreenLid: View {
     var isCharging: Bool
     var isOpen: Bool
     
-    @AppStorage("twinMacColor") private var twinMacColor: String = "silver"
-    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
+    @AppStorage(AppPreferenceKeys.twinMacColor) private var twinMacColor: String = "silver"
+    @AppStorage(AppPreferenceKeys.twinDeviceType) private var deviceType: String = "mbp"
     
     var body: some View {
         let isNeo = deviceType == "neo"
@@ -782,7 +783,7 @@ struct EnergyWire3D: View {
     var onToggleStyle: (() -> Void)? = nil
     
     @State private var phase: CGFloat = 0.0
-    @AppStorage("twinDeviceType") private var deviceType: String = "mbp"
+    @AppStorage(AppPreferenceKeys.twinDeviceType) private var deviceType: String = "mbp"
     
     var body: some View {
         GeometryReader { geometry in
@@ -948,10 +949,13 @@ struct EnergyWire3D: View {
                 }
             }
         }
-        .onReceive(Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()) { _ in
-            if isAnimated && isActive {
+        .task(id: isAnimated && isActive) {
+            guard isAnimated && isActive else { return }
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .milliseconds(33)) } catch { return }
+                guard !Task.isCancelled else { return }
                 let speedMultiplier = max(0.5, min(4.0, 0.4 + (adapterPower / 60.0)))
-                phase += (2.5 * CGFloat(speedMultiplier))
+                phase += 4.125 * CGFloat(speedMultiplier)
                 if phase > 10000 { phase -= 10000 }
             }
         }

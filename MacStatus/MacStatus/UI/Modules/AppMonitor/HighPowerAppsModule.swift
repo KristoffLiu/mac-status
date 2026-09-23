@@ -5,7 +5,11 @@ struct HighPowerAppsModule: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if service.highPowerApps.isEmpty {
+            if service.unavailable {
+                Text("应用能耗暂不可用").foregroundStyle(.secondary)
+            } else if !service.hasSample {
+                Text("正在读取应用能耗…").foregroundStyle(.secondary)
+            } else if service.highPowerApps.isEmpty {
                 HStack {
                     Text("No Applications Using Significant Energy")
                         .font(.subheadline)
@@ -15,6 +19,7 @@ struct HighPowerAppsModule: View {
                 .padding(.vertical, 4)
             } else {
                 Text("High Power Apps")
+                    .help("能耗影响分数，不是瓦数")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.bottom, 2)
@@ -49,7 +54,6 @@ struct HighPowerAppsModule: View {
                 }
             }
         }
-        .padding(.horizontal, 4)
         .padding(.vertical, 8)
     }
     
@@ -68,22 +72,3 @@ struct HighPowerAppsModule_Previews: PreviewProvider {
             .background(Color.black.opacity(0.8))
 }
 }
-
-// MARK: - Plugin Definition
-struct HighPowerAppsPlugin: AppWidgetPlugin {
-    let id = "highPowerApps"
-    let name = "高耗能应用"
-    let icon = "cpu"
-    let hasSettings = false
-    
-    @MainActor
-    var contentView: AnyView {
-        AnyView(HighPowerAppsModule())
-    }
-    
-    @MainActor
-    var settingsView: AnyView {
-        AnyView(EmptyView())
-    }
-}
-

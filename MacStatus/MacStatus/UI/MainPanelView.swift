@@ -3,12 +3,12 @@ import UniformTypeIdentifiers
 
 struct MainPanelView: View {
     @ObservedObject var viewModel: StatusViewModel
-    @AppStorage("showPercentage") private var showPercentage = true
-    @AppStorage("showWattage") private var showWattage = false
+    @AppStorage(AppPreferenceKeys.showPercentage) private var showPercentage = true
+    @AppStorage(AppPreferenceKeys.showWattage) private var showWattage = false
     @Environment(\.openWindow) private var openWindow
     
     @StateObject private var widgetManager = WidgetManager.shared
-    @AppStorage("isPanelEditing") private var isEditing = false
+    @AppStorage(AppPreferenceKeys.isPanelEditing) private var isEditing = false
     @State private var draggingItem: String?
 
     var body: some View {
@@ -50,15 +50,15 @@ struct MainPanelView: View {
                 .buttonStyle(.plain)
                 .foregroundColor(isEditing ? .accentColor : .secondary)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, PanelLayout.contentInset)
             .padding(.bottom, 4)
             
             // Unified Power & Battery Card
             VStack(spacing: 0) {
                 ForEach(widgetManager.activeWidgets, id: \.self) { widgetId in
                     HStack(spacing: 0) {
-                        if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
-                            WidgetContainerView(plugin: plugin)
+                        if let widget = WidgetID(rawValue: widgetId) {
+                            WidgetContainerView(widget: widget)
                                 .environmentObject(viewModel)
                         } else {
                             Text("Unknown Widget")
@@ -99,10 +99,9 @@ struct MainPanelView: View {
                     .onDrop(of: [UTType.text], delegate: WidgetDropDelegate(item: widgetId, activeWidgets: $widgetManager.activeWidgets, draggingItem: $draggingItem, manager: widgetManager))
                     
                     if widgetId != widgetManager.activeWidgets.last {
-                        Divider()
-                            .padding(.vertical, isEditing ? 4 : 12)
-                            .padding(.horizontal, 12)
-                            .opacity(isEditing ? 0.3 : 1)
+                        PanelSeparator()
+                            .padding(.vertical, isEditing ? 4 : 8)
+                            .padding(.horizontal, PanelLayout.contentInset)
                     }
                 }
             }
@@ -135,8 +134,8 @@ struct MainPanelView: View {
                                 }
                                 .buttonStyle(.plain)
                                 
-                                if let plugin = WidgetRegistry.shared.plugin(for: widgetId) {
-                                    Text(LocalizedStringKey(plugin.name))
+                                if let widget = WidgetID(rawValue: widgetId) {
+                                    Text(LocalizedStringKey(widget.name))
                                         .font(.subheadline)
                                         .foregroundColor(.primary.opacity(0.8))
                                 }

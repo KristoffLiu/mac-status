@@ -7,8 +7,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var statusItem: NSStatusItem!
     var panel: NSPanel!
     private var eventMonitor: Any?
+    private var localEventMonitor: Any?
     
-    var viewModel: StatusViewModel = StatusViewModel()
+    var viewModel: StatusViewModel = .shared
     
     var menuBarIsDark: Bool {
         // Use the status item button's appearance when available; it reflects the actual menu bar theme.
@@ -26,10 +27,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppPreferences.migrate()
+        _ = SystemMonitorService.shared
+        _ = AppEnergyMonitor.shared
+        _ = HighPowerAppsService.shared
+
         // Initialize Status Item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.action = #selector(togglePopover(_:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            button.action = #selector(handleStatusItemClick(_:))
             button.target = self
         }
         
@@ -54,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // Monitor for outside clicks to close the popover automatically
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             // Default is true if not set
-            let autoHide = UserDefaults.standard.object(forKey: "autoHidePanel") == nil ? true : UserDefaults.standard.bool(forKey: "autoHidePanel")
+            let autoHide = UserDefaults.standard.object(forKey: AppPreferenceKeys.autoHidePanel) == nil ? true : UserDefaults.standard.bool(forKey: AppPreferenceKeys.autoHidePanel)
             if autoHide {
                 if let panel = self?.panel, panel.isVisible {
                     self?.hidePanel()
@@ -62,13 +69,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
         }
         
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .keyDown]) { [weak self] event in
+            guard let self, self.panel.isVisible else { return event }
+            if event.type == .keyDown, event.keyCode == 53 {
+                self.hidePanel()
+                return nil
+            }
+            let autoHide = UserDefaults.standard.object(forKey: AppPreferenceKeys.autoHidePanel) == nil || UserDefaults.standard.bool(forKey: AppPreferenceKeys.autoHidePanel)
+            if event.type != .keyDown, event.window != self.panel, event.window != self.statusItem.button?.window, autoHide {
+                self.hidePanel()
+            }
+            return event
+        }
+
         // Listen for open panel notifications
         NotificationCenter.default.addObserver(self, selector: #selector(showPopoverForEditing), name: NSNotification.Name("OpenMenuBarPopover"), object: nil)
         
         // Listen for UserDefaults changes
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
             .sink { [weak self] _ in
-                let theme = UserDefaults.standard.string(forKey: "panelTheme") ?? "system"
+                let theme = UserDefaults.standard.string(forKey: AppPreferenceKeys.panelTheme) ?? "system"
                 self?.applyPanelTheme(theme)
                 // Force a render update when settings change to eliminate any delay
                 DispatchQueue.main.async {
@@ -77,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }.store(in: &cancellables)
         
         // Initial Theme
-        applyPanelTheme(UserDefaults.standard.string(forKey: "panelTheme") ?? "system")
+        applyPanelTheme(UserDefaults.standard.string(forKey: AppPreferenceKeys.panelTheme) ?? "system")
         
         // Listen for appearance changes (both app-level and system-wide)
         NSApp.publisher(for: \.effectiveAppearance).sink { [weak self] _ in
@@ -127,11 +147,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
     }
     
-    @objc func togglePopover(_ sender: AnyObject?) {
-        if panel.isVisible {
-            hidePanel()
-        } else {
-            showPanel()
+    @objc private func handleStatusItemClick(_ sender: AnyObject?) {
+        let button: MenuBarMouseButton = NSApp.currentEvent?.type == .rightMouseUp ? .right : .left
+        switch MenuBarInteraction.command(
+            for: button,
+            rightClickAction: AppPreferences.rightClickAction()
+        ) {
+        case .togglePanel:
+            if panel.isVisible {
+                hidePanel()
+            } else {
+                showPanel()
+            }
+        case .terminate:
+            NSApp.terminate(nil)
         }
     }
     
@@ -144,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private func hidePanel() {
         EnergyEfficiencyManager.shared.appState = .background
         
-        let enableAnim = UserDefaults.standard.object(forKey: "enablePanelAnimations") == nil ? true : UserDefaults.standard.bool(forKey: "enablePanelAnimations")
+        let enableAnim = UserDefaults.standard.object(forKey: AppPreferenceKeys.enablePanelAnimations) == nil ? true : UserDefaults.standard.bool(forKey: AppPreferenceKeys.enablePanelAnimations)
         
         if enableAnim {
             NSAnimationContext.runAnimationGroup({ context in
@@ -159,9 +188,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
     
     private func showPanel() {
-        EnergyEfficiencyManager.shared.appState = .active
-        
         guard let button = statusItem.button, let window = button.window else { return }
+        EnergyEfficiencyManager.shared.appState = .active
         
         // Refresh fitting size in case of layout changes
         if let hostingController = panel.contentViewController as? NSHostingController<MainPanelView> {
@@ -171,12 +199,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let buttonFrame = button.convert(button.bounds, to: nil)
         let screenRect = window.convertToScreen(buttonFrame)
         
-        let x = screenRect.midX - (panel.frame.width / 2)
-        let y = screenRect.minY - panel.frame.height - 8
+        let visible = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? screenRect
+        let x = max(visible.minX + 8, min(screenRect.midX - panel.frame.width / 2, visible.maxX - panel.frame.width - 8))
+        let y = max(visible.minY + 8, screenRect.minY - panel.frame.height - 8)
         
         panel.setFrameOrigin(NSPoint(x: x, y: y))
         
-        let enableAnim = UserDefaults.standard.object(forKey: "enablePanelAnimations") == nil ? true : UserDefaults.standard.bool(forKey: "enablePanelAnimations")
+        let enableAnim = UserDefaults.standard.object(forKey: AppPreferenceKeys.enablePanelAnimations) == nil ? true : UserDefaults.standard.bool(forKey: AppPreferenceKeys.enablePanelAnimations)
         if enableAnim {
             panel.alphaValue = 0.0
             panel.makeKeyAndOrderFront(nil)
@@ -192,34 +221,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private var lastRenderedBatteryLevel: Int?
-    private var lastRenderedIsCharging: Bool?
-    private var lastRenderedStatusText: String?
+    private var lastRenderedBattery: BatteryData?
+    private var lastRenderedFlow: PowerFlowData?
     private var lastRenderedThemeDark: Bool?
-    
+
     @MainActor
     private func updateStatusItemImage(force: Bool = false) {
         let isDark = menuBarIsDark
+        statusItem.button?.toolTip = viewModel.powerFlow.readingsConflict ? String(localized: "传感器读数暂不一致") : "MacStatus · \(viewModel.capacityText)"
         
-        let currentLevel = viewModel.batteryData.currentCapacity
-        let currentCharging = viewModel.powerFlow.isCharging
-        let adapterW = viewModel.powerFlow.adapterPower
-        let currentText = adapterW > 1.0 ? String(format: "%.0fW", adapterW) : ""
-        
-        // Critical Render Deduplication (Saves 5-10% CPU usage)
-        if !force &&
-           lastRenderedBatteryLevel == currentLevel && 
-           lastRenderedIsCharging == currentCharging && 
-           lastRenderedStatusText == currentText &&
-           lastRenderedThemeDark == isDark {
-            return
-        }
-        
-        lastRenderedBatteryLevel = currentLevel
-        lastRenderedIsCharging = currentCharging
-        lastRenderedStatusText = currentText
+        var battery = viewModel.batteryData
+        battery.sampledAt = nil // A timestamp alone does not change the label.
+        guard force || lastRenderedBattery != battery || lastRenderedFlow != viewModel.powerFlow || lastRenderedThemeDark != isDark else { return }
+        lastRenderedBattery = battery
+        lastRenderedFlow = viewModel.powerFlow
         lastRenderedThemeDark = isDark
-        
+
         // Create the isolated battery graphic
         let batteryView = IsolatedBatteryGraphicRenderer(viewModel: viewModel)
             .environment(\.colorScheme, isDark ? .dark : .light)
@@ -230,7 +247,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         
         var batteryImage: NSImage? = nil
         if let nsImage = batteryRenderer.nsImage {
-            let fillStyle = UserDefaults.standard.string(forKey: "batteryFillStyle") ?? "monochrome"
+            let fillStyle = UserDefaults.standard.string(forKey: AppPreferenceKeys.batteryFillStyle) ?? "monochrome"
             if fillStyle == "status_color" {
                 nsImage.isTemplate = false
             } else {

@@ -5,15 +5,14 @@ import UniformTypeIdentifiers
 class WidgetManager: ObservableObject {
     static let shared = WidgetManager()
     
-    @Published var activeWidgets: [String] = ["powerFlow", "batterySpecs", "batteryHealth", "systemMonitor"] {
+    @Published var activeWidgets: [String] = WidgetCatalog.defaultOrder {
         didSet {
             save()
         }
     }
     
     var inactiveWidgets: [String] {
-        let allKeys = WidgetRegistry.shared.allPlugins.map { $0.id }
-        return allKeys.filter { !activeWidgets.contains($0) }
+        WidgetCatalog.allIDs.filter { !activeWidgets.contains($0) }
     }
     
     init() {
@@ -41,21 +40,21 @@ class WidgetManager: ObservableObject {
     }
     
     private func save() {
-        UserDefaults.standard.set(activeWidgets, forKey: "panelWidgetOrder")
+        UserDefaults.standard.set(activeWidgets, forKey: AppPreferenceKeys.panelWidgetOrder)
     }
     
     private func load() {
         // Automatically migrate users to the new arrangement
-        if let stored = UserDefaults.standard.stringArray(forKey: "panelWidgetOrder") {
+        if let stored = UserDefaults.standard.stringArray(forKey: AppPreferenceKeys.panelWidgetOrder) {
             var strings = stored
             
-            let hasMigrated = UserDefaults.standard.bool(forKey: "hasMigratedToV2")
+            let hasMigrated = UserDefaults.standard.bool(forKey: AppPreferenceKeys.hasMigratedToV2)
             if !hasMigrated {
                 // Clean out old widgets
                 strings.removeAll { $0 == "powerData" || $0 == "batteryData" || $0 == "batteryDetail" }
                 
                 // Re-insert new group structure
-                var insertions: [String] = ["batterySpecs", "batteryHealth"]
+                let insertions: [String] = ["batterySpecs", "batteryHealth"]
                 // Place them after powerFlow if it exists
                 if let index = strings.firstIndex(of: "powerFlow") {
                     strings.insert(contentsOf: insertions, at: index + 1)
@@ -63,20 +62,10 @@ class WidgetManager: ObservableObject {
                     strings.insert(contentsOf: insertions, at: 0)
                 }
                 
-                UserDefaults.standard.set(true, forKey: "hasMigratedToV2")
+                UserDefaults.standard.set(true, forKey: AppPreferenceKeys.hasMigratedToV2)
             }
             
-            // Deduplicate preserving order
-            var uniqueWidgets = [String]()
-            for w in strings {
-                if !uniqueWidgets.contains(w) {
-                    uniqueWidgets.append(w)
-                }
-            }
-            
-            if !uniqueWidgets.isEmpty {
-                self.activeWidgets = uniqueWidgets
-            }
+            self.activeWidgets = WidgetCatalog.sanitize(strings)
         }
     }
 }

@@ -1,5 +1,10 @@
 # Helper Tool Configuration Instructions
 
+> Historical design notes, not the current build or distribution setup. The Xcode project
+> currently contains only the MacStatus application target and does not ship this helper.
+> These instructions have not been validated for production signing. A privileged helper
+> does not make an app eligible for the Mac App Store; see [App Store readiness](../app-store-readiness.md).
+
 To finish setting up the Privileged Helper Tool in Xcode, please follow these steps:
 
 1. In Xcode, go to **File > New > Target...**

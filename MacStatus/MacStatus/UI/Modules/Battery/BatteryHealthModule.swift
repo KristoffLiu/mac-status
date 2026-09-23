@@ -11,25 +11,24 @@ struct BatteryHealthModule: View {
                 .foregroundColor(.secondary)
             
             HStack {
-                let healthPercent = calculateHealth()
-                detailItem(title: "硬件健康度", value: "\(healthPercent)%")
+                let healthPercent = batteryData.healthPercent
+                detailItem(title: "硬件健康度", value: healthPercent.map { "\($0)%" } ?? "—")
                 Spacer()
-                let condition = healthPercent > 80 ? "状态良好" : (healthPercent > 50 ? "建议维修" : "需要更换")
-                detailItem(title: "系统状态评估", value: condition)
+                let condition = healthPercent.map { $0 > 80 ? "容量正常" : "容量偏低" } ?? "暂不可用"
+                detailItem(title: "容量评估（非系统诊断）", value: condition)
             }
             
             HStack {
-                detailItem(title: "当前最大容量", value: "\(batteryData.maxCapacity) mAh")
+                detailItem(title: "当前最大容量", value: batteryData.maxCapacity > 100 ? "\(batteryData.maxCapacity) mAh" : "—")
                 Spacer()
-                detailItem(title: "出厂设计容量", value: "\(batteryData.designCapacity) mAh")
+                detailItem(title: "出厂设计容量", value: batteryData.designCapacity > 100 ? "\(batteryData.designCapacity) mAh" : "—")
             }
             
             HStack {
-                detailItem(title: "循环次数 (Cycles)", value: "\(batteryData.cycleCount) 次")
+                detailItem(title: "循环次数 (Cycles)", value: batteryData.isAvailable ? "\(batteryData.cycleCount) 次" : "—")
                 Spacer()
             }
         }
-        .padding(.horizontal, 4)
         .padding(.vertical, 8)
     }
     
@@ -47,36 +46,5 @@ struct BatteryHealthModule: View {
         .frame(width: width, alignment: .leading)
     }
     
-    private func calculateHealth() -> Int {
-        guard batteryData.designCapacity > 0 else { return 100 }
-        let health = Double(batteryData.maxCapacity) / Double(batteryData.designCapacity) * 100
-        return Int(min(100.0, max(0.0, health)))
-    }
-}
 
-// MARK: - Plugin Definition
-struct BatteryHealthPlugin: AppWidgetPlugin {
-    let id = "batteryHealth"
-    let name = "电池健康"
-    let icon = "heart.fill"
-    let hasSettings = false
-    
-    @MainActor
-    var contentView: AnyView {
-        AnyView(BatteryHealthPluginContentView())
-    }
-    
-    @MainActor
-    var settingsView: AnyView {
-        AnyView(EmptyView())
-    }
 }
-
-private struct BatteryHealthPluginContentView: View {
-    @EnvironmentObject var viewModel: StatusViewModel
-    
-    var body: some View {
-        BatteryHealthModule(batteryData: viewModel.batteryData)
-    }
-}
-

@@ -10,8 +10,8 @@ struct BlockPowerFlowView: View {
                 if powerFlow.adapterPower > 0 {
                     BlockNode(icon: "powerplug.fill", title: "电源适配器", value: powerFlow.adapterPower, color: .yellow)
                 }
-                if powerFlow.batteryPower > 0 && powerFlow.topology == .topologyB {
-                    BlockNode(icon: "battery.100", title: "电池输出", value: powerFlow.batteryPower, color: .blue)
+                if powerFlow.directionalBatteryPower > 0 && powerFlow.topology == .topologyB {
+                    BlockNode(icon: "battery.100", title: "电池输出", value: powerFlow.directionalBatteryPower, color: .blue)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -25,8 +25,8 @@ struct BlockPowerFlowView: View {
             VStack(spacing: 8) {
                 BlockNode(icon: "laptopcomputer", title: "系统消耗", value: powerFlow.systemPower, color: .primary)
                 
-                if powerFlow.batteryPower > 0 && powerFlow.topology == .topologyA {
-                    BlockNode(icon: "battery.100.bolt", title: "电池充入", value: powerFlow.batteryPower, color: .green)
+                if powerFlow.directionalBatteryPower > 0 && powerFlow.topology == .topologyA {
+                    BlockNode(icon: "battery.100.bolt", title: "电池充入", value: powerFlow.directionalBatteryPower, color: .green)
                 }
             }
             .frame(maxWidth: .infinity)

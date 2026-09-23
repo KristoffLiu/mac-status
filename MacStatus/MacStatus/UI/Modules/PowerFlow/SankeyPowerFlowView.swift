@@ -2,13 +2,16 @@ import SwiftUI
 
 struct SankeyPowerFlowView: View {
     var powerFlow: PowerFlowData
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimatedSetting = true
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyAnimated) private var isAnimatedSetting = true
     @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
-    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
-    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
-    @AppStorage("powerFlowThreeStage") private var isThreeStage = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var isAnimated: Bool { isAnimatedSetting && !reduceMotion && energyManager.appState == .active && !energyManager.policy.sleeping }
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyShowValues) private var showValues = true
+    @AppStorage(AppPreferenceKeys.powerFlowThreeStage) private var isThreeStage = false
     
     var body: some View {
+        let batteryPower = powerFlow.directionalBatteryPower
+        let adapterPower = powerFlow.adapterSupplyPower
         let appW = powerFlow.topAppWatts ?? 0
         let coreW = powerFlow.coreWatts ?? 0
         let periW = powerFlow.peripheralWatts ?? 0
@@ -25,9 +28,9 @@ struct SankeyPowerFlowView: View {
                 
                 if powerFlow.topology == .topologyA {
                     // Topology A: Adapter provides all power
-                    let totalSource = max(powerFlow.adapterPower, 0.1)
+                    let totalSource = max(adapterPower, 0.1)
                     let sysFlowWatts = powerFlow.systemPower
-                    let batChargeWatts = max(powerFlow.batteryPower, 0.0)
+                    let batChargeWatts = max(batteryPower, 0.0)
                     let effectiveTotalForFractions = max(sysFlowWatts + batChargeWatts, 0.1)
                     let sysFraction = sysFlowWatts / effectiveTotalForFractions
                     let batFraction = batChargeWatts / effectiveTotalForFractions
@@ -103,20 +106,19 @@ struct SankeyPowerFlowView: View {
                     }
                 } else {
                     // Topology B: System is the sink
-                    let totalSource = max(powerFlow.adapterPower + powerFlow.batteryPower, 0.1)
-                    let adFraction = powerFlow.adapterPower / totalSource
-                    let batFraction = powerFlow.batteryPower / totalSource
+                    let totalSource = max(adapterPower + batteryPower, 0.1)
+                    let adFraction = adapterPower / totalSource
+                    let batFraction = batteryPower / totalSource
                     
-                    let dynamicBaseHeight = 64.0 + CGFloat(pow(min(totalSource, 140.0) / 140.0, 0.6)) * 56.0
-                    
-                    let topHeightRaw = dynamicBaseHeight * adFraction
-                    let botHeightRaw = dynamicBaseHeight * batFraction
-                    
-                    let topHeight = powerFlow.adapterPower > 0 ? max(64.0, topHeightRaw) : 0.0
-                    let botHeight = powerFlow.batteryPower > 0 ? max(64.0, botHeightRaw) : 0.0
-                    
-                    let H_total_left = topHeight + botHeight + (powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0 ? 12.0 : 0.0)
-                    let actualRightH = isThreeStage ? max(70.0, sinksHeight) : 70.0
+                    let layout = SankeySupplyLayout(
+                        adapterPower: adapterPower,
+                        batteryPower: batteryPower,
+                        sinksHeight: isThreeStage ? sinksHeight : 0
+                    )
+                    let topHeight = layout.adapterHeight
+                    let botHeight = layout.batteryHeight
+                    let H_total_left = layout.sourceHeight
+                    let actualRightH = layout.systemHeight
                     let global_H = max(H_total_left, actualRightH)
                     
                     let leftOffsetY = (global_H - H_total_left) / 2.0
@@ -125,15 +127,15 @@ struct SankeyPowerFlowView: View {
                     // Root Container
                     HStack(alignment: .center, spacing: -12) {
                         
-                        if powerFlow.adapterPower > 0 || powerFlow.batteryPower > 0 {
+                        if adapterPower > 0 || batteryPower > 0 {
                             // Col 1: Sources
                             VStack(spacing: 12) {
-                                if powerFlow.adapterPower > 0 {
+                                if adapterPower > 0 {
                                     NodePill(icon: "powerplug.fill", value: nil, iconColor: .yellow.opacity(0.8), stretchHeight: true)
                                         .frame(height: topHeight)
                                         .zIndex(2)
                                 }
-                                if powerFlow.batteryPower > 0 {
+                                if batteryPower > 0 {
                                     NodePill(icon: "battery.100", value: nil, iconColor: .blue, stretchHeight: true)
                                         .frame(height: botHeight)
                                         .zIndex(2)
@@ -142,31 +144,31 @@ struct SankeyPowerFlowView: View {
                             .zIndex(2)
                             
                             // Col 2: Pipes
-                            let offsetGap = (powerFlow.adapterPower > 0 && powerFlow.batteryPower > 0) ? 12.0 : 0.0
+                            let offsetGap = layout.gap
                             VStack(spacing: 12) {
-                                if powerFlow.adapterPower > 0 {
+                                if adapterPower > 0 {
                                     ThickFlowBlock(
-                                        watts: powerFlow.adapterPower,
+                                        watts: adapterPower,
                                         fraction: min(adFraction, 1.0),
                                         startColor: .yellow.opacity(0.8),
                                         endColor: .gray.opacity(0.2),
                                         isSubFlow: false,
                                         parentHeight: topHeight,
-                                        explicitRightYRange: [rightOffsetY - leftOffsetY, rightOffsetY + actualRightH * adFraction - leftOffsetY]
+                                        explicitRightYRange: [rightOffsetY - leftOffsetY, rightOffsetY + layout.adapterPortHeight - leftOffsetY]
                                     )
                                     .frame(height: topHeight)
                                     .zIndex(0)
                                 }
                                 
-                                if powerFlow.batteryPower > 0 {
+                                if batteryPower > 0 {
                                     ThickFlowBlock(
-                                        watts: powerFlow.batteryPower,
+                                        watts: batteryPower,
                                         fraction: min(batFraction, 1.0),
                                         startColor: .blue,
-                                        endColor: .gray.opacity(0.2),
-                                        isSubFlow: powerFlow.adapterPower > 0,
+                                        endColor: .blue.opacity(0.65),
+                                        isSubFlow: adapterPower > 0,
                                         parentHeight: botHeight,
-                                        explicitRightYRange: [rightOffsetY + actualRightH * adFraction - (leftOffsetY + topHeight + offsetGap), rightOffsetY + actualRightH - (leftOffsetY + topHeight + offsetGap)]
+                                        explicitRightYRange: [rightOffsetY + layout.adapterPortHeight - (leftOffsetY + topHeight + offsetGap), rightOffsetY + actualRightH - (leftOffsetY + topHeight + offsetGap)]
                                     )
                                     .frame(height: botHeight)
                                     .zIndex(0)
@@ -249,7 +251,7 @@ struct NodePill: View {
         )
     }
 }
-enum FlowMergeMode {
+nonisolated enum FlowMergeMode: Sendable {
     case none
     case topMerge    // Left-side top pipe merging down
     case bottomMerge // Left-side bottom pipe merging up
@@ -271,13 +273,13 @@ struct ThickFlowBlock: View {
     var explicitLeftYRange: [CGFloat]? = nil
     var explicitRightYRange: [CGFloat]? = nil
     
-    @AppStorage("powerFlowSankeyAnimated") private var isAnimatedSetting = true
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyAnimated) private var isAnimatedSetting = true
     @ObservedObject private var energyManager = EnergyEfficiencyManager.shared
-    private var isAnimated: Bool { isAnimatedSetting && energyManager.appState == .active }
-    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
-    @AppStorage("powerFlowSankeyStyle") private var sankeyStyle = "watchband"
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var isAnimated: Bool { isAnimatedSetting && !reduceMotion && energyManager.appState == .active && !energyManager.policy.sleeping }
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyShowValues) private var showValues = true
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyStyle) private var sankeyStyle = "watchband"
     
-    @State private var phase = 0.0
     
     private var textYOffset: CGFloat {
         let baseHeight: CGFloat = isSubFlow ? 35.0 : 70.0
@@ -329,25 +331,21 @@ struct ThickFlowBlock: View {
                         endPoint: .trailing
                     )
                 )
-                .overlay(
-                    // Flow animation overlay
-                    WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange)
-                        .fill(
-                            LinearGradient(
-                                stops: [
+                .overlay {
+                    if isAnimated {
+                        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                            let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.5) / 1.5
+                            WatchBandShape(thickness: thickness, leftHeight: leftH, rightHeight: rightH, mergeMode: mergeMode, localConvergenceY: localConvergenceY, sankeyStyle: sankeyStyle, explicitLeftYRange: explicitLeftYRange, explicitRightYRange: explicitRightYRange)
+                                .fill(LinearGradient(stops: [
                                     .init(color: .clear, location: 0),
                                     .init(color: Color.white.opacity(0.4), location: 0.5),
                                     .init(color: .clear, location: 1)
-                                ],
-                                startPoint: UnitPoint(x: phase - 0.5, y: 0),
-                                endPoint: UnitPoint(x: phase + 0.5, y: 0)
-                            )
-                        )
-                        .blendMode(.overlay)
-                        .animation(isAnimated ? .linear(duration: 1.5).repeatForever(autoreverses: false) : .default, value: phase)
-                        .opacity(isAnimated ? 1.0 : 0.0)
-                )
-            
+                                ], startPoint: UnitPoint(x: phase - 0.5, y: 0), endPoint: UnitPoint(x: phase + 0.5, y: 0)))
+                                .blendMode(.overlay)
+                        }
+                    }
+                }
+
             // Text inside the block
             if showValues {
                 let textValue = (watts == -1.0) ? "-- W" : String(format: "%.2f W", watts)
@@ -364,9 +362,6 @@ struct ThickFlowBlock: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .onAppear {
-            phase = 1.0
-        }
     }
 }
 
@@ -511,7 +506,7 @@ struct WatchBandShape: Shape {
 
 struct ThreeStageSinksView: View {
     var powerFlow: PowerFlowData
-    @AppStorage("powerFlowSankeyShowValues") private var showValues = true
+    @AppStorage(AppPreferenceKeys.powerFlowSankeyShowValues) private var showValues = true
     
     var body: some View {
         let appW = powerFlow.topAppWatts ?? 0.0

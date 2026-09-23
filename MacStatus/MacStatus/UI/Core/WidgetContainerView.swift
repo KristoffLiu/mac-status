@@ -1,21 +1,27 @@
 import SwiftUI
 
 struct WidgetContainerView: View {
-    let plugin: any AppWidgetPlugin
+    let widget: WidgetID
+    @EnvironmentObject private var viewModel: StatusViewModel
+    @AppStorage(AppPreferenceKeys.powerFlowStyle) private var powerFlowStyle: PowerFlowStyle = .cards
     @State private var showSettings = false
     @State private var isHovering = false
+
+    private var wantsEdgeToEdge: Bool {
+        widget.wantsEdgeToEdge(powerFlowStyle: powerFlowStyle)
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             // Main Content
-            plugin.contentView
-                // By default apply the 12pt global panel margin, unless plugin requires full bleed
-                .padding(.horizontal, plugin.wantsEdgeToEdge ? 0 : 12)
+            widget.content(viewModel: viewModel)
+                // Shared content inset; modules do not add a second horizontal margin.
+                .padding(.horizontal, wantsEdgeToEdge ? 0 : PanelLayout.contentInset)
                 // Allow interactions inside the content view
                 .zIndex(0)
 
             // Settings overlay
-            if plugin.hasSettings {
+            if widget.hasSettings {
                 Button {
                     showSettings.toggle()
                 } label: {
@@ -31,11 +37,15 @@ struct WidgetContainerView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 4)
-                .padding(.trailing, plugin.wantsEdgeToEdge ? 12 : 4)
+                .padding(.trailing, wantsEdgeToEdge ? 12 : 4)
                 .opacity(isHovering || showSettings ? 1.0 : 0.0) // Keep visible when popover is open
                 .popover(isPresented: $showSettings, arrowEdge: .trailing) {
-                    plugin.settingsView
-                        .padding()
+                    if widget == .systemMonitor {
+                        widget.settings
+                            .presentationBackground(.ultraThinMaterial)
+                    } else {
+                        widget.settings.padding()
+                    }
                 }
                 .zIndex(1)
             }

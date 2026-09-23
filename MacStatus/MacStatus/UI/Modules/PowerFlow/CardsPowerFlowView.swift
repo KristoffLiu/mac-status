@@ -14,7 +14,7 @@ struct CardsPowerFlowView: View {
             HStack {
                 // Status Badge
                 HStack(spacing: 4) {
-                    Image(systemName: "bolt.fill")
+                    Image(systemName: statusIcon)
                     Text(statusText)
                 }
                 .font(.system(size: 11, weight: .bold))
@@ -26,7 +26,7 @@ struct CardsPowerFlowView: View {
                 
                 Spacer()
                 
-                if powerFlow.adapterPower > 2 {
+                if powerFlow.hasAdapter {
                     Text(adapterName)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
@@ -36,7 +36,7 @@ struct CardsPowerFlowView: View {
             
             // 3/2 Cards Layout, Custom Carousel
             ZStack {
-                let hasAdapter = powerFlow.adapterPower > 2
+                let hasAdapter = powerFlow.hasAdapter
                 
                 // Card 1: Adapter (if hasAdapter) OR Battery Output (if pure battery)
                 if hasAdapter {
@@ -209,14 +209,14 @@ struct CardsPowerFlowView: View {
                 DragGesture()
                     .onChanged { value in
                         guard isExpanded else { return }
-                        let hasAdapter = powerFlow.adapterPower > 2
+                        let hasAdapter = powerFlow.hasAdapter
                         let proposedOffset = savedOffset + value.translation.width
                         let minBound: CGFloat = hasAdapter ? -54 : 0
                         dragOffset = min(max(proposedOffset, minBound), 54)
                     }
                     .onEnded { value in
                         guard isExpanded else { return }
-                        let hasAdapter = powerFlow.adapterPower > 2
+                        let hasAdapter = powerFlow.hasAdapter
                         let minBound: CGFloat = hasAdapter ? -54 : 0
                         let finalOffset = dragOffset
                         let targetOffset: CGFloat
@@ -234,9 +234,9 @@ struct CardsPowerFlowView: View {
                     }
             )
             .padding(.vertical, 8)
-            .onChange(of: powerFlow.adapterPower) { newValue in
+            .onChange(of: powerFlow.hasAdapter) { _, hasAdapter in
                 // Auto-center bounds recovery if unplugged while focused on card 3
-                if newValue <= 2 && savedOffset < 0 {
+                if !hasAdapter && savedOffset < 0 {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         dragOffset = 0
                         savedOffset = 0
@@ -249,7 +249,7 @@ struct CardsPowerFlowView: View {
     }
 
     private func handleTap(_ id: Int) {
-        let hasAdapter = powerFlow.adapterPower > 2
+        let hasAdapter = powerFlow.hasAdapter
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
             if isExpanded && focusedCard == id {
                 isExpanded = false
@@ -358,12 +358,25 @@ struct CardsPowerFlowView: View {
     }
 
     private var statusText: String {
-        let hasAdapter = powerFlow.adapterPower > 2
-        if hasAdapter && powerFlow.isDischarging { return "混合供电" }
-        if powerFlow.isCharging { return "电池充电" }
-        if powerFlow.isDischarging { return "电池供电" }
-        if hasAdapter { return "旁路供电" }
-        return "电池闲置"
+        switch powerFlow.batteryActivity {
+        case .charging: return "外接电源 · 电池充电"
+        case .assisting: return "外接电源 · 电池辅助供电"
+        case .batteryPowered: return "电池供电"
+        case .idle: return powerFlow.hasAdapter ? "外接电源 · 电池基本闲置" : "电池闲置"
+        case .confirming: return "外接电源 · 电池状态确认中"
+        case .lowActivity: return "外接电源 · 电池低功率活动"
+        case .unavailable: return powerFlow.hasAdapter ? "外接电源 · 电池状态未知" : "电池状态未知"
+        }
+    }
+
+    private var statusIcon: String {
+        switch powerFlow.batteryActivity {
+        case .charging: return "bolt.fill"
+        case .assisting, .batteryPowered: return "battery.100"
+        case .idle: return "powerplug.fill"
+        case .confirming, .lowActivity: return "waveform.path"
+        case .unavailable: return "questionmark.circle"
+        }
     }
     
     private var adapterName: String {

@@ -5,7 +5,7 @@ struct BatteryGraphicView: View {
     var isCharging: Bool
     var isPowered: Bool = false  // adapter connected (covers bypass/passthrough)
 
-    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
+    @AppStorage(AppPreferenceKeys.iconLowPowerColor) private var iconLowPowerColor = false
     @Environment(\.colorScheme) private var colorScheme
 
     // Configurable styles
@@ -178,19 +178,21 @@ struct BatteryGraphicView: View {
 struct IsolatedBatteryGraphicRenderer: View {
     @ObservedObject var viewModel: StatusViewModel
     
-    @AppStorage("batteryShellStyle") private var batteryShellStyle = "native"
-    @AppStorage("batteryFillStyle") private var batteryFillStyle = "monochrome"
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
-    @AppStorage("batteryChargingIndicator") private var batteryChargingIndicator = "bolt"
-    @AppStorage("batteryChargingBorderStyle") private var batteryChargingBorderStyle = "sharp"
+    @AppStorage(AppPreferenceKeys.batteryShellStyle) private var batteryShellStyle = "native"
+    @AppStorage(AppPreferenceKeys.batteryFillStyle) private var batteryFillStyle = "monochrome"
+    @AppStorage(AppPreferenceKeys.batteryInnerContent) private var batteryInnerContent = "none"
+    @AppStorage(AppPreferenceKeys.batteryChargingIndicator) private var batteryChargingIndicator = "bolt"
+    @AppStorage(AppPreferenceKeys.batteryChargingBorderStyle) private var batteryChargingBorderStyle = "sharp"
 
     var body: some View {
         Group {
-            if batteryShellStyle != "hidden" {
+            if !viewModel.batteryData.isAvailable {
+                Image(systemName: "battery.0").overlay(Text("?").font(.system(size: 8, weight: .bold)))
+            } else if batteryShellStyle != "hidden" {
                 BatteryGraphicView(
                     capacity: viewModel.currentCapacity,
                     isCharging: viewModel.isCharging,
-                    isPowered: viewModel.batteryData.adapter != nil,
+                    isPowered: viewModel.powerFlow.hasAdapter,
                     isColored: batteryFillStyle == "status_color",
                     chargingStyle: batteryChargingIndicator,
                     showNumber: batteryInnerContent == "inside",
@@ -208,48 +210,48 @@ struct MenuBarLabelRendererView: View {
     @ObservedObject var viewModel: StatusViewModel
     var generatedMenuImage: NSImage?
     
-    @AppStorage("menuBarPowerStyle") private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
-    @AppStorage("batteryLayout") private var batteryLayout = "left"
+    @AppStorage(AppPreferenceKeys.menuBarPowerStyle) private var menuBarPowerStyle: MenuBarPowerStyle = .graphic
+    @AppStorage(AppPreferenceKeys.batteryLayout) private var batteryLayout = "left"
     
-    @AppStorage("showPercentage") private var showPercentage = true
-    @AppStorage("showChargingStatus") private var showChargingStatus = false
-    @AppStorage("iconLowPowerColor") private var iconLowPowerColor = false
-    @AppStorage("batteryInnerContent") private var batteryInnerContent = "none"
+    @AppStorage(AppPreferenceKeys.showPercentage) private var showPercentage = true
+    @AppStorage(AppPreferenceKeys.showChargingStatus) private var showChargingStatus = false
+    @AppStorage(AppPreferenceKeys.iconLowPowerColor) private var iconLowPowerColor = false
+    @AppStorage(AppPreferenceKeys.batteryInnerContent) private var batteryInnerContent = "none"
     
-    @AppStorage("showMaxCapacity") private var showMaxCapacity = false
-    @AppStorage("showMacOSCapacity") private var showMacOSCapacity = false
-    @AppStorage("showMacOSCondition") private var showMacOSCondition = false
-    @AppStorage("showCycles") private var showCycles = false
+    @AppStorage(AppPreferenceKeys.showMaxCapacity) private var showMaxCapacity = false
+    @AppStorage(AppPreferenceKeys.showMacOSCapacity) private var showMacOSCapacity = false
+    @AppStorage(AppPreferenceKeys.showMacOSCondition) private var showMacOSCondition = false
+    @AppStorage(AppPreferenceKeys.showCycles) private var showCycles = false
     
-    @AppStorage("showTemperature") private var showTemperature = false
-    @AppStorage("showTimeRemaining") private var showTimeRemaining = false
-    @AppStorage("showAmperage") private var showAmperage = false
-    @AppStorage("showVoltage") private var showVoltage = false
-    @AppStorage("showWattage") private var showWattage = false
-    @AppStorage("showSystemLoad") private var showSystemLoad = false
+    @AppStorage(AppPreferenceKeys.showTemperature) private var showTemperature = false
+    @AppStorage(AppPreferenceKeys.showTimeRemaining) private var showTimeRemaining = false
+    @AppStorage(AppPreferenceKeys.showAmperage) private var showAmperage = false
+    @AppStorage(AppPreferenceKeys.showVoltage) private var showVoltage = false
+    @AppStorage(AppPreferenceKeys.showWattage) private var showWattage = false
+    @AppStorage(AppPreferenceKeys.showSystemLoad) private var showSystemLoad = false
     
-    @AppStorage("showAdapterCurrent") private var showAdapterCurrent = false
-    @AppStorage("showAdapterVoltage") private var showAdapterVoltage = false
-    @AppStorage("showAdapterPower") private var showAdapterPower = false
+    @AppStorage(AppPreferenceKeys.showAdapterCurrent) private var showAdapterCurrent = false
+    @AppStorage(AppPreferenceKeys.showAdapterVoltage) private var showAdapterVoltage = false
+    @AppStorage(AppPreferenceKeys.showAdapterPower) private var showAdapterPower = false
     
-    @AppStorage("showAlDenteCalibration") private var showAlDenteCalibration = false
-    @AppStorage("showAlDenteOverheat") private var showAlDenteOverheat = false
-    @AppStorage("showAlDenteSailing") private var showAlDenteSailing = false
-    @AppStorage("showAlDenteFull") private var showAlDenteFull = false
+    @AppStorage(AppPreferenceKeys.showAlDenteCalibration) private var showAlDenteCalibration = false
+    @AppStorage(AppPreferenceKeys.showAlDenteOverheat) private var showAlDenteOverheat = false
+    @AppStorage(AppPreferenceKeys.showAlDenteSailing) private var showAlDenteSailing = false
+    @AppStorage(AppPreferenceKeys.showAlDenteFull) private var showAlDenteFull = false
     
     // Spacing
-    @AppStorage("menuItemSpacing") private var menuItemSpacing: Double = 4
-    @AppStorage("mainIconGroupSpacing") private var mainIconGroupSpacing: Double = 4
+    @AppStorage(AppPreferenceKeys.menuItemSpacing) private var menuItemSpacing: Double = 4
+    @AppStorage(AppPreferenceKeys.mainIconGroupSpacing) private var mainIconGroupSpacing: Double = 4
 
     // Battery Man
-    @AppStorage("batteryManLegLength") private var batteryManLegLength: BatteryManLegLength = .normal
-    @AppStorage("batteryManShowFace") private var batteryManShowFace = false
-    @AppStorage("batteryManShowArms") private var batteryManShowArms = false
-    @AppStorage("batteryManShowPosture") private var batteryManShowPosture = false
-    @AppStorage("batteryManShowAccessory") private var batteryManShowAccessory = false
-    @AppStorage("batteryManFaceStyle") private var batteryManFaceStyle: BatteryManFaceStyle = .solid
-    @AppStorage("batteryManHandAction") private var batteryManHandAction = "none"
-    @AppStorage("batteryManHandActionSide") private var batteryManHandActionSide = "right"
+    @AppStorage(AppPreferenceKeys.batteryManLegLength) private var batteryManLegLength: BatteryManLegLength = .normal
+    @AppStorage(AppPreferenceKeys.batteryManShowFace) private var batteryManShowFace = false
+    @AppStorage(AppPreferenceKeys.batteryManShowArms) private var batteryManShowArms = false
+    @AppStorage(AppPreferenceKeys.batteryManShowPosture) private var batteryManShowPosture = false
+    @AppStorage(AppPreferenceKeys.batteryManShowAccessory) private var batteryManShowAccessory = false
+    @AppStorage(AppPreferenceKeys.batteryManFaceStyle) private var batteryManFaceStyle: BatteryManFaceStyle = .solid
+    @AppStorage(AppPreferenceKeys.batteryManHandAction) private var batteryManHandAction = "none"
+    @AppStorage(AppPreferenceKeys.batteryManHandActionSide) private var batteryManHandActionSide = "right"
 
     var body: some View {
         HStack(spacing: CGFloat(menuItemSpacing)) {
@@ -258,7 +260,7 @@ struct MenuBarLabelRendererView: View {
                 if menuBarPowerStyle == .graphic {
                     if batteryLayout == "left", let image = generatedMenuImage { Image(nsImage: image) }
 
-                    if batteryInnerContent == "outside" { Text("\(viewModel.currentCapacity)%") }
+                    if batteryInnerContent == "outside" { Text(viewModel.capacityText) }
                     if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
 
                     if batteryLayout == "right", let image = generatedMenuImage { Image(nsImage: image) }
@@ -267,7 +269,7 @@ struct MenuBarLabelRendererView: View {
                         BatteryManView(
                             capacity: viewModel.currentCapacity,
                             isCharging: viewModel.isCharging,
-                            isPowered: viewModel.batteryData.adapter != nil,
+                            isPowered: viewModel.powerFlow.hasAdapter,
                             isColored: false,
                             showBolt: true,
                             legLength: batteryManLegLength,
@@ -280,13 +282,13 @@ struct MenuBarLabelRendererView: View {
                             handActionSide: batteryManHandActionSide
                         )
                     }
-                    if showPercentage { Text("\(viewModel.currentCapacity)%") }
+                    if showPercentage { Text(viewModel.capacityText) }
                     if showChargingStatus && viewModel.isCharging { Image(systemName: "bolt.fill") }
                     if batteryLayout == "right" {
                         BatteryManView(
                             capacity: viewModel.currentCapacity,
                             isCharging: viewModel.isCharging,
-                            isPowered: viewModel.batteryData.adapter != nil,
+                            isPowered: viewModel.powerFlow.hasAdapter,
                             isColored: false,
                             showBolt: true,
                             legLength: batteryManLegLength,
@@ -302,37 +304,33 @@ struct MenuBarLabelRendererView: View {
                 } else if menuBarPowerStyle == .symbolic {
                     Image(systemName: viewModel.isCharging ? "battery.100.bolt" : "battery.100")
                         .symbolRenderingMode(.hierarchical)
-                    if showPercentage { Text("\(viewModel.currentCapacity)%") }
+                    if showPercentage { Text(viewModel.capacityText) }
                 } else if menuBarPowerStyle == .textOnly {
-                    Text("\(viewModel.currentCapacity)%")
+                    Text(viewModel.capacityText)
                         .fontWeight(.bold)
                 }
             }
             
             // Health
-            if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text("H:\(viewModel.batteryData.appleRawMaxCapacity ?? 0)%") } }
-            if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text("S:\(viewModel.batteryData.appleMaxCapacity ?? 0)%") } }
-            if showMacOSCondition { HStack(spacing: 2) { Image(systemName: "cross.case"); Text("正常") } }
-            if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text("\(viewModel.batteryData.cycleCount ?? 0)") } }
+            if showMaxCapacity { HStack(spacing: 2) { Image(systemName: "stethoscope"); Text(viewModel.batteryData.healthPercent.map { "H:\($0)%" } ?? "H:—") } }
+            if showMacOSCapacity { HStack(spacing: 2) { Image(systemName: "info.circle"); Text(viewModel.batteryData.appleMaxCapacity.map { "S:\($0)%" } ?? "S:—") } }
+            if showMacOSCondition { HStack(spacing: 2) { Image(systemName: "cross.case"); Text(viewModel.batteryData.condition ?? "—") } }
+            if showCycles { HStack(spacing: 2) { Image(systemName: "arrow.3.path"); Text(viewModel.batteryData.isAvailable ? "\(viewModel.batteryData.cycleCount)" : "—") } }
             
             // Specs
-            if showTemperature { HStack(spacing: 2) { Image(systemName: "thermometer"); Text(String(format: "%.0f°C", viewModel.temperature)) } }
-            if showTimeRemaining { HStack(spacing: 2) { Image(systemName: "clock"); Text("\(viewModel.batteryData.timeRemaining ?? 0)m") } }
-            if showAmperage { HStack(spacing: 2) { Image(systemName: "a.square"); Text(String(format: "%.2fA", Double(viewModel.batteryData.amperage) / 1000.0)) } }
-            if showVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(String(format: "%.2fV", Double(viewModel.batteryData.voltage) / 1000.0)) } }
-            if showWattage { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(String(format: "%.1fW", viewModel.batteryData.adapter?.realTimeWatts ?? 0.0)) } }
-            if showSystemLoad { HStack(spacing: 2) { Image(systemName: "laptopcomputer"); Text("15.0W") } }
+            if showTemperature { HStack(spacing: 2) { Image(systemName: "thermometer"); Text(viewModel.temperature > 0 ? String(format: "%.0f°C", viewModel.temperature) : "—") } }
+            if showTimeRemaining { HStack(spacing: 2) { Image(systemName: "clock"); Text(viewModel.batteryData.timeRemaining.map { "\($0)m" } ?? "—") } }
+            if showAmperage { HStack(spacing: 2) { Image(systemName: "a.square"); Text(viewModel.batteryData.hasCurrentReading ? String(format: "%.2fA", Double(viewModel.batteryData.amperage) / 1000.0) : "—") } }
+            if showVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(viewModel.voltage > 0 ? String(format: "%.2fV", Double(viewModel.voltage) / 1000.0) : "—") } }
+            if showWattage { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(viewModel.powerFlow.adapterQuality.format(viewModel.powerFlow.adapterPower)) } }
+            if showSystemLoad { HStack(spacing: 2) { Image(systemName: "laptopcomputer"); Text(viewModel.powerFlow.systemQuality.format(viewModel.powerFlow.systemPower)) } }
             
             // Adapter
-            if showAdapterCurrent { HStack(spacing: 2) { Image(systemName: "powerplug"); Text(String(format: "%.1fA", viewModel.batteryData.adapter?.current ?? 0)) } }
-            if showAdapterVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(String(format: "%.1fV", viewModel.batteryData.adapter?.voltage ?? 0)) } }
-            if showAdapterPower { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(String(format: "%.0fW", viewModel.batteryData.adapter?.watts ?? 0)) } }
+            if showAdapterCurrent { HStack(spacing: 2) { Image(systemName: "powerplug"); Text(viewModel.powerFlow.adapterCurrent.map { String(format: "%.1fA", $0) } ?? "—") } }
+            if showAdapterVoltage { HStack(spacing: 2) { Image(systemName: "v.square"); Text(viewModel.powerFlow.adapterVoltage.map { String(format: "%.1fV", $0) } ?? "—") } }
+            if showAdapterPower { HStack(spacing: 2) { Image(systemName: "bolt.fill"); Text(viewModel.powerFlow.adapterQuality.format(viewModel.powerFlow.adapterPower)) } }
             
-            // AlDente
-            if showAlDenteCalibration { Image(systemName: "slider.vertical.3") }
-            if showAlDenteOverheat { Image(systemName: "flame") }
-            if showAlDenteSailing { Image(systemName: "paperplane") }
-            if showAlDenteFull { Image(systemName: "plus.circle") }
+
         }
         .font(.system(.body, design: .rounded).monospacedDigit())
         .padding(.horizontal, 2)

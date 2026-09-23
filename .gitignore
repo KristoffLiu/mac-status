@@ -18,6 +18,17 @@ xcuserdata/
 ## Build generated
 build/
 DerivedData/
+dist/
+__pycache__/
+*.pyc
+
+# Local signing material must never enter the repository.
+*.p12
+*.p8
+*.keychain-db
+.env
+.env.*
+!.env.example
 
 ## Various settings
 *.pbxuser
