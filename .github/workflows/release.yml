@@ -24,11 +24,12 @@ jobs:
       MACSTATUS_TEAM_ID: ${{ secrets.MACSTATUS_TEAM_ID }}
       MACSTATUS_BUNDLE_ID: ${{ vars.MACSTATUS_BUNDLE_ID }}
       MACSTATUS_NOTARY_PROFILE: macstatus-release
-      MACSTATUS_KEYCHAIN: ${{ runner.temp }}/macstatus-signing.keychain-db
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Set temporary keychain path
+        run: echo "MACSTATUS_KEYCHAIN=$RUNNER_TEMP/macstatus-signing.keychain-db" >> "$GITHUB_ENV"
       - name: Validate release configuration
         env:
           CERTIFICATE: ${{ secrets.MACSTATUS_CERTIFICATE_P12_BASE64 }}

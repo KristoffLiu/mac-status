@@ -5,7 +5,7 @@
 已实现：本机 ad hoc 构建、Release 构建、Developer ID 签名、Hardened Runtime、
 Apple 公证和票据附加、DMG / ZIP、SHA256、发布元数据、CI、GitHub Release 草稿、Cask 生成。
 
-正式对外发布还需配置：GitHub 远程仓库、最终 Bundle ID、
+GitHub 远程仓库已配置。正式对外发布还需确定最终 Bundle ID，并配置
 Apple Developer Program 证书和公证凭据。项目采用 MIT 许可证，应用包内也包含许可文本。
 不要把证书或私钥提交进 Git。
 GitHub Release 和 Homebrew 复用相同的站外发行包；Mac App Store 单独评估。
